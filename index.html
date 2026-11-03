@@ -303,6 +303,10 @@
 
         <!-- 2. Consumer UI - Radar -->
         <section id="sec-consumerRadar" class="app-section" style="background:transparent; border:none; box-shadow:none; padding:0.5rem 0;">
+            
+            <!-- Custom Ad Banner Slot -->
+            <div id="dynamicCustomAdContainer" style="display:none; margin-bottom:1rem; border-radius:12px; overflow:hidden; border:2px solid #FBBF24; box-shadow:0 4px 15px rgba(0,0,0,0.4);"></div>
+
             <div class="radar-container" id="radarContainer">
                 <div class="radar-grid"></div>
                 <div class="radar-circle-inner"></div>
@@ -318,6 +322,9 @@
             </div>
 
             <div id="consumerStationsList" style="margin-top: 1rem;"></div>
+
+            <!-- Google AdSense Banner Slot -->
+            <div id="dynamicGoogleAdContainer" style="display:none; margin-top:1.5rem; text-align:center; background:#1E293B; border:1px solid #334155; padding:0.75rem; border-radius:12px;"></div>
         </section>
 
         <!-- 3. Consumer Settings -->
@@ -444,7 +451,36 @@
                 </div>
             </div>
 
-                        <!-- VIP Packages Control Section -->
+                                    <!-- Custom Ads & Google AdSense Control Section -->
+            <div style="background: #0F172A; border: 1px solid #10B981; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.95rem; color: #34D399; margin-top: 0;">📢 إدارة الإعلانات والربح (الإعلانات الخاصة + قوقل أدسنس)</h3>
+                
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
+                    <h4 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:0.85rem;">⭐ إعلانك الخاص (رعاية محلية / بانر ترويجي):</h4>
+                    <label style="font-size:0.8rem;">عنوان الإعلان:</label>
+                    <input type="text" id="customAdTitle" placeholder="مثال: شركة المحروقات الكبرى..." style="margin:0.2rem 0 0.5rem 0; font-size:0.85rem;">
+                    <label style="font-size:0.8rem;">رابط صورة البانر الإعلاني (URL):</label>
+                    <input type="text" id="customAdImg" placeholder="https://..." style="margin:0.2rem 0 0.5rem 0; font-size:0.85rem;">
+                    <label style="font-size:0.8rem;">رابط الانتقال عند النقر (واتساب أو موقع):</label>
+                    <input type="text" id="customAdLink" placeholder="https://wa.me/..." style="margin:0.2rem 0 0.5rem 0; font-size:0.85rem;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer; margin-bottom:0.5rem;">
+                        <input type="checkbox" id="customAdActive" style="width:auto; margin:0;"> تفعيل عرض الإعلان الخاص في تطبيق المستهلكين
+                    </label>
+                </div>
+
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
+                    <h4 style="color:#60A5FA; margin:0 0 0.4rem 0; font-size:0.85rem;">🌐 إعلانات قوقل أدسنس (Google AdSense Script / Slot):</h4>
+                    <label style="font-size:0.8rem;">كود شفرة إعلان قوقل أدسنس (HTML / Script):</label>
+                    <textarea id="googleAdCode" placeholder="<script ...></script> أو شفرة البانر..." style="background:#0F172A; color:#F8FAFC; border:1px solid #475569; padding:0.5rem; border-radius:6px; width:100%; height:80px; box-sizing:border-box; font-size:0.8rem; margin-bottom:0.5rem; resize:vertical;"></textarea>
+                    <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer;">
+                        <input type="checkbox" id="googleAdActive" style="width:auto; margin:0;"> تفعيل إعلانات قوقل أدسنس في أسفل الشاشة
+                    </label>
+                </div>
+
+                <button onclick="saveAdsAdminSettings()" style="background:#059669; color:white; border:none; padding:0.75rem; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">💾 حفظ إعدادات الإعلانات فوراً</button>
+            </div>
+
+            <!-- VIP Packages Control Section -->
             <div style="background: #0F172A; border: 1px solid #EC4899; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <h3 style="font-size: 0.95rem; color: #F472B6; margin-top: 0;">👑 التحكم في عروض وباقات VIP & VIP+ (مدى الحياة)</h3>
                 
@@ -838,7 +874,47 @@
         }
 
         // --- Consumer Radar & Preferences ---
+        async function 
+        async function loadAndRenderAds() {
+            let customBox = document.getElementById('dynamicCustomAdContainer');
+            let googleBox = document.getElementById('dynamicGoogleAdContainer');
+            if (!customBox || !googleBox) return;
+
+            if (db) {
+                try {
+                    let doc = await db.collection("settings").doc("config").get();
+                    if (doc.exists) {
+                        let d = doc.data();
+                        
+                        // 1. Custom Ad
+                        if (d.customAd && d.customAd.active && d.customAd.img) {
+                            let linkHtml = d.customAd.link ? `href="${d.customAd.link}" target="_blank"` : '';
+                            let titleHtml = d.customAd.title ? `<div style="padding:0.5rem 0.75rem; background:rgba(15,23,42,0.85); color:#FBBF24; font-weight:bold; font-size:0.85rem;">📢 ${d.customAd.title}</div>` : '';
+                            customBox.innerHTML = `
+                                <a ${linkHtml} style="display:block; text-decoration:none; background:#0F172A; text-align:center;">
+                                    ${titleHtml}
+                                    <img src="${d.customAd.img}" alt="إعلان ترويجي" style="width:100%; max-height:120px; object-fit:cover; display:block;">
+                                </a>`;
+                            customBox.style.display = 'block';
+                        } else {
+                            customBox.style.display = 'none';
+                        }
+
+                        // 2. Google AdSense
+                        if (d.googleAd && d.googleAd.active && d.googleAd.code) {
+                            googleBox.innerHTML = `<div style="font-size:0.65rem; color:#64748B; margin-bottom:0.25rem;">إعلان ممول</div>` + d.googleAd.code;
+                            googleBox.style.display = 'block';
+                        } else {
+                            googleBox.style.display = 'none';
+                        }
+                    }
+                } catch(e) {}
+            }
+        }
+
+
         async function initConsumerSettingsState() {
+            loadAndRenderAds();
             if (localStorage.getItem('bg_alarm_active') === null) {
                 localStorage.setItem('bg_alarm_active', 'true');
             }
@@ -1760,6 +1836,17 @@
                     document.getElementById('settingRegNoteInput').value = cData.prominentRegNote || globalProminentNote;
                     document.getElementById('settingAdminWaMsgInput').value = cData.adminWaMsg || globalAdminWaMsg;
 
+                    if (cData.customAd) {
+                        document.getElementById('customAdTitle').value = cData.customAd.title || "";
+                        document.getElementById('customAdImg').value = cData.customAd.img || "";
+                        document.getElementById('customAdLink').value = cData.customAd.link || "";
+                        document.getElementById('customAdActive').checked = cData.customAd.active === true;
+                    }
+                    if (cData.googleAd) {
+                        document.getElementById('googleAdCode').value = cData.googleAd.code || "";
+                        document.getElementById('googleAdActive').checked = cData.googleAd.active === true;
+                    }
+
                     if (cData.vipPkg1) {
                         document.getElementById('vip1_price').value = cData.vipPkg1.price || "25";
                         document.getElementById('vip1_alert').value = cData.vipPkg1.alertRange || "15";
@@ -1905,6 +1992,31 @@
             try { await db.collection("settings").doc("config").set({ defaultRingtone: val }, { merge: true }); showToast("تم تعيين النغمة الافتراضية!"); } catch (e) {}
         };
         
+        
+        window.saveAdsAdminSettings = async function() {
+            if (!db) return;
+            let customAd = {
+                title: document.getElementById('customAdTitle').value.trim(),
+                img: document.getElementById('customAdImg').value.trim(),
+                link: document.getElementById('customAdLink').value.trim(),
+                active: document.getElementById('customAdActive').checked
+            };
+            let googleAd = {
+                code: document.getElementById('googleAdCode').value.trim(),
+                active: document.getElementById('googleAdActive').checked
+            };
+            try {
+                await db.collection("settings").doc("config").set({
+                    customAd: customAd,
+                    googleAd: googleAd
+                }, { merge: true });
+                showToast("✅ تم حفظ إعدادات الإعلانات بنجاح!");
+            } catch(e) {
+                showToast("خطأ أثناء حفظ الإعلانات");
+            }
+        };
+
+
         window.saveVipPackagesAdminSettings = async function() {
             if (!db) return;
             let vipPkg1 = {
