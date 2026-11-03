@@ -295,6 +295,9 @@
 <body>
 
     <div id="toast-notification"></div>
+    <div id="offlineIndicatorBar" style="display:none; background:#DC2626; color:#FFFFFF; text-align:center; padding:0.45rem; font-size:0.8rem; font-weight:bold; position:sticky; top:0; z-index:10002; box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+        ⚠️ لا يوجد اتصال بالإنترنت حالياً - يتم عرض آخر بيانات محفوظة في جهازك
+    </div>
 
     <!-- Alert Modal -->
     <div id="alertModalOverlay" class="modal-overlay">
@@ -384,6 +387,10 @@
             
             <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 0.75rem 0; overflow-x: auto; padding-bottom: 0.4rem;">
                 <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
+            </div>
+
+            <div style="margin: 0.5rem 0;">
+                <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية / المنطقة..." style="margin-bottom:0; padding:0.65rem 0.85rem; font-size:0.85rem; background:#1E293B; border:1px solid #334155;">
             </div>
 
             <!-- Local Sponsor / Promotional Banner (Top of Search Results) -->
@@ -565,19 +572,37 @@
                 <h3 style="font-size: 0.95rem; color: #E9D5FF; margin-top: 0;">📢 إدارة الإعلانات والرعاية المحلية (بانر ترويجي + Google AdSense)</h3>
                 
                 <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.85rem; border:1px solid #334155;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.4rem;">
                         <strong style="font-size:0.85rem; color:#FBBF24;">1. الإعلان الخاص (رعاية محلية أعلى البحث):</strong>
-                        <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; color:#34D399; cursor:pointer;">
-                            <input type="checkbox" id="settingSponsorActive" style="width:1.1rem; height:1.1rem; margin:0;"> تفعيل الإعلان
-                        </label>
+                        <div style="display:flex; align-items:center; gap:0.6rem;">
+                            <span style="background:#0F172A; border:1px solid #FBBF24; color:#FDE68A; padding:0.15rem 0.5rem; border-radius:6px; font-size:0.75rem;">👆 النقرات: <b id="admSponsorClicksCount">0</b></span>
+                            <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; color:#34D399; cursor:pointer;">
+                                <input type="checkbox" id="settingSponsorActive" style="width:1.1rem; height:1.1rem; margin:0;"> تفعيل الإعلان
+                            </label>
+                        </div>
                     </div>
                     <label style="font-size:0.78rem; color:#94A3B8;">عنوان الإعلان أو النص الترويجي:</label>
-                    <input type="text" id="settingSponsorTitle" placeholder="مثال: برعاية شركة الأمان للمحروقات - خدمة التوصيل متوفرة..." style="margin-bottom:0.4rem;">
-                    <label style="font-size:0.78rem; color:#94A3B8;">رابط صورة البانر (اختياري - اتركه فارغاً لإعلان نصي أنيق):</label>
+                    <input type="text" id="settingSponsorTitle" placeholder="مثال: برعاية شركة الأمان للمحروقات - خدمة التوصيل متوفرة..." style="margin-bottom:0.5rem;">
+                    
+                    <label style="font-size:0.78rem; color:#38BDF8; font-weight:bold;">🖼️ رفع صورة البانر مباشرة من جهازك (يتم ضغطها تلقائياً):</label>
+                    <div style="display:flex; gap:0.4rem; align-items:center; margin-bottom:0.4rem;">
+                        <input type="file" id="sponsorImageFileInput" accept="image/*" onchange="handleSponsorImageUpload(event)" style="margin:0; padding:0.4rem; font-size:0.78rem; flex:1;">
+                        <button type="button" onclick="clearSponsorUploadedImage()" style="background:#DC2626; color:white; border:none; padding:0.45rem 0.65rem; border-radius:6px; cursor:pointer; font-size:0.75rem; white-space:nowrap;">🗑️ مسح الصورة</button>
+                    </div>
+                    <div id="sponsorImgPreviewContainer" style="display:none; text-align:center; margin-bottom:0.5rem; background:#0F172A; padding:0.4rem; border-radius:8px; border:1px dashed #475569;">
+                        <img id="sponsorImgPreview" src="" alt="معاينة البانر" style="max-width:100%; max-height:110px; border-radius:6px;">
+                        <div id="sponsorImgUploadStatus" style="font-size:0.7rem; color:#34D399; margin-top:0.2rem;">✓ الصورة جاهزة للحفظ</div>
+                    </div>
+
+                    <label style="font-size:0.75rem; color:#64748B;">أو ضع رابط صورة خارجي (اختياري إذا لم ترفع صورة):</label>
                     <input type="url" id="settingSponsorImg" placeholder="https://example.com/banner.jpg" style="margin-bottom:0.4rem;">
+
                     <label style="font-size:0.78rem; color:#94A3B8;">رابط الانتقال عند النقر (رابط واتساب أو موقع إلكتروني):</label>
                     <input type="url" id="settingSponsorLink" placeholder="https://wa.me/9639xxxxxxxx" style="margin-bottom:0.5rem;">
-                    <button onclick="saveSponsorAdSettings()" style="background:#9333EA; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; width:100%; font-size:0.85rem;">💾 حفظ وتحديث الإعلان المحلي فوراً</button>
+                    <div style="display:flex; gap:0.4rem;">
+                        <button onclick="saveSponsorAdSettings()" style="background:#9333EA; color:white; border:none; padding:0.55rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; flex:1; font-size:0.85rem;">💾 حفظ وتحديث الإعلان المحلي فوراً</button>
+                        <button onclick="resetSponsorClicks()" style="background:#334155; color:#CBD5E1; border:none; padding:0.55rem 0.75rem; border-radius:8px; cursor:pointer; font-size:0.75rem;" title="تصفير عداد النقرات">تصفير العداد</button>
+                    </div>
                 </div>
 
                 <div style="background:#1E293B; padding:0.75rem; border-radius:8px; border:1px solid #334155;">
@@ -636,6 +661,27 @@
         let backgroundAlarmInterval = null;
         let currentStationIdForPending = localStorage.getItem('pending_station_id') || null;
         let currentCategoryFilter = 'all';
+        let currentSearchQuery = '';
+        let uploadedSponsorBase64 = '';
+
+        // --- Offline / Online Indicator ---
+        function updateNetworkStatusBar() {
+            let bar = document.getElementById('offlineIndicatorBar');
+            if (!bar) return;
+            if (!navigator.onLine) {
+                bar.style.display = 'block';
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+        window.addEventListener('online', () => {
+            updateNetworkStatusBar();
+            showToast("🟢 عاد الاتصال بالإنترنت");
+        });
+        window.addEventListener('offline', () => {
+            updateNetworkStatusBar();
+            showToast("⚠️ انقطع الاتصال بالإنترنت - وضع التصفح المحلي");
+        });
 
         // --- PWA Install Prompt ---
         let deferredPrompt;
@@ -761,7 +807,11 @@
                 showSection('consumerRadar');
                 initConsumerSettingsState();
             } else {
-                if (currentStationIdForPending) {
+                let savedPhone = localStorage.getItem('saved_station_phone');
+                let savedPin = localStorage.getItem('saved_station_pin');
+                if (savedPhone && savedPin) {
+                    autoLoginStationOwner(savedPhone, savedPin);
+                } else if (currentStationIdForPending) {
                     checkPendingStationStatus(currentStationIdForPending);
                 } else {
                     showSection('stationPortal');
@@ -809,6 +859,8 @@
 
         // --- Initial Boot ---
         window.addEventListener('DOMContentLoaded', () => {
+            updateNetworkStatusBar();
+
             // 1. Show correct route immediately so screen is never blank
             let route = localStorage.getItem('app_route');
             if (!route) {
@@ -817,7 +869,12 @@
                 showSection('consumerRadar');
                 initConsumerSettingsState();
             } else if (route === 'station') {
-                if (currentStationIdForPending) {
+                let savedPhone = localStorage.getItem('saved_station_phone');
+                let savedPin = localStorage.getItem('saved_station_pin');
+                if (savedPhone && savedPin) {
+                    showSection('stationPortal');
+                    autoLoginStationOwner(savedPhone, savedPin);
+                } else if (currentStationIdForPending) {
                     showSection('stationPending');
                     checkPendingStationStatus(currentStationIdForPending);
                 } else {
@@ -904,14 +961,68 @@
             renderConsumerStations(allStations);
         };
 
+        window.onConsumerTextSearch = function() {
+            let el = document.getElementById('consumerSearchQuery');
+            currentSearchQuery = el ? el.value.trim().toLowerCase() : '';
+            renderConsumerStations(allStations);
+        };
+
+        window.trackSponsorClick = function() {
+            if (!db) return;
+            try {
+                db.collection("settings").doc("config").set({
+                    sponsorClicksCount: firebase.firestore.FieldValue.increment(1)
+                }, { merge: true }).catch(e => {});
+            } catch (e) {}
+        };
+
+        window.shareStationInfo = function(stId) {
+            let st = allStations.find(s => s.id === stId);
+            if (!st) return;
+            let availMats = [];
+            if (st.materialsStatus) {
+                for (let [m, isAv] of Object.entries(st.materialsStatus)) {
+                    if (isAv) {
+                        let prc = (st.materialsPrices && st.materialsPrices[m]) ? ` (${st.materialsPrices[m]} ل.س)` : '';
+                        availMats.push(`${m}${prc}`);
+                    }
+                }
+            }
+            let matsText = availMats.length > 0 ? `✅ متوفر الآن: ${availMats.join(' ، ')}` : `ℹ️ حالة المحطة محدثة على المنصة`;
+            let mapsLink = (st.lat && st.lon) ? `\n🗺️ موقع المحطة على الخريطة: https://maps.google.com/?q=${st.lat},${st.lon}` : '';
+            let shareText = `⛽ *محطة ${st.name}* (${st.region})\n${matsText}${mapsLink}\n\n📲 عبر منصة *متوفر هناا* للمحروقات والغاز:\n${window.location.href}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: `توفر محروقات - ${st.name}`,
+                    text: shareText
+                }).catch(() => {
+                    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+                });
+            } else {
+                window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+            }
+        };
+
         async function loadCloudStationsData() {
-            if (!db) return [];
+            if (!db || !navigator.onLine) {
+                let cached = localStorage.getItem('cached_stations_list');
+                if (cached) {
+                    try { allStations = JSON.parse(cached); return allStations; } catch(e) {}
+                }
+                if (!db) return [];
+            }
             try {
                 const snap = await db.collection("stations").get();
                 allStations = [];
                 snap.forEach(doc => allStations.push({ id: doc.id, ...doc.data() }));
+                try { localStorage.setItem('cached_stations_list', JSON.stringify(allStations)); } catch(e) {}
                 return allStations;
             } catch (e) {
+                let cached = localStorage.getItem('cached_stations_list');
+                if (cached) {
+                    try { allStations = JSON.parse(cached); return allStations; } catch(err) {}
+                }
                 return [];
             }
         }
@@ -927,14 +1038,15 @@
             // 1. Local Sponsor / Promotional Banner (Top of Search Results)
             const sponsorEl = document.getElementById('localSponsorBanner');
             if (sponsorEl) {
-                if (data.sponsorActive && (data.sponsorTitle || data.sponsorImg)) {
-                    let titleHtml = data.sponsorTitle ? `<div style="color:#FBBF24; font-weight:900; font-size:0.9rem; margin-bottom:${data.sponsorImg ? '0.5rem' : '0'};">✨ ${data.sponsorTitle}</div>` : '';
-                    let imgHtml = data.sponsorImg ? `<img src="${data.sponsorImg}" alt="إعلان راعي" style="max-width:100%; max-height:140px; border-radius:8px; display:block; margin:auto;">` : '';
+                let activeImgSrc = data.sponsorImgBase64 || data.sponsorImg || '';
+                if (data.sponsorActive && (data.sponsorTitle || activeImgSrc)) {
+                    let titleHtml = data.sponsorTitle ? `<div style="color:#FBBF24; font-weight:900; font-size:0.9rem; margin-bottom:${activeImgSrc ? '0.5rem' : '0'};">✨ ${data.sponsorTitle}</div>` : '';
+                    let imgHtml = activeImgSrc ? `<img src="${activeImgSrc}" alt="إعلان راعي" style="max-width:100%; max-height:150px; border-radius:8px; display:block; margin:auto; object-fit:cover;">` : '';
                     let innerContent = `${titleHtml}${imgHtml}`;
                     if (data.sponsorLink && data.sponsorLink.trim() !== '') {
-                        sponsorEl.innerHTML = `<a href="${data.sponsorLink.trim()}" target="_blank" style="text-decoration:none; display:block;">${innerContent}<div style="font-size:0.72rem; color:#38BDF8; margin-top:0.35rem; font-weight:bold;">🔗 اضغط هنا للتفاصيل والتواصل</div></a>`;
+                        sponsorEl.innerHTML = `<a href="${data.sponsorLink.trim()}" target="_blank" onclick="trackSponsorClick()" style="text-decoration:none; display:block;">${innerContent}<div style="font-size:0.72rem; color:#38BDF8; margin-top:0.35rem; font-weight:bold;">🔗 اضغط هنا للتفاصيل والتواصل</div></a>`;
                     } else {
-                        sponsorEl.innerHTML = innerContent;
+                        sponsorEl.innerHTML = `<div onclick="trackSponsorClick()" style="cursor:pointer;">${innerContent}</div>`;
                     }
                     sponsorEl.style.display = 'block';
                 } else {
@@ -1105,11 +1217,15 @@
                 }
             });
 
-            // Filter by status, category, AND independent Search Range (نطاق البحث)
+            // Filter by status, category, text search query, AND independent Search Range (نطاق البحث)
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
                 if (currentCategoryFilter !== 'all') {
                     if (!st.materialsStatus || st.materialsStatus[currentCategoryFilter] !== true) return false;
+                }
+                if (currentSearchQuery !== '') {
+                    let matchText = `${st.name || ''} ${st.region || ''}`.toLowerCase();
+                    if (!matchText.includes(currentSearchQuery)) return false;
                 }
                 if (st.distance !== undefined) {
                     let allowedSearchRange = getStationDefaultSearchRadius(st);
@@ -1182,8 +1298,10 @@
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="display:block; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem; margin-top:0.75rem;">💬 مراسلة المالك عبر واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem;">💬 تواصل واتساب</a>`;
                 }
+                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.7rem; border-radius:10px; font-weight:bold; font-size:0.82rem; cursor:pointer; white-space:nowrap;">📤 مشاركة التوفر</button>`;
+                let actionsRowHtml = `<div style="display:flex; gap:0.5rem; margin-top:0.75rem; align-items:center;">${waBtn}${shareBtn}</div>`;
 
                 html += `
                     <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
@@ -1205,7 +1323,7 @@
                                 <button onclick="rateStation('${st.id}', 5)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐5</button>
                             </div>
                         </div>
-                        ${waBtn}
+                        ${actionsRowHtml}
                     </div>`;
 
                 // Plot Radar Dot
@@ -1622,6 +1740,40 @@
             }
         });
 
+        window.autoLoginStationOwner = async function(phoneVal, pinVal) {
+            if (!db) return;
+            try {
+                let snap = await db.collection("stations").where("phone", "==", phoneVal).get();
+                if (snap.empty) {
+                    localStorage.removeItem('saved_station_phone');
+                    localStorage.removeItem('saved_station_pin');
+                    return;
+                }
+                let stDoc = null;
+                snap.forEach(d => { stDoc = { id: d.id, ...d.data() }; });
+                if (stDoc.pinCode !== pinVal) {
+                    localStorage.removeItem('saved_station_phone');
+                    localStorage.removeItem('saved_station_pin');
+                    return;
+                }
+                if (stDoc.status === 'approved') {
+                    loadMyStationDashboard(stDoc);
+                } else if (stDoc.status === 'pending') {
+                    currentStationIdForPending = stDoc.id;
+                    showSection('stationPending');
+                }
+            } catch (e) {}
+        };
+
+        window.logoutStationOwner = function() {
+            localStorage.removeItem('saved_station_phone');
+            localStorage.removeItem('saved_station_pin');
+            document.getElementById('loginPhone').value = '';
+            document.getElementById('loginPin').value = '';
+            showToast("تم تسجيل الخروج بنجاح");
+            showSection('stationPortal');
+        };
+
         window.attemptStationLogin = async function() {
             let p = document.getElementById('loginPhone').value.trim();
             let pin = document.getElementById('loginPin').value.trim();
@@ -1653,6 +1805,11 @@
                 if (stDoc.status === 'canceled') {
                     return showToast("هذا الطلب ملغى.");
                 }
+
+                // Save owner session for automatic login next time
+                localStorage.setItem('saved_station_phone', p);
+                localStorage.setItem('saved_station_pin', pin);
+                localStorage.removeItem('pending_station_id');
 
                 loadMyStationDashboard(stDoc);
             } catch (e) {
@@ -1807,7 +1964,7 @@
                     <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.2rem; height:1.2rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
                 </label>
                 <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.9rem; font-size:1rem;">حفظ إعدادات التواصل</button>
-                <button onclick="showSection('stationPortal')" class="btn-danger" style="margin-top:1.25rem; margin-bottom:0; padding:0.9rem; font-size:1rem;">تسجيل الخروج</button>
+                <button onclick="logoutStationOwner()" class="btn-danger" style="margin-top:1.25rem; margin-bottom:0; padding:0.9rem; font-size:1rem;">تسجيل الخروج من الحساب</button>
             </div>`;
 
             let dash = document.getElementById('sec-stationDashboard');
@@ -1965,6 +2122,17 @@
                     document.getElementById('settingSponsorTitle').value = cData.sponsorTitle || "";
                     document.getElementById('settingSponsorImg').value = cData.sponsorImg || "";
                     document.getElementById('settingSponsorLink').value = cData.sponsorLink || "";
+                    document.getElementById('admSponsorClicksCount').textContent = cData.sponsorClicksCount || 0;
+
+                    uploadedSponsorBase64 = cData.sponsorImgBase64 || "";
+                    let prevCont = document.getElementById('sponsorImgPreviewContainer');
+                    let prevImg = document.getElementById('sponsorImgPreview');
+                    if (uploadedSponsorBase64 && prevCont && prevImg) {
+                        prevImg.src = uploadedSponsorBase64;
+                        prevCont.style.display = 'block';
+                    } else if (prevCont) {
+                        prevCont.style.display = 'none';
+                    }
 
                     document.getElementById('settingAdsenseActive').checked = (cData.adsenseActive === true);
                     document.getElementById('settingAdsenseCode').value = cData.adsenseCode || "";
@@ -2179,6 +2347,73 @@
             loadAdminPanel();
         };
 
+        window.handleSponsorImageUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const statusEl = document.getElementById('sponsorImgUploadStatus');
+            const prevCont = document.getElementById('sponsorImgPreviewContainer');
+            const prevImg = document.getElementById('sponsorImgPreview');
+            if (statusEl) statusEl.textContent = "⏳ جاري ضغط ومعالجة الصورة...";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 700;
+                    const MAX_HEIGHT = 280;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height = Math.round(height * (MAX_WIDTH / width));
+                        width = MAX_WIDTH;
+                    }
+                    if (height > MAX_HEIGHT) {
+                        width = Math.round(width * (MAX_HEIGHT / height));
+                        height = MAX_HEIGHT;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress as JPEG to keep Firestore document lightweight (<60KB)
+                    uploadedSponsorBase64 = canvas.toDataURL('image/jpeg', 0.72);
+                    if (prevImg && prevCont) {
+                        prevImg.src = uploadedSponsorBase64;
+                        prevCont.style.display = 'block';
+                    }
+                    if (statusEl) {
+                        let sizeKB = Math.round((uploadedSponsorBase64.length * 3) / 4 / 1024);
+                        statusEl.textContent = `✅ تم ضغط الصورة بنجاح (${sizeKB} كيلوبايت) - اضغط حفظ لتطبيقها`;
+                    }
+                    showToast("تم تجهيز صورة البانر بنجاح!");
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.clearSponsorUploadedImage = function() {
+            uploadedSponsorBase64 = "";
+            let fileInput = document.getElementById('sponsorImageFileInput');
+            if (fileInput) fileInput.value = "";
+            let prevCont = document.getElementById('sponsorImgPreviewContainer');
+            if (prevCont) prevCont.style.display = 'none';
+            showToast("تم مسح الصورة المرفوعة (اضغط حفظ لتأكيد التعديل)");
+        };
+
+        window.resetSponsorClicks = async function() {
+            if (!db) return;
+            try {
+                await db.collection("settings").doc("config").set({ sponsorClicksCount: 0 }, { merge: true });
+                document.getElementById('admSponsorClicksCount').textContent = "0";
+                showToast("تم تصفير عداد نقرات الإعلان");
+            } catch (e) {}
+        };
+
         window.saveSponsorAdSettings = async function() {
             if (!db) return;
             let isActive = document.getElementById('settingSponsorActive').checked;
@@ -2190,6 +2425,7 @@
                     sponsorActive: isActive,
                     sponsorTitle: title,
                     sponsorImg: img,
+                    sponsorImgBase64: uploadedSponsorBase64 || "",
                     sponsorLink: link
                 }, { merge: true });
                 showToast("✅ تم حفظ وتحديث الإعلان الترويجي المحلي فوراً!");
