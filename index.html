@@ -397,9 +397,7 @@
             let savedLon = localStorage.getItem('user_lon');
             if (savedLat && savedLon) { userLat = parseFloat(savedLat); userLon = parseFloat(savedLon); }
             
-            await loadCategoriesAndInit();
-
-            // Routing Logic
+            // Routing Logic (تشغيل الواجهة فوراً قبل انتظار فايربيس)
             let route = localStorage.getItem('app_route');
             if (!route) {
                 showSection('onboarding');
@@ -409,6 +407,9 @@
             } else if (route === 'station') {
                 showSection('stationPortal');
             }
+
+            // تحميل بيانات فايربيس في الخلفية لكي لا توقف ظهور الشاشة
+            loadCategoriesAndInit().catch(e => console.error(e));
         });
 
         // --- Routing & Navigation ---
