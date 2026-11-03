@@ -1,20 +1,14 @@
 {
-  "name": "متوفر هناا - دليل المحروقات",
+  "name": "متوفر هناا",
   "short_name": "متوفر هناا",
-  "description": "منصة لتحديد مكان تواجد المحروقات والغاز في سوريا",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#F8FAFC",
+  "background_color": "#ffffff",
   "theme_color": "#10B981",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "icon.png",
       "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
       "type": "image/png"
     }
   ]
