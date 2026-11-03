@@ -322,13 +322,12 @@
             <div style="background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%); border: 2px solid #FBBF24; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                     <span style="color:#FBBF24; font-weight:900; font-size:1.05rem;">⭐ باقة VIP الأساسية</span>
-                    <span class="vip-badge" style="margin:0;">الأكثر طلباً</span>
+                    <span class="vip-badge" style="margin:0;">التكلفة: <b id="modalVipPriceText" style="color:white;">10$</b></span>
                 </div>
-                <ul style="font-size:0.82rem; color:#F8FAFC; padding-right:1.2rem; margin:0.5rem 0; line-height:1.7;">
-                    <li>توسيع <b>نطاق البحث</b> ليصل إلى <b>15 كم</b> بدلاً من 5 كم.</li>
-                    <li>توسيع <b>نطاق التنبيه الصوتي</b> ليصل إلى <b>15 كم</b>.</li>
+                <ul id="modalVipPerksList" style="font-size:0.82rem; color:#F8FAFC; padding-right:1.2rem; margin:0.5rem 0; line-height:1.7;">
+                    <li>توسيع نطاق البحث والتنبيه إلى <b>15 كم</b>.</li>
                     <li>إطار ذهبي مضيء وشارة موزع معتمد VIP وأولوية في الظهور.</li>
-                    <li>ميزة إرسال إشعارات بث فورية صاخبة للمستهلكين يومياً.</li>
+                    <li>إرسال إشعارات بث فورية صاخبة للمستهلكين.</li>
                 </ul>
                 <button onclick="requestPackageUpgrade('VIP الأساسية')" style="background:#D97706; color:white; border:none; width:100%; padding:0.7rem; border-radius:8px; font-weight:900; cursor:pointer; font-size:0.9rem;">💬 طلب تفعيل باقة VIP عبر واتساب</button>
             </div>
@@ -337,13 +336,12 @@
             <div style="background: linear-gradient(180deg, #2E1065 0%, #1E1B4B 100%); border: 2px solid #C084FC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; box-shadow: 0 0 18px rgba(192,132,252,0.3);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                     <span style="color:#E9D5FF; font-weight:900; font-size:1.05rem;">👑 باقة VIP+ الملكية الفاخرة</span>
-                    <span class="vip-plus-badge" style="margin:0;">أقصى انتشار</span>
+                    <span class="vip-plus-badge" style="margin:0;">التكلفة: <b id="modalVipPlusPriceText" style="color:white;">25$</b></span>
                 </div>
-                <ul style="font-size:0.82rem; color:#F3E8FF; padding-right:1.2rem; margin:0.5rem 0; line-height:1.7;">
-                    <li>توسيع <b>نطاق البحث</b> ليصل إلى <b>30 كم أو أكثر</b> (تغطية شاملة للمنطقة).</li>
-                    <li>توسيع <b>نطاق التنبيه الصوتي</b> الفوري وحصريته في القرى المجاورة.</li>
-                    <li>تصميم ملكي أرجواني متوهج (VIP+) مع شارة التاج الملكي وتصدر مطلق للقائمة.</li>
-                    <li>رصيد مضاعف من رسائل البث العاجل المنسدلة في هواتف المستهلكين.</li>
+                <ul id="modalVipPlusPerksList" style="font-size:0.82rem; color:#F3E8FF; padding-right:1.2rem; margin:0.5rem 0; line-height:1.7;">
+                    <li>توسيع نطاق البحث حتى <b>30 كم</b> ونطاق التنبيه 25 كم.</li>
+                    <li>تصميم ملكي أرجواني متوهج وشارة تاج ملكي وتصدر مطلق للقائمة.</li>
+                    <li>رصيد مضاعف من رسائل البث العاجل المنسدلة.</li>
                 </ul>
                 <button onclick="requestPackageUpgrade('VIP+ الملكية الفاخرة 👑')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; width:100%; padding:0.75rem; border-radius:8px; font-weight:900; cursor:pointer; font-size:0.9rem;">👑 طلب تفعيل باقة VIP+ الملكية عبر واتساب</button>
             </div>
@@ -1367,12 +1365,12 @@
                 let matsHtml = '';
                 if (st.materialsStatus) {
                     for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
-                        let bBg = isAvail ? '#064E3B' : '#7F1D1D';
-                        let bCol = isAvail ? '#34D399' : '#FCA5A5';
-                        let txt = isAvail ? '✓ متوفر' : '✗ نفدت الكمية';
+                        let bBg = isAvail ? '#064E3B' : '#991B1B';
+                        let bCol = isAvail ? '#34D399' : '#FEE2E2';
+                        let txt = isAvail ? '🟢 متوفر الآن ✓' : '🔴 نفدت الكمية ✗';
                         let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b>${st.materialsPrices[mat]} ل.س</b>` : '';
                         let ts = st.lastUpdate ? `<span style="font-size:0.7rem; opacity:0.85;">(${timeSince(st.lastUpdate)})</span>` : '';
-                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.45rem 0.65rem; border-radius:6px; font-size:0.8rem; margin-bottom:0.35rem; display:flex; justify-content:space-between; align-items:center;"><span><b>${mat}</b>: ${txt}${prc}</span> ${ts}</div>`;
+                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.75rem 1rem; border-radius:10px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${mat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
                     }
                 }
 
@@ -1925,6 +1923,44 @@
             await loadRegistrationFee();
             let span = document.getElementById('upgradeShamCashSpan');
             if (span) span.textContent = window.currentGlobalShamCashId || 'غير محدد';
+
+            if (db) {
+                try {
+                    let cfgDoc = await db.collection("settings").doc("config").get();
+                    if (cfgDoc.exists) {
+                        let cd = cfgDoc.data();
+                        let vPrice = cd.vipPrice || "10";
+                        let vRadius = cd.vipRadius || "15";
+                        let vPerks = cd.vipPerks || "";
+                        let vpPrice = cd.vipPlusPrice || "25";
+                        let vpRadius = cd.vipPlusRadius || "30";
+                        let vpPerks = cd.vipPlusPerks || "";
+
+                        let pTxt1 = document.getElementById('modalVipPriceText');
+                        let pTxt2 = document.getElementById('modalVipPlusPriceText');
+                        if (pTxt1) pTxt1.textContent = vPrice + "$";
+                        if (pTxt2) pTxt2.textContent = vpPrice + "$";
+
+                        let perks1 = document.getElementById('modalVipPerksList');
+                        let perks2 = document.getElementById('modalVipPlusPerksList');
+                        if (perks1) {
+                            perks1.innerHTML = `
+                                <li>التكلفة المعتمدة: <b>${vPrice}$</b></li>
+                                <li>نطاق البحث والتنبيه: <b>${vRadius} كم</b></li>
+                                <li>${vPerks || 'إطار ذهبي مضيء وشارة موزع معتمد VIP وأولوية في الظهور.'}</li>
+                            `;
+                        }
+                        if (perks2) {
+                            perks2.innerHTML = `
+                                <li>التكلفة المعتمدة: <b>${vpPrice}$</b></li>
+                                <li>نطاق البحث حتى <b>${vpRadius} كم</b>.</li>
+                                <li>${vpPerks || 'تصميم ملكي أرجواني متوهج وشارة تاج ملكي وتصدر مطلق للقائمة.'}</li>
+                            `;
+                        }
+                    }
+                } catch(e) {}
+            }
+
             let ol = document.getElementById('upgradeModalOverlay');
             if (ol) ol.style.display = 'flex';
         };
