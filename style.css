@@ -1,0 +1,188 @@
+:root {
+    --primary-color: #10B981; /* أخضر زمردي احترافي */
+    --primary-dark: #059669;  /* أخضر داكن للأزرار والتفاعل */
+    --primary-light: #D1FAE5; /* أخضر فاتح للخلفيات والتنبيهات */
+    --bg-color: #F8FAFC;      /* خلفية رمادية فاتحة ونظيفة */
+    --card-bg: #FFFFFF;       /* خلفية البطاقات بيضاء نقية */
+    --text-main: #1E293B;     /* لون النصوص الأساسية داكن وواضح */
+    --text-muted: #64748B;    /* نصوص فرعية هادئة */
+    --radius: 12px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    direction: rtl;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background-color: var(--card-bg);
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.logo-text h1 {
+    font-size: 1.25rem;
+    color: var(--text-main);
+}
+
+.logo-text p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.welcome-card, .search-container, .station-container, .admin-container {
+    background-color: var(--card-bg);
+    padding: 2.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 600px;
+    text-align: right;
+}
+
+.welcome-card {
+    text-align: center;
+    max-width: 500px;
+}
+
+.welcome-card h2, .search-container h2, .station-container h2, .admin-container h2 {
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.welcome-card p, .search-container p, .station-container p, .admin-container p {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.role-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btn-role {
+    background-color: var(--card-bg);
+    border: 2px solid #E2E8F0;
+    padding: 1rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btn-role:hover {
+    border-color: var(--primary-color);
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #E2E8F0;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+footer {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}

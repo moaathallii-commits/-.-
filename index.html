@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متوفر هناا - دليل المحروقات والغاز</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- إعدادات وتفعيل الـ PWA -->
+    <meta name="theme-color" content="#10B981">
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker Registered Successfully'));
+        }
+    </script>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">✓</div>
+            <div class="logo-text">
+                <h1>متوفر هناا</h1>
+                <p>دليل توفر المحروقات والغاز</p>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="welcome-card">
+            <h2>مرحباً بك في منصة متوفر هناا</h2>
+            <p>يرجى اختيار واجهة الدخول للمتابعة حسب صلاحياتك:</p>
+            
+            <div class="role-buttons">
+                <button class="btn-role" onclick="navigateTo('consumer')">
+                    <span>بحث عن مواد (بنزين، مازوت، غاز)</span>
+                    <span class="icon">🔍</span>
+                </button>
+                
+                <button class="btn-role" onclick="navigateTo('station')">
+                    <span>بوابة المحطات والموزعين المعتمدين</span>
+                    <span class="icon">⛽</span>
+                </button>
+                
+                <button class="btn-role" onclick="navigateTo('admin')">
+                    <span>لوحة الإدارة العامة</span>
+                    <span class="icon">⚙️</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>جميع الحقوق محفوظة &copy; 2026 - متوفر هناا</p>
+    </footer>
+
+    <script>
+        function navigateTo(role) {
+            if (role === 'consumer') {
+                window.location.href = 'consumer.html';
+            } else if (role === 'station') {
+                window.location.href = 'station.html';
+            } else if (role === 'admin') {
+                window.location.href = 'admin.html';
+            }
+        }
+    </script>
+</body>
+</html>

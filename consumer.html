@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متوفر هناا - البحث عن المحروقات والغاز</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- إعدادات وتفعيل الـ PWA -->
+    <meta name="theme-color" content="#10B981">
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">✓</div>
+            <div class="logo-text">
+                <h1>متوفر هناا</h1>
+                <p>البحث عن المواد المتوفرة</p>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="search-container">
+            <a href="index.html" class="back-link">← العودة للرئيسية</a>
+            <h2>ابحث عن المادة المتوفرة قربك</h2>
+            <p>اختر المادة وقم بتحديد منطقتك لمعرفة المحطات والموزعين المتاحين.</p>
+
+            <form id="searchForm" onsubmit="handleSearch(event)">
+                <div class="form-group">
+                    <label for="materialType">المادة المطلوبة:</label>
+                    <select id="materialType" class="form-control" required>
+                        <option value="" disabled selected>اختر المادة...</option>
+                        <option value="petrol">بنزين</option>
+                        <option value="diesel">مازوت</option>
+                        <option value="gas">غاز منزلي</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="region">المنطقة / المدنية:</label>
+                    <input type="text" id="region" class="form-control" placeholder="مثال: حماة، السقيلبية، العوينة..." required>
+                </div>
+
+                <button type="submit" class="btn-primary">بحث عن توفر المادة</button>
+            </form>
+
+            <div class="results-section" id="resultsSection" style="display:none; margin-top: 2rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem;">النتائج المتاحة قربك:</h3>
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="color: #1E293B;">محطة الأمان (الموزع المعتمد)</h4>
+                        <p style="font-size: 0.85rem; color: #64748B;">متوفرة الآن في محيطك</p>
+                    </div>
+                    <span style="background-color: #D1FAE5; color: #059669; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600;">متوفر</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>جميع الحقوق محفوظة &copy; 2026 - متوفر هناا</p>
+    </footer>
+
+    <script>
+        function handleSearch(event) {
+            event.preventDefault();
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

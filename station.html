@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متوفر هناا - بوابة المحطات والموزعين</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- إعدادات وتفعيل الـ PWA -->
+    <meta name="theme-color" content="#10B981">
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">⛽</div>
+            <div class="logo-text">
+                <h1>متوفر هناا</h1>
+                <p>لوحة تحكم المحطات والموزعين</p>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="station-container">
+            <a href="index.html" class="back-link">← العودة للرئيسية</a>
+            <h2>إدارة توفر المواد</h2>
+            <p>قم بتحديث حالة توفر المحروقات والغاز لديك ليراها المستهلكون مباشرة.</p>
+
+            <div style="background: #D1FAE5; padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1.5rem; color: #059669; font-weight: 600; font-size: 0.95rem;">
+                المحطة المعتمدة: محطة الأمان (الشارع الرئيسي)
+            </div>
+
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="font-size: 1rem;">مادة البنزين</h4>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; background: #D1FAE5; color: #059669; border: 1px solid #10B981;">متوفر</button>
+                    <button type="button" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; background: #FFF; color: #64748B; border: 1px solid #CBD5E1;">غير متوفر</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn-primary" onclick="alert('تم حفظ التحديثات بنجاح!')">حفظ وتحديث الحالة</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>جميع الحقوق محفوظة &copy; 2026 - متوفر هناا</p>
+    </footer>
+</body>
+</html>
