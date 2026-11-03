@@ -1943,7 +1943,7 @@
         window.admToggleVIP = async function(id, isVip) {
             let newRadius = isVip ? 15.0 : 5.0;
             await db.collection("stations").doc(id).update({ isVip: isVip, alertRadius: newRadius });
-            showToast(isVip ? "تم منح اشتراك VIP وتوسيع الرادار لـ 15 كم!" : "تم إلغاء اشتراك VIP");
+            showToast(isVip ? "تم منح اشتراك VIP وتوسيع الرادار الافتراضي إلى 15 كم!" : "تم إلغاء اشتراك VIP وعودة النطاق إلى 5 كم");
             loadAdminPanel();
         };
 
