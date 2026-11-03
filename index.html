@@ -312,7 +312,11 @@
     <div id="upgradeModalOverlay" class="modal-overlay">
         <div class="modal-content" style="max-width: 440px; border-color: #C084FC; text-align: right; max-height: 90vh; overflow-y: auto;">
             <h3 style="color: #FBBF24; margin-top: 0; text-align: center;">👑 ترقية حساب المحطة (باقات التميز)</h3>
-            <p style="font-size: 0.82rem; color: #94A3B8; text-align: center; margin-bottom: 1rem;">ضاعف مبيعاتك واجعل محطتك الخيار الأول للمستهلكين في منطقتك والقرى المجاورة:</p>
+            <p style="font-size: 0.82rem; color: #94A3B8; text-align: center; margin-bottom: 0.75rem;">ضاعف مبيعاتك واجعل محطتك الخيار الأول للمستهلكين في منطقتك والقرى المجاورة:</p>
+            <div id="upgradeShamCashBox" style="background:#0F172A; border:1px solid #3B82F6; padding:0.6rem 0.8rem; border-radius:8px; margin-bottom:1rem; text-align:center; font-size:0.82rem; color:#60A5FA;">
+                💳 شام كاش للتحويل: <span id="upgradeShamCashSpan" style="font-family:monospace; color:#FDE68A; font-weight:bold;">جاري التحميل...</span> 
+                <button type="button" onclick="copyShamCashToClipboard(window.currentGlobalShamCashId || 'غير محدد')" style="background:#2563EB; color:white; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem; margin-right:6px; font-weight:bold;">📋 نسخ</button>
+            </div>
 
             <!-- VIP Basic Package -->
             <div style="background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%); border: 2px solid #FBBF24; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
@@ -515,14 +519,17 @@
                 <button onclick="showSection('stationPortal')" style="background:#475569; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-size:0.8rem;">إغلاق 🔒</button>
             </div>
 
-            <!-- Macro Stats -->
+            <!-- Macro Stats & VIP Subscriptions Quick Panel -->
             <div style="background: #064E3B; border: 1px solid #10B981; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align: center;">
                 <h3 style="font-size: 0.95rem; color: #34D399; margin-top: 0; margin-bottom:0.5rem;">📊 إحصائيات المنصة الشاملة</h3>
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; font-size:0.8rem; color:#A7F3D0;">
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; font-size:0.8rem; color:#A7F3D0; margin-bottom:0.75rem;">
                     <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">المستخدمين الكلي: <b id="admTotalUsers" style="color:white; font-size:1rem;">...</b></div>
                     <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">نشطين (24 ساعة): <b id="admActiveUsers" style="color:white; font-size:1rem;">...</b></div>
                     <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">إجمالي التنبيهات: <b id="admTotalAlerts" style="color:white; font-size:1rem;">...</b></div>
                     <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">تواصل واتساب: <b id="admTotalClicks" style="color:white; font-size:1rem;">...</b></div>
+                </div>
+                <div style="background:#022C22; border:1px dashed #34D399; padding:0.6rem; border-radius:8px; font-size:0.82rem; color:#D1FAE5;">
+                    ⭐ محطات VIP مفعلة: <b id="admCountVip" style="color:#FBBF24;">0</b> | 👑 محطات VIP+ مفعلة: <b id="admCountVipPlus" style="color:#C084FC;">0</b>
                 </div>
             </div>
 
@@ -733,6 +740,42 @@
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLon / 2) * Math.sin(dLon / 2);
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+
+        window.copyShamCashToClipboard = function(shamId) {
+            if (!shamId || shamId === 'غير محدد') {
+                showToast("معرف الشام كاش غير متوفر حالياً.");
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shamId).then(() => {
+                    showToast("📋 تم نسخ معرف الشام كاش بنجاح: " + shamId);
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(shamId);
+                });
+            } else {
+                fallbackCopyTextToClipboard(shamId);
+            }
+        };
+
+        function fallbackCopyTextToClipboard(text) {
+            let textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";  // Avoid scrolling to bottom
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                let successful = document.execCommand('copy');
+                if (successful) {
+                    showToast("📋 تم نسخ معرف الشام كاش بنجاح: " + text);
+                } else {
+                    showToast("تعذر النسخ تلقائياً.");
+                }
+            } catch (err) {
+                showToast("تعذر النسخ تلقائياً.");
+            }
+            document.body.removeChild(textArea);
         }
 
         function timeSince(dateString) {
@@ -1608,8 +1651,9 @@
                     let data = doc.data();
                     let fee = data.regFee || "0";
                     let sham = data.shamCash || "غير محدد";
+                    window.currentGlobalShamCashId = sham;
                     if (notice) {
-                        notice.textContent = `تكلفة تسجيل المحطة: ${fee} دولار ($) | شام كاش: ${sham}`;
+                        notice.innerHTML = `تكلفة تسجيل المحطة: <b>${fee}$</b> | شام كاش: <span style="font-family:monospace; color:#FDE68A;">${sham}</span> <button type="button" onclick="copyShamCashToClipboard('${sham}')" style="background:#2563EB; color:white; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem; margin-right:6px; font-weight:bold;" title="نسخ معرف الشام كاش">📋 نسخ الشام كاش</button>`;
                     }
                     if (data.adminWaPhone) globalAdminWaPhone = data.adminWaPhone;
                     if (data.adminWaMsg) globalAdminWaMsg = data.adminWaMsg;
@@ -1841,8 +1885,11 @@
         // --- Station Dashboard & Upgrade Modal ---
         let currentDashboardStationInfo = { name: '', region: '', phone: '' };
 
-        window.openUpgradeModal = function(stName, stRegion, stPhone) {
+        window.openUpgradeModal = async function(stName, stRegion, stPhone) {
             currentDashboardStationInfo = { name: stName, region: stRegion, phone: stPhone };
+            await loadRegistrationFee();
+            let span = document.getElementById('upgradeShamCashSpan');
+            if (span) span.textContent = window.currentGlobalShamCashId || 'غير محدد';
             let ol = document.getElementById('upgradeModalOverlay');
             if (ol) ol.style.display = 'flex';
         };
@@ -2167,14 +2214,23 @@ window.emergencyPanicAll = async function(id, statusVal) {
                 allStations = [];
                 let totalAlerts = 0;
                 let totalClicks = 0;
+                let countVip = 0;
+                let countVipPlus = 0;
                 sSnap.forEach(doc => {
                     let d = doc.data();
                     totalAlerts += (d.alertsReceivedCount || 0);
                     totalClicks += (d.accessCount || 0);
+                    let lvl = getStationTierLevel(d);
+                    if (lvl === 2) countVipPlus++;
+                    else if (lvl === 1) countVip++;
                     allStations.push({ id: doc.id, ...d });
                 });
                 document.getElementById('admTotalAlerts').textContent = totalAlerts;
                 document.getElementById('admTotalClicks').textContent = totalClicks;
+                let elVip = document.getElementById('admCountVip');
+                let elVipPlus = document.getElementById('admCountVipPlus');
+                if (elVip) elVip.textContent = countVip;
+                if (elVipPlus) elVipPlus.textContent = countVipPlus;
 
                 renderAdminStationsList(allStations);
             } catch (e) {
