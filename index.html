@@ -574,6 +574,45 @@
                 </div>
             </div>
 
+            <!-- VIP & VIP+ Subscriptions Management (Pricing & Perks) -->
+            <div style="background: #0F172A; border: 1px solid #C084FC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.95rem; color: #E9D5FF; margin-top: 0;">⭐👑 إدارة باقات وتكلفة اشتراكات (VIP و VIP+)</h3>
+                
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; border:1px solid #FBBF24;">
+                    <strong style="font-size:0.85rem; color:#FBBF24; display:block; margin-bottom:0.4rem;">باقة VIP الأساسية:</strong>
+                    <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.72rem; color:#94A3B8;">التكلفة ($):</label>
+                            <input type="number" id="settingVipPrice" placeholder="10" style="margin:0; padding:0.5rem; font-size:0.85rem;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.72rem; color:#94A3B8;">النطاق (كم):</label>
+                            <input type="number" id="settingVipRadius" placeholder="15" style="margin:0; padding:0.5rem; font-size:0.85rem;">
+                        </div>
+                    </div>
+                    <label style="font-size:0.72rem; color:#94A3B8;">وصف المميزات (تظهر للمالك في نافذة الترقية):</label>
+                    <input type="text" id="settingVipPerks" placeholder="مثال: نطاق 15 كم + إشعارات بث يومية..." style="margin-bottom:0.4rem; padding:0.5rem; font-size:0.85rem;">
+                </div>
+
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; border:1px solid #C084FC;">
+                    <strong style="font-size:0.85rem; color:#C084FC; display:block; margin-bottom:0.4rem;">باقة VIP+ الملكية الفاخرة:</strong>
+                    <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.72rem; color:#94A3B8;">التكلفة ($):</label>
+                            <input type="number" id="settingVipPlusPrice" placeholder="25" style="margin:0; padding:0.5rem; font-size:0.85rem;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.72rem; color:#94A3B8;">النطاق (كم):</label>
+                            <input type="number" id="settingVipPlusRadius" placeholder="30" style="margin:0; padding:0.5rem; font-size:0.85rem;">
+                        </div>
+                    </div>
+                    <label style="font-size:0.72rem; color:#94A3B8;">وصف المميزات (تظهر للمالك في نافذة الترقية):</label>
+                    <input type="text" id="settingVipPlusPerks" placeholder="مثال: نطاق 30 كم + تاج ملكي وتصدر مطلق..." style="margin-bottom:0.4rem; padding:0.5rem; font-size:0.85rem;">
+                </div>
+
+                <button onclick="saveVipSubscriptionSettings()" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.6rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; width:100%; font-size:0.88rem;">💾 حفظ وتحديث أسعار ومميزات الاشتراكات فوراً</button>
+            </div>
+
             <!-- Local Sponsor Banner & Google AdSense Management -->
             <div style="background: #0F172A; border: 1px solid #C084FC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <h3 style="font-size: 0.95rem; color: #E9D5FF; margin-top: 0;">📢 إدارة الإعلانات والرعاية المحلية (بانر ترويجي + Google AdSense)</h3>
@@ -1320,12 +1359,8 @@
                 let locationCoordsHtml = '';
                 if (st.lat && st.lon) {
                     locationCoordsHtml = `
-                        <div style="background:#0F172A; border:1px solid #334155; padding:0.55rem 0.7rem; border-radius:8px; margin:0.45rem 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                            <div>
-                                <div style="font-size:0.72rem; color:#94A3B8;">🌐 الإحداثيات الدقيقة للمحطة:</div>
-                                <div style="font-size:0.8rem; color:#34D399; font-family:monospace; font-weight:bold; direction:ltr; text-align:right;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
-                            </div>
-                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="background:#0284C7; color:white; text-decoration:none; padding:0.4rem 0.75rem; border-radius:6px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">🗺️ فتح الموقع على خرائط Google</a>
+                        <div style="margin: 0.5rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.6rem; border-radius:8px; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(2,132,199,0.3);">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
                         </div>`;
                 }
 
@@ -2191,6 +2226,14 @@ window.emergencyPanicAll = async function(id, statusVal) {
 
                     document.getElementById('settingAdsenseActive').checked = (cData.adsenseActive === true);
                     document.getElementById('settingAdsenseCode').value = cData.adsenseCode || "";
+
+                    // Load VIP subscription pricing & perks
+                    document.getElementById('settingVipPrice').value = cData.vipPrice || "10";
+                    document.getElementById('settingVipRadius').value = cData.vipRadius || "15";
+                    document.getElementById('settingVipPerks').value = cData.vipPerks || "";
+                    document.getElementById('settingVipPlusPrice').value = cData.vipPlusPrice || "25";
+                    document.getElementById('settingVipPlusRadius').value = cData.vipPlusRadius || "30";
+                    document.getElementById('settingVipPlusPerks').value = cData.vipPlusPerks || "";
                 } else {
                     document.getElementById('settingAdminWaPhoneInput').value = "0965461504";
                     document.getElementById('settingRegNoteInput').value = globalProminentNote;
@@ -2510,6 +2553,29 @@ window.emergencyPanicAll = async function(id, statusVal) {
                 showToast("✅ تم حفظ وتحديث إعدادات Google AdSense بنجاح!");
             } catch (e) {
                 showToast("حدث خطأ أثناء حفظ إعدادات AdSense");
+            }
+        };
+
+        window.saveVipSubscriptionSettings = async function() {
+            if (!db) return;
+            let vPrice = document.getElementById('settingVipPrice').value.trim();
+            let vRadius = document.getElementById('settingVipRadius').value.trim();
+            let vPerks = document.getElementById('settingVipPerks').value.trim();
+            let vpPrice = document.getElementById('settingVipPlusPrice').value.trim();
+            let vpRadius = document.getElementById('settingVipPlusRadius').value.trim();
+            let vpPerks = document.getElementById('settingVipPlusPerks').value.trim();
+            try {
+                await db.collection("settings").doc("config").set({
+                    vipPrice: vPrice,
+                    vipRadius: vRadius,
+                    vipPerks: vPerks,
+                    vipPlusPrice: vpPrice,
+                    vipPlusRadius: vpRadius,
+                    vipPlusPerks: vpPerks
+                }, { merge: true });
+                showToast("✅ تم حفظ أسعار ومميزات باقات VIP و VIP+ بنجاح!");
+            } catch (e) {
+                showToast("حدث خطأ أثناء حفظ اشتراكات VIP");
             }
         };
 
