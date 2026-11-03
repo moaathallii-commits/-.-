@@ -13,7 +13,7 @@
             <div class="logo-icon">✓</div>
             <div class="logo-text">
                 <h1>البحث عن المواد</h1>
-                <p>تحديد الموقع الجغرافي GPS</p>
+                <p>قاعدة البيانات السحابية (Firebase)</p>
             </div>
         </div>
     </header>
@@ -21,64 +21,66 @@
     <main>
         <div class="search-container">
             <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            <h2>ابحث عن المواد المتوفرة قربك</h2>
+            <h2>المحطات المعتمدة سحابياً</h2>
             
-            <!-- زر الـ GPS الواضح -->
-            <button type="button" onclick="getGPSLocation()" class="btn-primary" style="background-color: #0284C7; margin: 1rem 0;">
-                📍 اضغط لتحديد موقعي الحالي (GPS)
+            <button type="button" onclick="getGPS()" class="btn-primary" style="background-color: #0284C7; margin: 1rem 0;">
+                📍 تحديد موقعي الحالي (GPS)
             </button>
-            <p id="gpsStatus" style="font-size: 0.85rem; color: #64748B; text-align: center; margin-bottom: 1rem;"></p>
+            <p id="gpsMsg" style="font-size: 0.85rem; color: #64748B; text-align: center;"></p>
 
-            <div id="stationsResults"></div>
+            <div id="cloudStationsList" style="margin-top: 1rem;">
+                <p style="text-align: center; color: #64748B;">جاري تحميل المحطات من السحابة...</p>
+            </div>
         </div>
     </main>
 
-    <script>
-        function getGPSLocation() {
-            const status = document.getElementById('gpsStatus');
-            if (!navigator.geolocation) {
-                status.textContent = 'متصفحك لا يدعم خاصية تحديد الموقع.';
-                return;
+    <script type="module">
+        import { db, collection, getDocs } from "./firebase-config.js";
+
+        async function loadCloudStations() {
+            const container = document.getElementById('cloudStationsList');
+            try {
+                const querySnapshot = await getDocs(collection(db, "stations"));
+                let html = '';
+                let found = false;
+
+                querySnapshot.forEach((docSnap) => {
+                    let st = docSnap.data();
+                    if (st.status === 'approved') {
+                        found = true;
+                        html += `
+                            <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1.25rem; border-radius:12px; margin-bottom:1rem;">
+                                <h4 style="color:#1E293B; font-size:1.1rem;">${st.name}</h4>
+                                <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region} (${st.type})</p>
+                                <div style="background:#E2E8F0; padding:0.4rem; border-radius:6px; font-size:0.8rem; margin:0.5rem 0;">
+                                    📦 المادة: ${st.material || 'متوفر'} | الكمية: ${st.quantity || 'متاحة'} | السعر: ${st.price || 'الرسمي'}
+                                </div>
+                                <a href="https://wa.me/963900000000?text=مرحباً، أود طلب مواد من ${st.name} عبر تطبيق متوفر هناا" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.5rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
+                                    💬 طلب عبر واتساب
+                                </a>
+                            </div>`;
+                    }
+                });
+
+                container.innerHTML = found ? html : '<p style="text-align:center; color:#64748B;">لا توجد محطات معتمدة سحابياً حالياً.</p>';
+            } catch (error) {
+                container.innerHTML = '<p style="text-align:center; color:red;">خطأ في الاتصال بقاعدة البيانات السحابية.</p>';
             }
-            status.textContent = 'جاري تفعيل الـ GPS وتحديد موقعك...';
-            navigator.geolocation.getCurrentPosition((pos) => {
-                status.textContent = `تم تحديد موقعك بدقة (خط العرض: ${pos.coords.latitude.toFixed(2)}, خط الطول: ${pos.coords.longitude.toFixed(2)})`;
-                renderStations();
-            }, () => {
-                status.textContent = 'تعذر الوصول لموقعك. يرجى السماح للمتصفح بالصلاحية.';
-                renderStations();
-            });
         }
 
-        function renderStations() {
-            let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
-            let stock = JSON.parse(localStorage.getItem('stationStock')) || { material: 'بنزين / مازوت', quantity: 'متوفر', price: 'حسب السعر الرسمي' };
-            let approved = stations.filter(s => s.status === 'approved');
-            let container = document.getElementById('stationsResults');
-
-            if (approved.length === 0) {
-                container.innerHTML = '<p style="color:#64748B; text-align:center;">لا توجد محطات معتمدة متاحة حالياً.</p>';
-                return;
+        window.getGPS = function() {
+            const msg = document.getElementById('gpsMsg');
+            if (navigator.geolocation) {
+                msg.textContent = 'جاري تحديد الموقع عبر GPS...';
+                navigator.geolocation.getCurrentPosition(pos => {
+                    msg.textContent = `تم تحديد موقعك (${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)})`;
+                }, () => {
+                    msg.textContent = 'تعذر الحصول على الموقع.';
+                });
             }
-
-            let html = '<h3 style="font-size:1.1rem; margin-bottom:1rem;">المحطات المتاحة حالياً:</h3>';
-            approved.forEach(st => {
-                html += `
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:12px; margin-bottom:1rem;">
-                        <h4>${st.name}</h4>
-                        <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region}</p>
-                        <div style="background:#E2E8F0; padding:0.4rem; border-radius:6px; font-size:0.8rem; margin:0.5rem 0;">
-                            المادة: ${stock.material} | الكمية: ${stock.quantity} | السعر: ${stock.price}
-                        </div>
-                        <a href="https://wa.me/963900000000?text=مرحباً، أود الاستفسار عن توفر المواد في ${st.name}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.5rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
-                            💬 طلب عبر واتساب
-                        </a>
-                    </div>`;
-            });
-            container.innerHTML = html;
         }
 
-        window.onload = renderStations;
+        window.onload = loadCloudStations;
     </script>
 </body>
 </html>
