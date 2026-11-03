@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متوفر هناا - لوحة الإدارة</title>
+    <title>متوفر هناا - لوحة الإدارة السحابية</title>
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#10B981">
 </head>
@@ -12,8 +12,8 @@
         <div class="logo-container">
             <div class="logo-icon">⚙️</div>
             <div class="logo-text">
-                <h1>لوحة الإدارة الشاملة</h1>
-                <p>تحكم كامل بصلاحيات المحطات</p>
+                <h1>الإدارة السحابية</h1>
+                <p>التحكم الشامل بالصلاحيات</p>
             </div>
         </div>
     </header>
@@ -21,65 +21,68 @@
     <main>
         <div class="admin-container">
             <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            <h2>إدارة المحطات المعتمدة والطلبات</h2>
-
-            <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem 0;">طلبات الاعتماد المعلقة:</h3>
-            <div id="pendingList"></div>
-
-            <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem 0;">المحطات المعتمدة (تحكم كامل):</h3>
-            <div id="approvedList"></div>
+            <h2>إدارة طلبات ومحطات السحابة</h2>
+            <div id="adminCloudList" style="margin-top: 1.5rem;">
+                <p style="text-align: center; color: #64748B;">جاري جلب الطلبات من السحابة...</p>
+            </div>
         </div>
     </main>
 
-    <script>
-        function loadAdmin() {
-            let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
-            
-            // عرض الطلبات المعلقة
-            let pendingHTML = '';
-            // عرض المحطات المعتمدة
-            let approvedHTML = '';
+    <script type="module">
+        import { db, collection, getDocs, doc, updateDoc, deleteDoc } from "./firebase-config.js";
 
-            stations.forEach((st, idx) => {
-                if (st.status === 'pending') {
-                    pendingHTML += `
+        async function loadAdminCloud() {
+            const container = document.getElementById('adminCloudList');
+            try {
+                const querySnapshot = await getDocs(collection(db, "stations"));
+                let html = '';
+                
+                querySnapshot.forEach((docSnap) => {
+                    let st = docSnap.data();
+                    let id = docSnap.id;
+                    
+                    let badgeColor = st.status === 'approved' ? '#D1FAE5' : '#FEF3C7';
+                    let textColor = st.status === 'approved' ? '#059669' : '#D97706';
+                    let statusText = st.status === 'approved' ? 'معتمدة' : 'معلقة';
+
+                    html += `
                         <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
                             <div>
-                                <h4>${st.name}</h4>
-                                <p style="font-size:0.8rem; color:#64748B;">${st.region}</p>
+                                <h4 style="font-size:0.95rem;">${st.name}</h4>
+                                <p style="font-size:0.8rem; color:#64748B;">${st.region} | <span style="background:${badgeColor}; color:${textColor}; padding:0.1rem 0.4rem; border-radius:4px;">${statusText}</span></p>
                             </div>
-                            <button onclick="updateStatus(${idx}, 'approved')" style="background:#D1FAE5; color:#059669; border:1px solid #10B981; padding:0.4rem 0.8rem; border-radius:8px; font-weight:600; cursor:pointer;">قبول الاعتماد</button>
-                        </div>`;
-                } else if (st.status === 'approved') {
-                    approvedHTML += `
-                        <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                            <div>
-                                <h4>${st.name}</h4>
-                                <p style="font-size:0.8rem; color:#059669;">حالة الصلاحية: مفعلة ومعتمدة</p>
+                            <div style="display:flex; gap:0.4rem;">
+                                ${st.status === 'pending' ? 
+                                    `<button onclick="updateSt('${id}', 'approved')" style="background:#D1FAE5; color:#059669; border:1px solid #10B981; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; font-weight:600;">قبول</button>` : 
+                                    `<button onclick="updateSt('${id}', 'revoked')" style="background:#FEE2E2; color:#DC2626; border:1px solid #EF4444; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; font-weight:600;">إيقاف</button>`
+                                }
                             </div>
-                            <button onclick="updateStatus(${idx}, 'revoked')" style="background:#FEE2E2; color:#DC2626; border:1px solid #EF4444; padding:0.4rem 0.8rem; border-radius:8px; font-weight:600; cursor:pointer;">نزع الصلاحية وإيقاف</button>
                         </div>`;
-                }
-            });
+                });
 
-            document.getElementById('pendingList').innerHTML = pendingHTML || '<p style="color:#64748B;">لا توجد طلبات معلقة.</p>';
-            document.getElementById('approvedList').innerHTML = approvedHTML || '<p style="color:#64748B;">لا توجد محطات معتمدة حالياً.</p>';
-        }
-
-        function updateStatus(index, action) {
-            let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
-            if (action === 'revoked') {
-                stations.splice(index, 1); // حذف المحطة وإلغاء صلاحيتها تماماً
-                alert('تم نزع الصلاحية وإيقاف المحطة بنجاح!');
-            } else {
-                stations[index].status = 'approved';
-                alert('تمت الموافقة واعتماد المحطة!');
+                container.innerHTML = html || '<p style="text-align:center; color:#64748B;">لا توجد طلبات في السحابة.</p>';
+            } catch (error) {
+                container.innerHTML = '<p style="text-align:center; color:red;">خطأ في الاتصال بالسحابة.</p>';
             }
-            localStorage.setItem('stationsRequests', JSON.stringify(stations));
-            loadAdmin();
         }
 
-        window.onload = loadAdmin;
+        window.updateSt = async function(id, action) {
+            try {
+                const docRef = doc(db, "stations", id);
+                if (action === 'revoked') {
+                    await deleteDoc(docRef);
+                    alert('تم نزع الصلاحية وإزالة المحطة من السحابة!');
+                } else {
+                    await updateDoc(docRef, { status: 'approved' });
+                    alert('تمت الموافقة واعتماد المحطة سحابياً!');
+                }
+                loadAdminCloud();
+            } catch (error) {
+                alert('حدث خطأ أثناء التحديث.');
+            }
+        }
+
+        window.onload = loadAdminCloud;
     </script>
 </body>
 </html>
