@@ -8,7 +8,12 @@
     <link rel="manifest" href="manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.update();
+                }
+            });
+            navigator.serviceWorker.register('sw.js').catch(function(e){});
         }
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -37,7 +42,8 @@
             border: 1px solid #334155;
             border-radius: 16px;
             padding: 1.5rem;
-            margin: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
             display: none;
         }
@@ -58,16 +64,30 @@
             outline: none;
         }
         
-        .btn-primary { background: #059669; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; }
-        .btn-secondary { background: #0284C7; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem;}
-        .btn-danger { background: #DC2626; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem;}
+        .btn-primary { background: #059669; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; }
+        .btn-secondary { background: #0284C7; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; }
+        .btn-danger { background: #DC2626; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; }
         
+        .spinner {
+            border: 4px solid #334155;
+            border-top: 4px solid #FBBF24;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Radar UI Styles */
         .radar-container {
             position: relative;
             width: 250px;
             height: 250px;
-            margin: 2rem auto;
+            margin: 1.5rem auto;
             border-radius: 50%;
             background: #0F172A;
             border: 2px solid #334155;
@@ -75,7 +95,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
         }
         .radar-grid {
             position: absolute;
@@ -88,6 +108,12 @@
         }
         .radar-grid::after {
             content: ''; position: absolute; top: 0; left: 50%; width: 1px; height: 100%; background: rgba(16, 185, 129, 0.2);
+        }
+        .radar-circle-inner {
+            position: absolute;
+            width: 50%; height: 50%;
+            border-radius: 50%;
+            border: 1px dashed rgba(16, 185, 129, 0.25);
         }
         .radar-sweep {
             position: absolute;
@@ -103,12 +129,13 @@
         .radar-center-btn {
             position: absolute;
             z-index: 10;
-            width: 70px; height: 70px;
+            width: 78px; height: 78px;
             border-radius: 50%;
             background: #10B981;
             border: 4px solid #0F172A;
-            color: white; font-weight: bold; font-size: 0.8rem;
+            color: white; font-weight: bold; font-size: 0.85rem;
             cursor: pointer; display: flex; justify-content: center; align-items: center;
+            text-align: center;
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
             transition: transform 0.2s;
         }
@@ -122,7 +149,7 @@
             box-shadow: 0 0 10px #FBBF24;
             transform: translate(-50%, -50%);
             display: none;
-            cursor: pointer;
+            z-index: 5;
         }
         
         /* VIP Card Styles */
@@ -134,9 +161,9 @@
         .vip-badge {
             background: #FBBF24;
             color: #0F172A;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
             display: inline-block;
@@ -145,31 +172,44 @@
         /* Utilities */
         .settings-icon {
             position: absolute;
-            left: 1rem; top: 1.2rem;
+            left: 1rem; top: 1.1rem;
             font-size: 1.5rem;
             cursor: pointer;
             color: #94A3B8;
+            background: #334155;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .settings-icon:hover { color: #FBBF24; }
         
         .hidden-escape-btn {
             position: fixed;
-            bottom: 10px; right: 10px;
-            opacity: 0.1;
-            font-size: 1rem;
+            bottom: 8px; right: 8px;
+            opacity: 0.18;
+            font-size: 0.9rem;
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 4px 8px;
+            border-radius: 6px;
             cursor: pointer;
             z-index: 9999;
         }
 
-        .toast, .modal-overlay { z-index: 10000; }
         #toast-notification {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             background: #334155; color: #FBBF24; border: 1px solid #FBBF24;
             padding: 0.75rem 1.5rem; border-radius: 12px; display: none; text-align: center; font-weight: bold;
+            z-index: 10001; box-shadow: 0 10px 15px rgba(0,0,0,0.5);
         }
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center;
+            z-index: 10000;
         }
         .modal-content {
             background: #1E293B; border: 2px solid #FBBF24; padding: 1.5rem; border-radius: 16px;
@@ -186,218 +226,405 @@
         <div class="modal-content">
             <h3 style="color: #FBBF24; margin-top: 0;">🚨 تنبيه ذكي هام</h3>
             <div id="alertModalBody" style="font-size: 0.95rem; margin-bottom: 1.25rem; color: #F8FAFC; line-height: 1.5;"></div>
-            <button onclick="closeAlertModal()" class="btn-primary" style="padding: 0.6rem;">حسناً، فهمت</button>
+            <button onclick="closeAlertModal()" class="btn-primary" style="padding: 0.6rem; margin-bottom:0;">حسناً، فهمت</button>
         </div>
     </div>
 
     <!-- Header (Dynamic) -->
     <header id="mainHeader">
         <h1 style="margin: 0; font-size: 1.5rem; letter-spacing: 1px;">متوفر هناا</h1>
-        <p style="font-size: 0.8rem; margin: 0.3rem 0 0 0; color: #94A3B8;">المنصة السحابية الموحدة</p>
-        <div id="consumerSettingsBtn" class="settings-icon" style="display:none;" onclick="showSection('consumerSettings')">⚙️</div>
+        <p style="font-size: 0.8rem; margin: 0.3rem 0 0 0; color: #94A3B8;">المنصة السحابية الموحدة للمحروقات والغاز</p>
+        <div id="consumerSettingsBtn" class="settings-icon" style="display:none;" onclick="showSection('consumerSettings')" title="الإعدادات">⚙️</div>
     </header>
 
     <!-- Escape Button for Station Owners who chose Consumer by mistake -->
-    <div id="escapeToStationBtn" class="hidden-escape-btn" style="display:none;" onclick="resetRouting('station')">⛽</div>
+    <button id="escapeToStationBtn" class="hidden-escape-btn" style="display:none;" onclick="resetRouting('station')">⛽</button>
 
-    <!-- 1. Onboarding (Routing) -->
-    <section id="sec-onboarding" class="app-section">
-        <h2 style="text-align: center; color: #FBBF24;">مرحباً بك في المنصة</h2>
-        <p style="text-align: center; color: #94A3B8; font-size: 0.9rem; margin-bottom: 2rem;">الرجاء تحديد هويتك للمتابعة وإعداد واجهتك المخصصة:</p>
-        <button onclick="setUserRoute('consumer')" class="btn-primary" style="font-size:1.1rem; padding: 1.2rem;">🔍 أنا مستخدم أبحث عن المحروقات</button>
-        <button onclick="setUserRoute('station')" class="btn-secondary" style="background:#334155;">⛽ أنا صاحب محطة / موزع معتمد</button>
-    </section>
+    <main style="padding: 0.5rem; max-width: 600px; margin: auto;">
 
-    <!-- 2. Consumer UI - Radar -->
-    <section id="sec-consumerRadar" class="app-section" style="background:transparent; border:none; box-shadow:none; padding-top:0;">
-        <div class="radar-container" id="radarContainer">
-            <div class="radar-grid"></div>
-            <div class="radar-sweep" id="radarSweep"></div>
-            <button class="radar-center-btn" id="radarBtn" onclick="activateRadar()">ابحث الآن</button>
-            <div id="radarDotsContainer"></div>
-        </div>
-        
-        <p id="radarStatusMsg" style="text-align:center; color:#94A3B8; font-size:0.85rem; height:20px;"></p>
-        
-        <div id="consumerStationsList" style="margin-top: 1rem;"></div>
-    </section>
-
-    <!-- 3. Consumer Settings -->
-    <section id="sec-consumerSettings" class="app-section">
-        <h2 style="margin-top:0; color:#FBBF24;">⚙️ إعدادات الرادار والتنبيه</h2>
-        
-        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: bold; color: #34D399; margin-bottom: 1rem;">
-            <input type="checkbox" id="bgAlarmToggle" onchange="toggleBackgroundAlarm()" style="width: 1.2rem; height: 1.2rem; margin:0;"> تفعيل التنبيه الصاخب بالخلفية
-        </label>
-        
-        <label style="font-size:0.85rem; color:#94A3B8;">نوع التنبيه:</label>
-        <select id="alertTriggerMode" onchange="saveConsumerPrefs()">
-            <option value="both">التوفر والنفاذ معاً</option>
-            <option value="available_only">التوفر فقط</option>
-            <option value="out_only">النفاذ فقط</option>
-        </select>
-
-        <label style="font-size:0.85rem; color:#94A3B8;">نغمة التنبيه:</label>
-        <div style="display:flex; gap:0.5rem;">
-            <select id="userRingtoneSelect" onchange="saveConsumerPrefs()">
-                <option value="alarm1">إنذار سريع (صاخب)</option>
-                <option value="alarm2">تنبيه متقطع</option>
-                <option value="chime">جرس هادئ</option>
-            </select>
-            <button onclick="testRingtone()" style="background:#334155; color:white; border:none; border-radius:8px; padding:0 1rem;">تجربة</button>
-        </div>
-
-        <p style="font-size: 0.85rem; font-weight: 600; color: #F8FAFC; margin-top: 1rem; border-top:1px solid #334155; padding-top:1rem;">تفضيلات المواد للبحث والتنبيه:</p>
-        <div id="consumerAlertPreferences" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;"></div>
-
-        <button onclick="showSection('consumerRadar')" class="btn-primary">حفظ والعودة للرادار</button>
-    </section>
-
-    <!-- 4. Station Portal (Login/Register) -->
-    <section id="sec-stationPortal" class="app-section">
-        <h2 style="margin-top:0; color:#FBBF24; text-align:center;">بوابة المحطات والموزعين</h2>
-        <p style="color: #94A3B8; font-size: 0.85rem; text-align:center;">أدخل بيانات الاعتماد للوصول للوحة التحكم:</p>
-        
-        <input type="tel" id="loginPhone" placeholder="رقم الهاتف (09xxxxxxxx)" maxlength="10">
-        <input type="password" id="loginPin" placeholder="الرمز السري">
-        <button onclick="attemptStationLogin()" class="btn-secondary">تسجيل الدخول</button>
-        
-        <hr style="border:0; border-top:1px solid #334155; margin:1.5rem 0;">
-        <p style="text-align:center; font-size:0.85rem; color:#F8FAFC;">ليس لديك حساب محطة معتمد؟</p>
-        <button onclick="showSection('stationRegister')" class="btn-primary" style="background:#334155;">⛽ تسجيل محطة جديدة</button>
-    </section>
-
-    <!-- Station Register -->
-    <section id="sec-stationRegister" class="app-section">
-        <h2 style="margin-top:0; color:#FBBF24;">طلب تسجيل محطة</h2>
-        <div id="registrationFeeNotice" style="background: #0F172A; border: 1px solid #0284C7; padding: 0.75rem; border-radius: 10px; margin-bottom: 1rem; text-align: center; color: #38BDF8; font-size: 0.85rem;">جاري تحميل التكلفة...</div>
-        
-        <form id="cloudStationForm">
-            <input type="text" id="stName" placeholder="اسم المحطة..." required>
-            <input type="text" id="stRegion" placeholder="المنطقة / القرية..." required>
-            <input type="tel" id="stPhone" placeholder="رقم الهاتف (للدخول) 09..." pattern="^09[0-9]{8}$" maxlength="10" required>
-            <input type="password" id="stPin" placeholder="اختر رمزاً سرياً..." required>
+        <!-- 1. Onboarding (Routing) - Shown by default so screen is NEVER blank -->
+        <section id="sec-onboarding" class="app-section" style="display: block;">
+            <h2 style="text-align: center; color: #FBBF24; margin-top: 0;">مرحباً بك في متوفر هناا</h2>
+            <p style="text-align: center; color: #94A3B8; font-size: 0.9rem; margin-bottom: 1.75rem;">الرجاء تحديد نوع حسابك لإعداد واجهتك المخصصة:</p>
             
-            <label style="font-size:0.85rem; margin-bottom:0.3rem; display:block;">اختر الفئات المقدمة:</label>
-            <div id="checkboxCategoriesContainer" style="background:#0F172A; border:1px solid #475569; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;"></div>
+            <button id="installBtn" style="display: none; background: #8B5CF6; color: white; padding: 0.85rem; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
+                📲 تثبيت التطبيق على الشاشة الرئيسية
+            </button>
 
-            <button type="button" onclick="getStationGPS()" class="btn-secondary" style="background:#334155; padding:0.75rem;">📍 التقاط إحداثيات الموقع (GPS)</button>
-            <p id="stationGpsStatus" style="font-size: 0.75rem; color: #34D399; margin: 0 0 1rem 0; text-align:center;"></p>
+            <button onclick="setUserRoute('consumer')" class="btn-primary" style="font-size:1.05rem; padding: 1.2rem;">🔍 مستخدم عادي (أبحث عن المحروقات)</button>
+            <button onclick="setUserRoute('station')" class="btn-secondary" style="background:#334155; font-size:1.05rem; padding: 1.2rem; margin-bottom:0;">⛽ صاحب محطة أو موزع معتمد</button>
+        </section>
 
-            <button type="submit" class="btn-primary">إرسال الطلب للإدارة</button>
-            <button type="button" onclick="showSection('stationPortal')" class="btn-secondary" style="background:transparent; color:#94A3B8; border:1px solid #475569;">إلغاء والعودة</button>
-        </form>
-    </section>
+        <!-- 2. Consumer UI - Radar -->
+        <section id="sec-consumerRadar" class="app-section" style="background:transparent; border:none; box-shadow:none; padding:0.5rem 0;">
+            <div class="radar-container" id="radarContainer">
+                <div class="radar-grid"></div>
+                <div class="radar-circle-inner"></div>
+                <div class="radar-sweep" id="radarSweep"></div>
+                <button class="radar-center-btn" id="radarBtn" onclick="activateRadar()">ابحث الآن</button>
+                <div id="radarDotsContainer"></div>
+            </div>
+            
+            <p id="radarStatusMsg" style="text-align:center; color:#94A3B8; font-size:0.85rem; min-height:22px; margin: 0.5rem 0;">اضغط على دائرة الرادار لفحص أقرب المحطات</p>
+            
+            <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 0.75rem 0; overflow-x: auto; padding-bottom: 0.4rem;">
+                <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
+            </div>
 
-    <!-- Station Pending Screen -->
-    <section id="sec-stationPending" class="app-section" style="text-align:center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
-        <h2 style="margin-top:0; color:#FBBF24;">طلبك قيد المراجعة</h2>
-        <p style="color: #94A3B8; font-size: 0.9rem; margin-bottom:2rem;">تم استلام طلب تسجيل محطتك وهو حالياً قيد المراجعة والاعتماد من قبل الإدارة. يرجى الانتظار.</p>
-        
-        <button onclick="cancelStationRequest()" class="btn-danger" style="background:transparent; border:1px solid #DC2626; color:#EF4444;">تراجع، أنا مستخدم عادي (إلغاء الطلب)</button>
-        <button onclick="showSection('stationPortal')" class="btn-secondary" style="background:#334155;">خروج</button>
-    </section>
+            <div id="consumerStationsList" style="margin-top: 1rem;"></div>
+        </section>
 
-    <!-- Station Dashboard -->
-    <section id="sec-stationDashboard" class="app-section">
-        <!-- Content injected dynamically via loadMyStationDashboard() -->
-    </section>
+        <!-- 3. Consumer Settings -->
+        <section id="sec-consumerSettings" class="app-section">
+            <h2 style="margin-top:0; color:#FBBF24;">⚙️ إعدادات الرادار والتنبيه</h2>
+            
+            <div style="background:#0F172A; padding:0.85rem; border-radius:10px; border:1px solid #334155; margin-bottom:1rem;">
+                <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; font-weight: bold; color: #34D399; cursor:pointer;">
+                    <input type="checkbox" id="bgAlarmToggle" onchange="toggleBackgroundAlarm()" style="width: 1.2rem; height: 1.2rem; margin:0;"> 🔔 تفعيل التنبيه الصاخب بالخلفية (كل 60 ثانية)
+                </label>
+            </div>
+            
+            <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">شرط إطلاق التنبيه:</label>
+            <select id="alertTriggerMode" onchange="saveConsumerPrefs()">
+                <option value="both">التوفر والنفاذ معاً</option>
+                <option value="available_only">عند توفر المادة فقط</option>
+                <option value="out_only">عند نفاذ المادة فقط</option>
+            </select>
 
-    <!-- Admin Room -->
-    <section id="sec-admin" class="app-section">
-        <h2 style="margin-top:0; color:#FBBF24;">غرفة الإدارة السرية 🕵️‍♂️</h2>
-        <button onclick="showSection('stationPortal')" class="btn-secondary" style="background:#475569; padding:0.5rem;">إغلاق اللوحة 🔒</button>
-        
-        <!-- Admin Stats & Content Injected Here -->
-        <div id="adminPanelContent" style="margin-top:1rem;"></div>
-    </section>
+            <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">نغمة التنبيه:</label>
+            <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+                <select id="userRingtoneSelect" onchange="saveConsumerPrefs()" style="margin-bottom:0; flex:1;">
+                    <option value="alarm1">نغمة الإنذار السريع (صاخب)</option>
+                    <option value="alarm2">نغمة التنبيه المتقطع</option>
+                    <option value="chime">نغمة جرس هادئ</option>
+                </select>
+                <button onclick="testRingtone()" style="background:#334155; color:white; border:none; border-radius:8px; padding:0 1rem; cursor:pointer; font-weight:bold;">تجربة</button>
+            </div>
+
+            <p style="font-size: 0.85rem; font-weight: 600; color: #F8FAFC; margin-top: 1rem; border-top:1px solid #334155; padding-top:1rem;">تفضيلات المواد للبحث والتنبيه:</p>
+            <div id="consumerAlertPreferences" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;"></div>
+
+            <button onclick="showSection('consumerRadar')" class="btn-primary" style="margin-bottom:0;">حفظ والعودة للرادار</button>
+        </section>
+
+        <!-- 4. Station Portal (Login/Register) -->
+        <section id="sec-stationPortal" class="app-section">
+            <h2 style="margin-top:0; color:#FBBF24; text-align:center;">بوابة المحطات والموزعين</h2>
+            <p style="color: #94A3B8; font-size: 0.85rem; text-align:center; margin-bottom:1.25rem;">أدخل رقم الهاتف والرمز السري للوصول للوحة التحكم:</p>
+            
+            <input type="tel" id="loginPhone" placeholder="رقم الهاتف (09xxxxxxxx)" maxlength="10">
+            <input type="password" id="loginPin" placeholder="الرمز السري">
+            <button onclick="attemptStationLogin()" class="btn-secondary">تسجيل الدخول للوحة التحكم</button>
+            
+            <hr style="border:0; border-top:1px solid #334155; margin:1.5rem 0;">
+            <p style="text-align:center; font-size:0.85rem; color:#F8FAFC; margin-bottom:0.75rem;">ليس لديك حساب محطة أو موزع معتمد؟</p>
+            <button onclick="showSection('stationRegister')" class="btn-primary">⛽ بدء تسجيل محطة جديدة</button>
+            
+            <button onclick="resetRouting('consumer')" style="background:transparent; border:1px solid #475569; color:#94A3B8; width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.8rem; margin-top:0.5rem;">↩️ اخترت محطة بالخطأ؟ العودة لواجهة المستهلك</button>
+        </section>
+
+        <!-- 5. Station Register -->
+        <section id="sec-stationRegister" class="app-section">
+            <h2 style="margin-top:0; color:#FBBF24;">طلب تسجيل محطة / موزع</h2>
+            <div id="registrationFeeNotice" style="background: #0F172A; border: 1px solid #0284C7; padding: 0.75rem; border-radius: 10px; margin-bottom: 1rem; text-align: center; color: #38BDF8; font-size: 0.85rem; font-weight:bold;">
+                تكلفة تسجيل المحطة: جاري التحميل...
+            </div>
+            
+            <form id="cloudStationForm">
+                <label style="font-size:0.8rem; color:#94A3B8;">اسم المحطة أو الموزع:</label>
+                <input type="text" id="stName" placeholder="مثال: محطة الأمان" required>
+                
+                <label style="font-size:0.8rem; color:#94A3B8;">المنطقة / القرية:</label>
+                <input type="text" id="stRegion" placeholder="مثال: العوينة" required>
+                
+                <label style="font-size:0.8rem; color:#94A3B8;">رقم هاتف تسجيل الدخول (10 خانات يبدأ بـ 09):</label>
+                <input type="tel" id="stPhone" placeholder="09xxxxxxxx" pattern="^09[0-9]{8}$" maxlength="10" required>
+                
+                <label style="font-size:0.8rem; color:#94A3B8;">الرمز السري الخاص بك:</label>
+                <input type="password" id="stPin" placeholder="اختر رمزاً سرياً..." required>
+                
+                <label style="font-size:0.85rem; margin-bottom:0.3rem; display:block;">اختر الفئات المتوفرة لديك:</label>
+                <div id="checkboxCategoriesContainer" style="background:#0F172A; border:1px solid #475569; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;"></div>
+
+                <button type="button" onclick="getStationGPS()" class="btn-secondary" style="background:#334155; padding:0.75rem;">📍 التقاط إحداثيات موقع المحطة (GPS)</button>
+                <p id="stationGpsStatus" style="font-size: 0.75rem; color: #34D399; margin: 0 0 1rem 0; text-align:center;"></p>
+
+                <button type="submit" class="btn-primary">إرسال طلب الاعتماد للإدارة</button>
+                <button type="button" onclick="showSection('stationPortal')" class="btn-secondary" style="background:transparent; color:#94A3B8; border:1px solid #475569; margin-bottom:0;">رجوع لبوابة الدخول</button>
+            </form>
+        </section>
+
+        <!-- 6. Station Pending Screen -->
+        <section id="sec-stationPending" class="app-section" style="text-align:center;">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🔒</div>
+            <h2 style="margin-top:0; color:#FBBF24;">طلبك قيد مراجعة الإدارة</h2>
+            <p style="color: #94A3B8; font-size: 0.9rem; margin-bottom:1.5rem; line-height:1.6;">تم إرسال بيانات محطتك بنجاح. بعد موافقة الإدارة، يمكنك تسجيل الدخول برقم هاتفك ورمزك السري لإدارة الأسعار والتوفر.</p>
+            
+            <button onclick="cancelStationRequest()" class="btn-danger" style="background:transparent; border:1px solid #DC2626; color:#FCA5A5;">⚠️ ضغطت بالخطأ؟ إلغاء الطلب والتحول لمستهلك عادي</button>
+            <button onclick="showSection('stationPortal')" class="btn-secondary" style="background:#334155; margin-bottom:0;">العودة لشاشة تسجيل الدخول</button>
+        </section>
+
+        <!-- 7. Station Dashboard -->
+        <section id="sec-stationDashboard" class="app-section"></section>
+
+        <!-- 8. Admin Room -->
+        <section id="sec-admin" class="app-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h2 style="margin:0; color:#FBBF24; font-size:1.2rem;">غرفة الإدارة السرية والإحصائيات</h2>
+                <button onclick="showSection('stationPortal')" style="background:#475569; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-size:0.8rem;">إغلاق 🔒</button>
+            </div>
+
+            <!-- Macro Stats -->
+            <div style="background: #064E3B; border: 1px solid #10B981; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align: center;">
+                <h3 style="font-size: 0.95rem; color: #34D399; margin-top: 0; margin-bottom:0.5rem;">📊 إحصائيات المنصة الشاملة</h3>
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; font-size:0.8rem; color:#A7F3D0;">
+                    <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">المستخدمين الكلي: <b id="admTotalUsers" style="color:white; font-size:1rem;">...</b></div>
+                    <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">نشطين (24 ساعة): <b id="admActiveUsers" style="color:white; font-size:1rem;">...</b></div>
+                    <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">إجمالي التنبيهات: <b id="admTotalAlerts" style="color:white; font-size:1rem;">...</b></div>
+                    <div style="background:#042F2E; padding:0.5rem; border-radius:8px;">تواصل واتساب: <b id="admTotalClicks" style="color:white; font-size:1rem;">...</b></div>
+                </div>
+            </div>
+
+            <!-- Settings (Sham Cash & Fee & Ringtone) -->
+            <div style="background: #0F172A; border: 1px solid #3B82F6; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.95rem; color: #60A5FA; margin-top: 0;">💳 إعدادات الشام كاش والتكلفة</h3>
+                <label style="font-size:0.8rem;">معرف شام كاش:</label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                    <input type="text" id="settingShamCashInput" placeholder="معرف التحويل..." style="margin:0;">
+                    <button onclick="saveShamCashID()" style="background:#2563EB; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
+                </div>
+                <label style="font-size:0.8rem;">تكلفة تسجيل المحطة ($):</label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                    <input type="number" id="settingFeeInput" placeholder="التكلفة بالدولار..." style="margin:0;">
+                    <button onclick="saveRegistrationFee()" style="background:#2563EB; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
+                </div>
+                <label style="font-size:0.8rem;">النغمة الافتراضية للمنصة:</label>
+                <div style="display:flex; gap:0.5rem;">
+                    <select id="adminDefaultRingtone" style="margin:0; flex:1;">
+                        <option value="alarm1">نغمة الإنذار السريع</option>
+                        <option value="alarm2">نغمة التنبيه المتقطع</option>
+                        <option value="chime">نغمة جرس هادئ</option>
+                    </select>
+                    <button onclick="saveAdminDefaultRingtone()" style="background:#2563EB; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">تعيين</button>
+                </div>
+            </div>
+
+            <!-- Categories Management -->
+            <div style="background: #0F172A; border: 1px solid #475569; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.95rem; color: #F8FAFC; margin-top: 0;">➕ إدارة الفئات والأصناف</h3>
+                <form id="addCategoryForm" style="display: flex; gap: 0.5rem; margin-bottom:0.75rem;">
+                    <input type="text" id="newCategoryName" placeholder="اسم المادة الجديدة..." required style="margin:0;">
+                    <button type="submit" style="background: #0284C7; color: white; border: none; padding: 0 1rem; border-radius: 8px; cursor: pointer; font-weight: bold;">إضافة</button>
+                </form>
+                <div id="adminCategoriesList" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+            </div>
+
+            <input type="text" id="adminSearchInput" oninput="filterAdminList()" placeholder="🔍 ابحث عن محطة بالاسم، المنطقة أو الهاتف...">
+
+            <h3 style="font-size: 1rem; color:#FBBF24; margin-bottom:0.5rem;">إدارة طلبات ومحطات السحابة</h3>
+            <div id="adminCloudList"></div>
+        </section>
+
+    </main>
 
     <script>
-        // --- Firebase Init & Globals ---
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
+        // --- Safe Firebase Initialization ---
+        let db = null;
+        try {
+            if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+            }
+        } catch (err) {
+            console.error("Firebase init error:", err);
+        }
+
         let allStations = [];
-        let availableCategories = [];
-        let categoryDocs = {}; 
+        let availableCategories = ["بنزين", "مازوت", "غاز منزلي"];
+        let categoryDocs = {};
         let userLat = null;
         let userLon = null;
-        let stationLat = 35.5; 
-        let stationLon = 36.3; 
+        let stationLat = 35.5;
+        let stationLon = 36.3;
         let backgroundAlarmInterval = null;
-        let currentStationIdForPending = null; 
+        let currentStationIdForPending = localStorage.getItem('pending_station_id') || null;
+        let currentCategoryFilter = 'all';
 
-        // --- Core Utilities ---
+        // --- PWA Install Prompt ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('installBtn');
+            if (installBtn) {
+                installBtn.style.display = 'block';
+                installBtn.onclick = async () => {
+                    installBtn.style.display = 'none';
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                };
+            }
+        });
+
+        // --- Core Helpers ---
         function showToast(msg, duration = 3000) {
             let toast = document.getElementById('toast-notification');
-            if(toast){ toast.textContent = msg; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', duration); }
+            if (toast) {
+                toast.textContent = msg;
+                toast.style.display = 'block';
+                setTimeout(() => { toast.style.display = 'none'; }, duration);
+            }
         }
+
         function showAlertModal(html) {
-            let ol = document.getElementById('alertModalOverlay'), bd = document.getElementById('alertModalBody');
-            if(ol && bd){ bd.innerHTML = html; ol.style.display = 'flex'; }
+            let ol = document.getElementById('alertModalOverlay');
+            let bd = document.getElementById('alertModalBody');
+            if (ol && bd) {
+                bd.innerHTML = html;
+                ol.style.display = 'flex';
+            }
         }
-        function closeAlertModal() { document.getElementById('alertModalOverlay').style.display = 'none'; }
+
+        function closeAlertModal() {
+            let ol = document.getElementById('alertModalOverlay');
+            if (ol) ol.style.display = 'none';
+        }
+
         function calculateDistance(lat1, lon1, lat2, lon2) {
             if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
-            const R = 6371; 
+            const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
         }
+
         function timeSince(dateString) {
-            if(!dateString) return '';
+            if (!dateString) return '';
             const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
+            if (isNaN(seconds) || seconds < 0) return '';
             let interval = seconds / 3600;
-            if (interval > 1) return `منذ ${Math.floor(interval)} س`;
+            if (interval >= 24) return 'منذ ' + Math.floor(interval / 24) + ' يوم';
+            if (interval >= 1) return 'منذ ' + Math.floor(interval) + ' س';
             interval = seconds / 60;
-            if (interval > 1) return `منذ ${Math.floor(interval)} د`;
+            if (interval >= 1) return 'منذ ' + Math.floor(interval) + ' د';
             return 'الآن';
         }
 
         // --- Batched Activity Tracker ---
-        let activityBatch = { activeCheck: false, clicks: {} };
+        let activityBatch = { activeCheck: false, clicks: {}, impressions: {} };
         async function flushActivityBatch() {
+            if (!db) return;
             try {
                 let uid = localStorage.getItem('app_user_id');
-                if(!uid) return;
-                
+                if (!uid) return;
                 let batch = db.batch();
-                if(activityBatch.activeCheck) {
+                let hasOps = false;
+
+                if (activityBatch.activeCheck) {
                     let userRef = db.collection("users").doc(uid);
-                    batch.set(userRef, { lastActive: new Date().toISOString() }, { merge: true });
+                    batch.set(userRef, { userId: uid, lastActive: new Date().toISOString() }, { merge: true });
+                    hasOps = true;
                 }
-                
                 for (let [stId, count] of Object.entries(activityBatch.clicks)) {
                     let stRef = db.collection("stations").doc(stId);
                     batch.update(stRef, { accessCount: firebase.firestore.FieldValue.increment(count) });
+                    hasOps = true;
                 }
-                
-                if (activityBatch.activeCheck || Object.keys(activityBatch.clicks).length > 0) {
+                for (let [stId, count] of Object.entries(activityBatch.impressions)) {
+                    let stRef = db.collection("stations").doc(stId);
+                    batch.update(stRef, { impressionsCount: firebase.firestore.FieldValue.increment(count) });
+                    hasOps = true;
+                }
+                if (hasOps) {
                     await batch.commit();
-                    activityBatch = { activeCheck: false, clicks: {} };
+                    activityBatch = { activeCheck: false, clicks: {}, impressions: {} };
                 }
-            } catch(e){}
+            } catch (e) {}
         }
-        setInterval(flushActivityBatch, 60000); // Flush every minute
+        setInterval(flushActivityBatch, 60000);
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            let uid = localStorage.getItem('app_user_id');
-            if (!uid) {
-                uid = 'user_' + Math.random().toString(36.2).substring(2, 11);
-                localStorage.setItem('app_user_id', uid);
-                db.collection("users").doc(uid).set({ joinedAt: new Date().toISOString(), lastActive: new Date().toISOString() });
-            } else {
-                activityBatch.activeCheck = true;
+        // --- Navigation & Routing ---
+        window.showSection = function(id) {
+            document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
+            let target = document.getElementById('sec-' + id);
+            if (target) target.style.display = 'block';
+
+            let settBtn = document.getElementById('consumerSettingsBtn');
+            let escBtn = document.getElementById('escapeToStationBtn');
+            if (settBtn) settBtn.style.display = (id === 'consumerRadar') ? 'flex' : 'none';
+            if (escBtn) escBtn.style.display = (id === 'consumerRadar') ? 'block' : 'none';
+
+            if (id === 'admin') {
+                loadAdminPanel();
             }
+            if (id === 'stationRegister') {
+                loadRegistrationFee();
+                loadCategoriesAndInit();
+            }
+            window.scrollTo(0, 0);
+        };
 
-            // Restore GPS
-            let savedLat = localStorage.getItem('user_lat');
-            let savedLon = localStorage.getItem('user_lon');
-            if (savedLat && savedLon) { userLat = parseFloat(savedLat); userLon = parseFloat(savedLon); }
-            
-            // Routing Logic (تشغيل الواجهة فوراً قبل انتظار فايربيس)
+        window.setUserRoute = function(route) {
+            localStorage.setItem('app_route', route);
+            if (route === 'consumer') {
+                showSection('consumerRadar');
+                initConsumerSettingsState();
+            } else {
+                if (currentStationIdForPending) {
+                    checkPendingStationStatus(currentStationIdForPending);
+                } else {
+                    showSection('stationPortal');
+                }
+            }
+        };
+
+        window.resetRouting = function(targetRoute) {
+            if (targetRoute === 'station') {
+                localStorage.setItem('app_route', 'station');
+                let bgToggle = document.getElementById('bgAlarmToggle');
+                if (bgToggle) bgToggle.checked = false;
+                if (backgroundAlarmInterval) clearInterval(backgroundAlarmInterval);
+                showSection('stationPortal');
+            } else if (targetRoute === 'consumer') {
+                localStorage.setItem('app_route', 'consumer');
+                showSection('consumerRadar');
+                initConsumerSettingsState();
+            } else {
+                localStorage.removeItem('app_route');
+                showSection('onboarding');
+            }
+        };
+
+        async function checkPendingStationStatus(stId) {
+            if (!db) { showSection('stationPortal'); return; }
+            try {
+                let doc = await db.collection("stations").doc(stId).get();
+                if (doc.exists) {
+                    let st = doc.data();
+                    if (st.status === 'pending') {
+                        showSection('stationPending');
+                        return;
+                    } else if (st.status === 'approved') {
+                        localStorage.removeItem('pending_station_id');
+                        currentStationIdForPending = null;
+                        showToast("تمت موافقة الإدارة على محطتك! يمكنك الدخول الآن.");
+                        showSection('stationPortal');
+                        return;
+                    }
+                }
+            } catch (e) {}
+            showSection('stationPortal');
+        }
+
+        // --- Initial Boot ---
+        window.addEventListener('DOMContentLoaded', () => {
+            // 1. Show correct route immediately so screen is never blank
             let route = localStorage.getItem('app_route');
             if (!route) {
                 showSection('onboarding');
@@ -405,81 +632,133 @@
                 showSection('consumerRadar');
                 initConsumerSettingsState();
             } else if (route === 'station') {
-                showSection('stationPortal');
+                if (currentStationIdForPending) {
+                    showSection('stationPending');
+                    checkPendingStationStatus(currentStationIdForPending);
+                } else {
+                    showSection('stationPortal');
+                }
             }
 
-            // تحميل بيانات فايربيس في الخلفية لكي لا توقف ظهور الشاشة
-            loadCategoriesAndInit().catch(e => console.error(e));
+            // 2. Restore GPS
+            let savedLat = localStorage.getItem('user_lat');
+            let savedLon = localStorage.getItem('user_lon');
+            if (savedLat && savedLon) {
+                userLat = parseFloat(savedLat);
+                userLon = parseFloat(savedLon);
+            }
+
+            // 3. Register User Activity
+            try {
+                let uid = localStorage.getItem('app_user_id');
+                if (!uid) {
+                    uid = 'user_' + Math.random().toString(36).substring(2, 11);
+                    localStorage.setItem('app_user_id', uid);
+                    if (db) {
+                        db.collection("users").doc(uid).set({
+                            userId: uid,
+                            joinedAt: new Date().toISOString(),
+                            lastActive: new Date().toISOString()
+                        }).catch(e => {});
+                    }
+                } else {
+                    activityBatch.activeCheck = true;
+                }
+            } catch (e) {}
+
+            // 4. Load categories in background
+            loadCategoriesAndInit();
         });
 
-        // --- Routing & Navigation ---
-        window.setUserRoute = function(route) {
-            localStorage.setItem('app_route', route);
-            if(route === 'consumer') {
-                showSection('consumerRadar');
-                initConsumerSettingsState();
-            } else {
-                showSection('stationPortal');
-            }
-        }
-        window.resetRouting = function(from) {
-            localStorage.removeItem('app_route');
-            if(from === 'consumer') document.getElementById('bgAlarmToggle').checked = false; toggleBackgroundAlarm();
-            showSection('onboarding');
-        }
-        
-        function showSection(id) {
-            document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
-            document.getElementById('sec-' + id).style.display = 'block';
-            
-            let hdr = document.getElementById('mainHeader');
-            let settBtn = document.getElementById('consumerSettingsBtn');
-            let escBtn = document.getElementById('escapeToStationBtn');
-            
-            settBtn.style.display = 'none';
-            escBtn.style.display = 'none';
-            hdr.style.display = 'block';
-            
-            if(id === 'consumerRadar') { settBtn.style.display = 'block'; escBtn.style.display = 'block'; }
-            if(id === 'onboarding') { hdr.style.display = 'none'; }
-            if(id === 'admin') { loadAdminPanel(); }
-            if(id === 'stationRegister') { loadRegistrationFee(); }
-            window.scrollTo(0,0);
-        }
-
-        // --- Data Loading ---
+        // --- Categories & Settings ---
         async function loadCategoriesAndInit() {
-            try {
-                const snap = await db.collection("categories").get();
-                availableCategories = []; categoryDocs = {};
-                snap.forEach(doc => { availableCategories.push(doc.data().name); categoryDocs[doc.data().name] = doc.id; });
-            } catch (err) { availableCategories = ["بنزين", "مازوت", "غاز منزلي"]; }
+            if (db) {
+                try {
+                    const snap = await db.collection("categories").get();
+                    if (!snap.empty) {
+                        availableCategories = [];
+                        categoryDocs = {};
+                        snap.forEach(doc => {
+                            let cName = doc.data().name;
+                            if (cName) {
+                                availableCategories.push(cName);
+                                categoryDocs[cName] = doc.id;
+                            }
+                        });
+                    } else {
+                        let defaults = ["بنزين", "مازوت", "غاز منزلي"];
+                        availableCategories = [];
+                        for (let cat of defaults) {
+                            let ref = await db.collection("categories").add({ name: cat });
+                            availableCategories.push(cat);
+                            categoryDocs[cat] = ref.id;
+                        }
+                    }
+                } catch (err) {}
+            }
             updateConsumerPrefsUI();
             updateStationCheckboxesUI();
+            updateConsumerFilterButtons();
+            updateAdminCategoriesList();
         }
 
+        function updateConsumerFilterButtons() {
+            const filterEl = document.getElementById('consumerCategoriesFilter');
+            if (!filterEl) return;
+            let html = `<button onclick="filterConsumerStations('all')" style="background: ${currentCategoryFilter==='all'?'#0284C7':'#334155'}; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>`;
+            availableCategories.forEach(cat => {
+                let bg = (currentCategoryFilter === cat) ? '#0284C7' : '#334155';
+                html += `<button onclick="filterConsumerStations('${cat}')" style="background: ${bg}; color: #F8FAFC; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">${cat}</button>`;
+            });
+            filterEl.innerHTML = html;
+        }
+
+        window.filterConsumerStations = function(cat) {
+            currentCategoryFilter = cat;
+            updateConsumerFilterButtons();
+            renderConsumerStations(allStations);
+        };
+
         async function loadCloudStationsData() {
+            if (!db) return [];
             try {
                 const snap = await db.collection("stations").get();
                 allStations = [];
                 snap.forEach(doc => allStations.push({ id: doc.id, ...doc.data() }));
                 return allStations;
-            } catch(e) { return []; }
+            } catch (e) {
+                return [];
+            }
         }
 
-        // --- Consumer Radar & Settings ---
-        function initConsumerSettingsState() {
+        // --- Consumer Radar & Preferences ---
+        async function initConsumerSettingsState() {
             let isBg = localStorage.getItem('bg_alarm_active') === 'true';
-            document.getElementById('bgAlarmToggle').checked = isBg;
-            if(isBg) toggleBackgroundAlarm();
-            
+            let bgToggle = document.getElementById('bgAlarmToggle');
+            if (bgToggle) bgToggle.checked = isBg;
+            if (isBg) startBackgroundAlarmLoop();
+
             let mode = localStorage.getItem('alert_trigger_mode');
-            if(mode) document.getElementById('alertTriggerMode').value = mode;
-            
+            let modeEl = document.getElementById('alertTriggerMode');
+            if (mode && modeEl) modeEl.value = mode;
+
             let tone = localStorage.getItem('user_ringtone');
-            if(tone) document.getElementById('userRingtoneSelect').value = tone;
-            
-            loadCloudStationsData(); // Preload data silently
+            let toneEl = document.getElementById('userRingtoneSelect');
+            if (tone && toneEl) {
+                toneEl.value = tone;
+            } else if (db) {
+                try {
+                    let doc = await db.collection("settings").doc("config").get();
+                    if (doc.exists && doc.data().defaultRingtone && toneEl) {
+                        toneEl.value = doc.data().defaultRingtone;
+                    }
+                } catch (e) {}
+            }
+
+            let stations = await loadCloudStationsData();
+            if (stations.length > 0) {
+                renderConsumerStations(stations);
+            }
         }
 
         function updateConsumerPrefsUI() {
@@ -489,7 +768,7 @@
             let html = '';
             availableCategories.forEach(cat => {
                 let checked = (saved.length === 0 || saved.includes(cat)) ? 'checked' : '';
-                html += `<label style="display:flex; align-items:center; gap:0.3rem; font-size:0.8rem; cursor:pointer; color:#94A3B8; background:#334155; padding:0.3rem 0.6rem; border-radius:6px;"><input type="checkbox" value="${cat}" class="pref-checkbox" ${checked} style="width:1rem; height:1rem; margin:0;"> ${cat}</label>`;
+                html += `<label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; cursor:pointer; color:#F8FAFC; background:#334155; padding:0.4rem 0.7rem; border-radius:6px;"><input type="checkbox" value="${cat}" class="pref-checkbox" ${checked} onchange="saveConsumerPrefs()" style="width:1rem; height:1rem; margin:0;"> ${cat}</label>`;
             });
             container.innerHTML = html;
         }
@@ -497,180 +776,217 @@
         window.saveConsumerPrefs = function() {
             let prefs = Array.from(document.querySelectorAll('.pref-checkbox:checked')).map(cb => cb.value);
             localStorage.setItem('alert_prefs', JSON.stringify(prefs));
-            localStorage.setItem('alert_trigger_mode', document.getElementById('alertTriggerMode').value);
-            localStorage.setItem('user_ringtone', document.getElementById('userRingtoneSelect').value);
-        }
+            let modeEl = document.getElementById('alertTriggerMode');
+            if (modeEl) localStorage.setItem('alert_trigger_mode', modeEl.value);
+            let toneEl = document.getElementById('userRingtoneSelect');
+            if (toneEl) localStorage.setItem('user_ringtone', toneEl.value);
+            showToast("تم حفظ الإعدادات");
+        };
 
         window.activateRadar = async function() {
             const btn = document.getElementById('radarBtn');
             const sweep = document.getElementById('radarSweep');
             const status = document.getElementById('radarStatusMsg');
-            const list = document.getElementById('consumerStationsList');
-            
+            const dotsCont = document.getElementById('radarDotsContainer');
+
             btn.style.display = 'none';
             sweep.style.display = 'block';
-            status.textContent = "جاري مسح النطاق وتحديد الموقع...";
-            list.innerHTML = '';
-            document.getElementById('radarDotsContainer').innerHTML = '';
+            status.textContent = "جاري مسح النطاق وتحديد الموقع الجغرافي (GPS)...";
+            dotsCont.innerHTML = '';
+
+            const finishRadarScan = async () => {
+                status.textContent = "جاري جلب بيانات المحطات القريبة...";
+                let stations = await loadCloudStationsData();
+                setTimeout(() => {
+                    sweep.style.display = 'none';
+                    btn.style.display = 'flex';
+                    btn.textContent = "تحديث الرادار";
+                    status.textContent = userLat ? "تم تحديد موقعك وعرض أقرب المحطات المعتمدة." : "تم عرض المحطات المعتمدة (يرجى تفعيل GPS لحساب المسافة).";
+                    renderConsumerStations(stations);
+                }, 1200);
+            };
 
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async pos => {
-                    userLat = pos.coords.latitude; userLon = pos.coords.longitude;
-                    localStorage.setItem('user_lat', userLat); localStorage.setItem('user_lon', userLon);
-                    
-                    status.textContent = "جلب بيانات المحطات السحابية...";
-                    let stations = await loadCloudStationsData();
-                    
-                    setTimeout(() => {
-                        sweep.style.display = 'none';
-                        btn.style.display = 'flex';
-                        btn.textContent = "إعادة المسح";
-                        status.textContent = `تم التحديث.`;
-                        renderConsumerStations(stations);
-                    }, 1500);
-
+                navigator.geolocation.getCurrentPosition(pos => {
+                    userLat = pos.coords.latitude;
+                    userLon = pos.coords.longitude;
+                    localStorage.setItem('user_lat', userLat);
+                    localStorage.setItem('user_lon', userLon);
+                    finishRadarScan();
                 }, () => {
-                    sweep.style.display = 'none'; btn.style.display = 'flex';
-                    status.textContent = "فشل تحديد الموقع. يرجى تفعيل الـ GPS.";
-                });
+                    finishRadarScan();
+                }, { timeout: 8000 });
             } else {
-                sweep.style.display = 'none'; btn.style.display = 'flex';
-                status.textContent = "الـ GPS غير مدعوم.";
+                finishRadarScan();
             }
-        }
+        };
 
         function renderConsumerStations(stations) {
             const list = document.getElementById('consumerStationsList');
             const dotsCont = document.getElementById('radarDotsContainer');
-            let savedPrefs = JSON.parse(localStorage.getItem('alert_prefs') || '[]');
-            
-            if(userLat !== null) {
-                stations.forEach(st => st.distance = calculateDistance(userLat, userLon, st.lat, st.lon));
-                stations.sort((a,b) => a.distance - b.distance);
-            }
+            if (!list || !dotsCont) return;
 
-            // Filter approved and matching prefs
-            let filtered = stations.filter(st => {
-                if(st.status !== 'approved') return false;
-                if(savedPrefs.length === 0) return true;
-                let hasWanted = false;
-                for(let mat of savedPrefs) { if(st.categories && st.categories.includes(mat)) hasWanted = true; }
-                return hasWanted;
+            stations.forEach(st => {
+                if (userLat !== null && userLon !== null) {
+                    st.distance = calculateDistance(userLat, userLon, st.lat || 35.5, st.lon || 36.3);
+                } else {
+                    st.distance = undefined;
+                }
             });
 
-            // Priority for VIP
-            filtered.sort((a,b) => {
-                let aVip = a.isVip ? 1 : 0; let bVip = b.isVip ? 1 : 0;
-                if(aVip !== bVip) return bVip - aVip;
-                return a.distance - b.distance;
+            let filtered = stations.filter(st => {
+                if (st.status !== 'approved') return false;
+                if (currentCategoryFilter !== 'all') {
+                    return st.materialsStatus && st.materialsStatus[currentCategoryFilter] === true;
+                }
+                return true;
+            });
+
+            // Sort: VIP within 15km (or when GPS off) gets priority, then by distance
+            filtered.sort((a, b) => {
+                let aVipNear = a.isVip && (a.distance === undefined || a.distance <= 15);
+                let bVipNear = b.isVip && (b.distance === undefined || b.distance <= 15);
+                if (aVipNear !== bVipNear) return bVipNear ? 1 : -1;
+                return (a.distance || 999) - (b.distance || 999);
             });
 
             let topResults = filtered.slice(0, 10);
-            let html = ''; let dotsHtml = '';
-            
-            if(topResults.length === 0) { list.innerHTML = '<p style="text-align:center; color:#94A3B8;">لا توجد محطات ضمن نطاقك حالياً.</p>'; return; }
+            let html = '';
+            let dotsHtml = '';
+
+            if (topResults.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1rem; border-radius:12px;">لا توجد محطات معتمدة مطابقة حالياً.</p>';
+                dotsCont.innerHTML = '';
+                return;
+            }
 
             topResults.forEach((st, idx) => {
-                let isVip = st.isVip;
+                activityBatch.impressions[st.id] = (activityBatch.impressions[st.id] || 0) + 1;
+                let isVip = st.isVip === true;
                 let cardClass = isVip ? 'vip-card' : '';
                 let vipBadge = isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '';
-                let distText = st.distance !== undefined ? `<p style="font-size:0.8rem; color:#38BDF8; margin-bottom: 0.5rem; font-weight:bold;">📍 تبعد عنك: ${st.distance < 1 ? (st.distance*1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</p>` : '';
+                let distText = st.distance !== undefined ? `<p style="font-size:0.8rem; color:#38BDF8; margin: 0.25rem 0; font-weight:bold;">📍 المسافة: ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</p>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
-                
+                let ratingCount = st.ratingCount || 1;
+
+                let broadcastHtml = '';
+                if (isVip && st.broadcastMsg) {
+                    broadcastHtml = `<div style="background:#451A03; border:1px solid #F59E0B; color:#FDE68A; padding:0.5rem; border-radius:8px; font-size:0.8rem; margin:0.5rem 0;">📢 <b>إشعار فوري من المالك:</b> ${st.broadcastMsg}</div>`;
+                }
+
                 let matsHtml = '';
-                if(st.materialsStatus) {
-                    for(let [mat, isAvail] of Object.entries(st.materialsStatus)) {
-                        let bBg = isAvail ? '#064E3B' : '#7F1D1D'; let bCol = isAvail ? '#34D399' : '#FCA5A5';
-                        let txt = isAvail ? 'متوفر' : 'نفدت الكمية';
-                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | ${st.materialsPrices[mat]} ل.س` : '';
-                        let ts = st.lastUpdate ? `<span style="font-size:0.65rem; opacity:0.8; margin-right:5px;">(${timeSince(st.lastUpdate)})</span>` : '';
-                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.4rem 0.6rem; border-radius:6px; font-size:0.8rem; margin-bottom:0.4rem; display:flex; justify-content:space-between;"><span><b>${mat}</b>: ${txt} ${prc}</span> ${ts}</div>`;
+                if (st.materialsStatus) {
+                    for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
+                        let bBg = isAvail ? '#064E3B' : '#7F1D1D';
+                        let bCol = isAvail ? '#34D399' : '#FCA5A5';
+                        let txt = isAvail ? '✓ متوفر' : '✗ نفدت الكمية';
+                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b>${st.materialsPrices[mat]} ل.س</b>` : '';
+                        let ts = st.lastUpdate ? `<span style="font-size:0.7rem; opacity:0.85;">(${timeSince(st.lastUpdate)})</span>` : '';
+                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.45rem 0.65rem; border-radius:6px; font-size:0.8rem; margin-bottom:0.35rem; display:flex; justify-content:space-between; align-items:center;"><span><b>${mat}</b>: ${txt}${prc}</span> ${ts}</div>`;
                     }
                 }
 
                 let waBtn = '';
-                if(st.showContact && st.publicPhone) {
+                if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من ' + st.name)}" target="_blank" onclick="trackClick('${st.id}')" style="display:block; text-align:center; background:#25D366; color:white; padding:0.75rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.9rem; margin-top:0.75rem;">💬 تواصل عبر واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="display:block; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem; margin-top:0.75rem;">💬 مراسلة المالك عبر واتساب</a>`;
                 }
 
                 html += `
                     <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
-                        <h4 style="color:#F8FAFC; font-size:1.1rem; margin:0 0 0.2rem 0;">${st.name}</h4>
-                        <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.2rem 0;">المنطقة: ${st.region}</p>
+                        <h4 style="color:#FBBF24; font-size:1.1rem; margin:0 0 0.2rem 0;">${st.name}</h4>
+                        <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.25rem 0;">المنطقة: ${st.region}</p>
                         ${distText}
-                        <div style="margin: 0.75rem 0;">${matsHtml}</div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:#0F172A; padding:0.5rem; border-radius:8px;">
-                            <span style="color:#F59E0B; font-size:0.85rem; font-weight:bold;">⭐ ${currentRating}</span>
-                            <div style="display:flex; gap:0.2rem;">
-                                <button onclick="rateStation('${st.id}', 1)" style="background:transparent; border:none; color:#94A3B8; cursor:pointer;">☆</button>
-                                <button onclick="rateStation('${st.id}', 5)" style="background:transparent; border:none; color:#FBBF24; cursor:pointer;">⭐</button>
+                        ${broadcastHtml}
+                        <div style="margin: 0.6rem 0;">${matsHtml}</div>
+                        <p style="font-size:0.8rem; color:#F59E0B; margin: 0.4rem 0;">⭐ التقييم العام: <b>${currentRating} / 5</b> (${ratingCount} تقييم)</p>
+                        <div style="background:#0F172A; padding:0.5rem; border-radius:8px; text-align:center;">
+                            <span style="font-size:0.75rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">قيّم هذه المحطة:</span>
+                            <div style="display:flex; justify-content:center; gap:0.3rem;">
+                                <button onclick="rateStation('${st.id}', 1)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐1</button>
+                                <button onclick="rateStation('${st.id}', 2)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐2</button>
+                                <button onclick="rateStation('${st.id}', 3)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐3</button>
+                                <button onclick="rateStation('${st.id}', 4)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐4</button>
+                                <button onclick="rateStation('${st.id}', 5)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐5</button>
                             </div>
                         </div>
                         ${waBtn}
                     </div>`;
 
-                // Add dot to radar (visual flair)
-                let angle = Math.random() * 360;
-                let maxDist = 20; // Assume 20km is edge of radar visually
-                let radiusPercent = Math.min((st.distance / maxDist) * 50, 48); // max 48% radius
+                // Plot Radar Dot
+                let angle = (idx * 77 + 35) % 360;
+                let distForPlot = st.distance !== undefined ? st.distance : (idx + 1) * 2;
+                let radiusPercent = Math.min(Math.max((distForPlot / 15) * 42, 18), 44);
                 let rad = angle * Math.PI / 180;
                 let top = 50 - (Math.cos(rad) * radiusPercent);
                 let left = 50 + (Math.sin(rad) * radiusPercent);
-                
                 let dotColor = isVip ? '#FBBF24' : '#10B981';
-                dotsHtml += `<div class="station-dot" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
+                dotsHtml += `<div class="station-dot" title="${st.name}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
             });
-            
+
             list.innerHTML = html;
             dotsCont.innerHTML = dotsHtml;
-            
-            // Trigger Smart Alerts Check immediately after scan
-            checkSmartAlertsSilent(stations, userLat, userLon);
+
+            if (userLat !== null && userLon !== null) {
+                checkSmartAlertsSilent(stations, userLat, userLon);
+            }
         }
 
         window.trackClick = function(id) {
             activityBatch.clicks[id] = (activityBatch.clicks[id] || 0) + 1;
-        }
+        };
 
         window.rateStation = async function(id, score) {
+            if (!db) return;
             let rated = JSON.parse(localStorage.getItem('rated_stations') || '[]');
-            if(rated.includes(id)) { showToast('لقد قيمت هذه المحطة مسبقاً.'); return; }
+            if (rated.includes(id)) {
+                showToast('لقد قمت بتقييم هذه المحطة مسبقاً من هذا الجهاز.');
+                return;
+            }
             try {
                 let ref = db.collection("stations").doc(id);
                 let doc = await ref.get();
-                if(doc.exists) {
-                    await ref.update({ rating: (doc.data().rating||0) + score, ratingCount: (doc.data().ratingCount||0) + 1 });
-                    rated.push(id); localStorage.setItem('rated_stations', JSON.stringify(rated));
-                    showToast('تم تسجيل تقييمك.');
-                    activateRadar(); // refresh UI
+                if (doc.exists) {
+                    await ref.update({
+                        rating: (doc.data().rating || 0) + score,
+                        ratingCount: (doc.data().ratingCount || 0) + 1
+                    });
+                    rated.push(id);
+                    localStorage.setItem('rated_stations', JSON.stringify(rated));
+                    showToast(`شكراً لك! تم تسجيل تقييمك بـ ${score} نجوم.`);
+                    let stations = await loadCloudStationsData();
+                    renderConsumerStations(stations);
                 }
-            } catch(e){}
-        }
+            } catch (e) {
+                showToast("حدث خطأ أثناء التقييم.");
+            }
+        };
 
-        // --- Background Alerts & Audio ---
+        // --- Background Alerts & Web Audio ---
         window.toggleBackgroundAlarm = function() {
             let isChecked = document.getElementById('bgAlarmToggle').checked;
             localStorage.setItem('bg_alarm_active', isChecked);
             if (isChecked) {
-                if (Notification.permission !== "granted" && Notification.permission !== "denied") { Notification.requestPermission(); }
+                if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission();
+                }
                 startBackgroundAlarmLoop();
-                showToast("تم تفعيل رادار الخلفية.");
+                showToast("تم تفعيل التنبيه الصاخب بالخلفية.");
             } else {
                 if (backgroundAlarmInterval) clearInterval(backgroundAlarmInterval);
-                showToast("تم إيقاف التنبيه.");
+                showToast("تم إيقاف التنبيه الصاخب.");
             }
-        }
+        };
 
         function startBackgroundAlarmLoop() {
             if (backgroundAlarmInterval) clearInterval(backgroundAlarmInterval);
             backgroundAlarmInterval = setInterval(async () => {
-                if (!navigator.onLine || userLat === null) return;
+                if (!navigator.onLine || userLat === null || userLon === null) return;
                 let stations = await loadCloudStationsData();
                 checkSmartAlertsSilent(stations, userLat, userLon);
-            }, 60000); 
+            }, 60000);
         }
 
         function checkSmartAlertsSilent(stations, uLat, uLon) {
@@ -680,12 +996,13 @@
             let lastAlerts = JSON.parse(localStorage.getItem('last_alert_states') || '{}');
             let stateChanged = false;
             let batchUpdateIds = new Set();
-            
+
             stations.forEach(st => {
-                if (st.status === 'approved' && st.lat && st.materialsStatus) {
-                    let stRadius = st.isVip ? (st.alertRadius || 15.0) : (st.alertRadius || 5.0);
+                if (st.status === 'approved' && st.lat && st.lon && st.materialsStatus) {
+                    let defaultRadius = st.isVip ? 15.0 : 5.0;
+                    let stRadius = st.alertRadius || defaultRadius;
                     let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
-                    
+
                     if (dist <= stRadius) {
                         for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
                             if (savedPrefs.length === 0 || savedPrefs.includes(mat)) {
@@ -699,8 +1016,8 @@
                                     if (lastAlerts[stateKey] !== isAvail) {
                                         lastAlerts[stateKey] = isAvail;
                                         stateChanged = true;
-                                        let statusMsg = isAvail ? "متوفر الآن" : "نفد للأسف";
-                                        alertsList.push(`⛽ ${st.name}: ${mat} (${statusMsg}) - يبعد ${dist.toFixed(1)} كم`);
+                                        let statusMsg = isAvail ? "متوفرة الآن ✓" : "نفدت كميتها ✗";
+                                        alertsList.push(`⛽ محطة (${st.name}): مادة [${mat}] (${statusMsg}) - تبعد ${dist.toFixed(1)} كم`);
                                         batchUpdateIds.add(st.id);
                                     }
                                 }
@@ -712,18 +1029,26 @@
 
             if (stateChanged) {
                 localStorage.setItem('last_alert_states', JSON.stringify(lastAlerts));
-                // Update alert counters silently
-                batchUpdateIds.forEach(id => {
-                    db.collection("stations").doc(id).update({ alertsReceivedCount: firebase.firestore.FieldValue.increment(1) }).catch(e=>e);
-                });
+                if (db) {
+                    batchUpdateIds.forEach(id => {
+                        db.collection("stations").doc(id).update({
+                            alertsReceivedCount: firebase.firestore.FieldValue.increment(1)
+                        }).catch(e => {});
+                    });
+                }
             }
 
             if (alertsList.length > 0) {
                 playTone(localStorage.getItem('user_ringtone') || 'alarm1');
                 showAlertModal(alertsList.join('<br><br>'));
-                if (Notification.permission === "granted" && navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.ready.then(reg => reg.showNotification("تحديث رادار المحروقات", { body: alertsList.join('
-'), icon: "icon-192.png", vibrate: [200, 100, 200] }));
+                if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification("🚨 تحديث رادار المحروقات", {
+                            body: alertsList.join('\n'),
+                            icon: "icon-192.png",
+                            vibrate: [200, 100, 200]
+                        });
+                    }).catch(e => {});
                 }
             }
         }
@@ -731,278 +1056,542 @@
         window.testRingtone = function() {
             let tone = document.getElementById('userRingtoneSelect').value;
             playTone(tone);
-        }
+            showToast("جاري تجربة النغمة...");
+        };
+
         function playTone(tone) {
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
                 if (tone === 'alarm2') {
-                    for(let i=0; i<4; i++) { setTimeout(() => { let o=ctx.createOscillator(), g=ctx.createGain(); o.type='square'; o.frequency.value=500; g.gain.value=0.2; o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.25); }, i*350); }
+                    for (let i = 0; i < 4; i++) {
+                        setTimeout(() => {
+                            let o = ctx.createOscillator(), g = ctx.createGain();
+                            o.type = 'square'; o.frequency.value = 500; g.gain.value = 0.2;
+                            o.connect(g); g.connect(ctx.destination);
+                            o.start(); o.stop(ctx.currentTime + 0.25);
+                        }, i * 350);
+                    }
                 } else if (tone === 'chime') {
-                    let o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.value=1046.5; g.gain.value=0.3; o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.6);
+                    let o = ctx.createOscillator(), g = ctx.createGain();
+                    o.type = 'sine'; o.frequency.value = 1046.5; g.gain.value = 0.3;
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(); o.stop(ctx.currentTime + 0.6);
                 } else {
-                    for(let i=0; i<3; i++) { setTimeout(() => { let o=ctx.createOscillator(), g=ctx.createGain(); o.type='sawtooth'; o.frequency.value=700+(i*150); g.gain.value=0.3; o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.4); }, i*500); }
+                    for (let i = 0; i < 3; i++) {
+                        setTimeout(() => {
+                            let o = ctx.createOscillator(), g = ctx.createGain();
+                            o.type = 'sawtooth'; o.frequency.value = 700 + (i * 150); g.gain.value = 0.3;
+                            o.connect(g); g.connect(ctx.destination);
+                            o.start(); o.stop(ctx.currentTime + 0.4);
+                        }, i * 500);
+                    }
                 }
             } catch (e) {}
         }
 
-        // --- Station Portal (Login & Register) ---
+        // --- Station Registration & Portal ---
         function updateStationCheckboxesUI() {
             const cont = document.getElementById('checkboxCategoriesContainer');
             if (!cont) return;
             let html = '';
-            availableCategories.forEach(cat => html += `<label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;"><input type="checkbox" name="stCats" value="${cat}" style="width:auto; margin-left:0.5rem;"> ${cat}</label>`);
+            availableCategories.forEach(cat => {
+                html += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; font-size:0.85rem; cursor:pointer;"><input type="checkbox" name="stCats" value="${cat}" style="width:1.1rem; height:1.1rem; margin:0;"> ${cat}</label>`;
+            });
             cont.innerHTML = html;
         }
 
         async function loadRegistrationFee() {
+            if (!db) return;
             try {
                 let doc = await db.collection("settings").doc("config").get();
-                if(doc.exists) document.getElementById('registrationFeeNotice').textContent = `التكلفة: ${doc.data().regFee||0}$ | شام كاش: ${doc.data().shamCash||'---'}`;
-            } catch(e){}
+                let notice = document.getElementById('registrationFeeNotice');
+                if (doc.exists && notice) {
+                    let fee = doc.data().regFee || "0";
+                    let sham = doc.data().shamCash || "غير محدد";
+                    notice.textContent = `تكلفة تسجيل المحطة: ${fee} دولار ($) | شام كاش: ${sham}`;
+                }
+            } catch (e) {}
         }
 
         window.getStationGPS = function() {
             let st = document.getElementById('stationGpsStatus');
-            st.textContent = "جاري الالتقاط...";
-            if(navigator.geolocation) {
+            if (navigator.geolocation) {
+                st.textContent = "جاري التقاط الإحداثيات...";
                 navigator.geolocation.getCurrentPosition(pos => {
-                    stationLat = pos.coords.latitude; stationLon = pos.coords.longitude;
-                    st.textContent = "تم تسجيل الموقع بنجاح ✓";
-                }, () => st.textContent = "تعذر الوصول للموقع.");
+                    stationLat = pos.coords.latitude;
+                    stationLon = pos.coords.longitude;
+                    st.textContent = `تم التقاط الموقع بنجاح (${stationLat.toFixed(4)}, ${stationLon.toFixed(4)}) ✓`;
+                }, () => {
+                    st.textContent = "تعذر الحصول على الموقع، سيتم استخدام الافتراضي.";
+                });
             }
-        }
+        };
 
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            let p = document.getElementById('stPhone').value;
-            if(!/^09[0-9]{8}$/.test(p)) return showToast("رقم هاتف غير صالح");
-            
-            let cbs = Array.from(document.querySelectorAll('input[name="stCats"]:checked')).map(cb=>cb.value);
-            if(cbs.length===0) return showToast("اختر فئة واحدة على الأقل");
-            
-            let mStat={}, mPrc={};
-            cbs.forEach(c => { mStat[c]=false; mPrc[c]=""; });
+            if (!db) return showToast("خطأ في الاتصال بقاعدة البيانات");
+            let p = document.getElementById('stPhone').value.trim();
+            if (!/^09[0-9]{8}$/.test(p)) return showToast("رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 09");
+
+            let cbs = Array.from(document.querySelectorAll('input[name="stCats"]:checked')).map(cb => cb.value);
+            if (cbs.length === 0) return showToast("يرجى اختيار فئة واحدة على الأقل");
+
+            let mStat = {}, mPrc = {};
+            cbs.forEach(c => { mStat[c] = false; mPrc[c] = ""; });
 
             try {
                 let ref = await db.collection("stations").add({
-                    name: document.getElementById('stName').value, region: document.getElementById('stRegion').value, phone: p, pinCode: document.getElementById('stPin').value,
-                    publicPhone: p, showContact: true, categories: cbs, materialsStatus: mStat, materialsPrices: mPrc,
-                    lat: stationLat, lon: stationLon, alertRadius: 5.0, rating: 5, ratingCount: 1, alertsReceivedCount: 0, accessCount: 0,
-                    status: 'pending', isVip: false, createdAt: new Date().toISOString()
+                    name: document.getElementById('stName').value.trim(),
+                    region: document.getElementById('stRegion').value.trim(),
+                    phone: p,
+                    pinCode: document.getElementById('stPin').value.trim(),
+                    publicPhone: p,
+                    showContact: true,
+                    categories: cbs,
+                    materialsStatus: mStat,
+                    materialsPrices: mPrc,
+                    lat: stationLat,
+                    lon: stationLon,
+                    alertRadius: 5.0,
+                    rating: 5,
+                    ratingCount: 1,
+                    alertsReceivedCount: 0,
+                    accessCount: 0,
+                    impressionsCount: 0,
+                    status: 'pending',
+                    isVip: false,
+                    createdAt: new Date().toISOString()
                 });
-                showToast("تم إرسال الطلب");
                 currentStationIdForPending = ref.id;
+                localStorage.setItem('pending_station_id', ref.id);
                 document.getElementById('cloudStationForm').reset();
+                showToast("تم إرسال طلب التسجيل للإدارة بنجاح!");
                 showSection('stationPending');
-            } catch(e) { showToast("خطأ بالاتصال"); }
+            } catch (err) {
+                showToast("حدث خطأ أثناء إرسال الطلب.");
+            }
         });
 
         window.attemptStationLogin = async function() {
             let p = document.getElementById('loginPhone').value.trim();
             let pin = document.getElementById('loginPin').value.trim();
-            if(p === "0965461504" && pin === "MHA@1997//MOAATHS") return showSection('admin');
-            
-            if(!p || !pin) return showToast("أدخل البيانات");
-            
+
+            // Secret Admin Login
+            if (p === "0965461504" && pin === "MHA@1997//MOAATHS") {
+                showSection('admin');
+                return;
+            }
+
+            if (!p || !pin) return showToast("الرجاء إدخال رقم الهاتف والرمز السري");
+            if (!db) return showToast("تعذر الاتصال بقاعدة البيانات");
+
             try {
-                let snap = await db.collection("stations").where("phone","==",p).get();
-                if(snap.empty) return showToast("رقم غير مسجل");
-                
+                let snap = await db.collection("stations").where("phone", "==", p).get();
+                if (snap.empty) return showToast("رقم الهاتف غير مسجل");
+
                 let stDoc = null;
-                snap.forEach(d => stDoc = {id:d.id, ...d.data()});
-                
-                if(stDoc.pinCode !== pin) return showToast("الرمز السري خاطئ");
-                
-                if(stDoc.status === 'pending') {
+                snap.forEach(d => { stDoc = { id: d.id, ...d.data() }; });
+
+                if (stDoc.pinCode !== pin) return showToast("الرمز السري غير صحيح");
+
+                if (stDoc.status === 'pending') {
                     currentStationIdForPending = stDoc.id;
-                    return showSection('stationPending');
+                    localStorage.setItem('pending_station_id', stDoc.id);
+                    showSection('stationPending');
+                    return;
                 }
-                
-                if(stDoc.status === 'canceled') return showToast("تم إلغاء هذا الحساب");
-                
-                // Load Dashboard
+                if (stDoc.status === 'canceled') {
+                    return showToast("هذا الطلب ملغى.");
+                }
+
                 loadMyStationDashboard(stDoc);
-            } catch(e) { showToast("خطأ بالاتصال"); }
-        }
+            } catch (e) {
+                showToast("خطأ في الاتصال بالسحابة");
+            }
+        };
 
         window.cancelStationRequest = async function() {
-            if(!currentStationIdForPending) return;
-            try {
-                await db.collection("stations").doc(currentStationIdForPending).update({ status: 'canceled' });
-                showToast("تم إلغاء الطلب وتحويلك لمستخدم عادي");
-                resetRouting('consumer');
-            } catch(e) { showToast("خطأ"); }
-        }
+            if (currentStationIdForPending && db) {
+                try {
+                    let doc = await db.collection("stations").doc(currentStationIdForPending).get();
+                    if (doc.exists && doc.data().status === 'approved') {
+                        showToast("تم اعتماد محطتك مسبقاً ولا يمكن إلغاء الطلب.");
+                        return;
+                    }
+                    await db.collection("stations").doc(currentStationIdForPending).update({ status: 'canceled' });
+                } catch (e) {}
+            }
+            localStorage.removeItem('pending_station_id');
+            currentStationIdForPending = null;
+            showToast("تم التراجع وتحويل واجهتك إلى مستخدم عادي");
+            resetRouting('consumer');
+        };
 
         // --- Station Dashboard ---
         function loadMyStationDashboard(st) {
+            let avgRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
             let html = `
-                <div style="background:#0F172A; padding:1.25rem; border-radius:12px; margin-bottom:1rem; border:1px solid ${st.isVip?'#FBBF24':'#334155'};">
-                    <h2 style="color:#F8FAFC; margin:0 0 0.5rem 0;">${st.name} ${st.isVip?'<span class="vip-badge" style="float:left;">VIP</span>':''}</h2>
-                    <p style="color:#34D399; font-size:0.85rem; font-weight:bold; margin-bottom:1rem;">✓ معتمدة</p>
+                <div style="background:#0F172A; padding:1.25rem; border-radius:12px; border:1px solid ${st.isVip ? '#FBBF24' : '#334155'};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <h3 style="color:#FBBF24; margin:0;">${st.name} (${st.region})</h3>
+                        ${st.isVip ? '<span class="vip-badge" style="margin:0;">⭐ VIP</span>' : ''}
+                    </div>
+                    <p style="color:#34D399; font-size:0.8rem; font-weight:bold; margin-top:0;">حالة الاعتماد: معتمدة ✓ (نطاق الرادار: ${st.alertRadius || (st.isVip ? 15 : 5)} كم)</p>
                     
-                    <div style="display:flex; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap;">
-                        <div style="background:#1E293B; border:1px solid #3B82F6; padding:0.75rem; border-radius:8px; flex:1; min-width:100px; text-align:center;">
-                            <div style="font-size:1.5rem; color:#60A5FA;">${st.alertsReceivedCount||0}</div>
-                            <div style="font-size:0.75rem; color:#93C5FD;">تنبيهات ناجحة</div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; margin:1rem 0;">
+                        <div style="background:#1E293B; border:1px solid #3B82F6; padding:0.6rem; border-radius:8px; text-align:center;">
+                            <div style="font-size:1.2rem; color:#60A5FA; font-weight:bold;">${st.impressionsCount || 0}</div>
+                            <div style="font-size:0.75rem; color:#93C5FD;">ظهور في الرادار</div>
                         </div>
-                        <div style="background:#1E293B; border:1px solid #10B981; padding:0.75rem; border-radius:8px; flex:1; min-width:100px; text-align:center;">
-                            <div style="font-size:1.5rem; color:#34D399;">${st.accessCount||0}</div>
-                            <div style="font-size:0.75rem; color:#A7F3D0;">نقرات واتساب</div>
+                        <div style="background:#1E293B; border:1px solid #10B981; padding:0.6rem; border-radius:8px; text-align:center;">
+                            <div style="font-size:1.2rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
+                            <div style="font-size:0.75rem; color:#A7F3D0;">مستلمو التنبيه الصوتي</div>
                         </div>
-                        <div style="background:#1E293B; border:1px solid #F59E0B; padding:0.75rem; border-radius:8px; flex:1; min-width:100px; text-align:center;">
-                            <div style="font-size:1.5rem; color:#FBBF24;">${st.rating?(st.rating/st.ratingCount).toFixed(1):5.0}</div>
-                            <div style="font-size:0.75rem; color:#FDE68A;">التقييم العام</div>
+                        <div style="background:#1E293B; border:1px solid #8B5CF6; padding:0.6rem; border-radius:8px; text-align:center;">
+                            <div style="font-size:1.2rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
+                            <div style="font-size:0.75rem; color:#DDD6FE;">نقرات تواصل واتساب</div>
+                        </div>
+                        <div style="background:#1E293B; border:1px solid #F59E0B; padding:0.6rem; border-radius:8px; text-align:center;">
+                            <div style="font-size:1.2rem; color:#FBBF24; font-weight:bold;">⭐ ${avgRating}</div>
+                            <div style="font-size:0.75rem; color:#FDE68A;">التقييم (${st.ratingCount || 1} صوت)</div>
                         </div>
                     </div>
 
                     ${st.isVip ? `
-                    <div style="background:#78350F; border:1px solid #B45309; padding:0.75rem; border-radius:8px; margin-bottom:1rem;">
-                        <h4 style="color:#FDE68A; margin:0 0 0.5rem 0; font-size:0.9rem;">📢 بث إشعار فوري (VIP)</h4>
+                    <div style="background:#451A03; border:1px solid #D97706; padding:0.85rem; border-radius:10px; margin-bottom:1rem;">
+                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.85rem;">📢 بث رسالة فورية للمستهلكين (ميزة VIP):</h4>
                         <div style="display:flex; gap:0.5rem;">
-                            <input type="text" id="bcMsg_${st.id}" placeholder="مثال: وصل المازوت..." style="background:#451A03; border-color:#92400E; margin:0;">
-                            <button onclick="sendVIPBroadcast('${st.id}')" style="background:#D97706; color:white; border:none; border-radius:8px; padding:0 1rem; font-weight:bold;">بث</button>
+                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="مثال: وصلت دفعة غاز الآن..." style="margin:0; background:#0F172A;">
+                            <button onclick="sendVIPBroadcast('${st.id}')" style="background:#D97706; color:white; border:none; border-radius:8px; padding:0 1rem; font-weight:bold; cursor:pointer;">نشر</button>
                         </div>
                     </div>` : ''}
 
-                    <h4 style="color:#F8FAFC; border-bottom:1px solid #334155; padding-bottom:0.5rem;">إدارة المواد</h4>
+                    <h4 style="color:#F8FAFC; border-bottom:1px solid #334155; padding-bottom:0.4rem; margin-bottom:0.75rem;">حالة توفر المواد والأسعار (ل.س):</h4>
             `;
 
-            if(st.categories) {
+            if (st.categories && st.categories.length > 0) {
                 st.categories.forEach(cat => {
-                    let isAvail = st.materialsStatus[cat];
+                    let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                    let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
                     html += `
-                        <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.5rem; border:1px solid #334155;">
+                        <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.6rem; border:1px solid #334155;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                                <strong style="color:#F8FAFC;">${cat}</strong>
-                                <button onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="background:${isAvail?'#DC2626':'#10B981'}; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; font-size:0.8rem; font-weight:bold;">${isAvail?'إيقاف (نفد)':'تفعيل (متوفر)'}</button>
+                                <span style="font-size:0.9rem;"><b>${cat}</b>: ${isAvail ? '<span style="color:#34D399; font-weight:bold;">متوفر ✓</span>' : '<span style="color:#FCA5A5; font-weight:bold;">نفدت ✗</span>'}</span>
+                                <button onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="background:${isAvail ? '#EF4444' : '#059669'}; color:white; border:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:bold; cursor:pointer;">${isAvail ? 'تحويل إلى: نفدت' : 'تحويل إلى: متوفر الآن'}</button>
                             </div>
                             <div style="display:flex; gap:0.5rem;">
-                                <input type="number" id="prc_${st.id}_${cat}" value="${st.materialsPrices[cat]||''}" placeholder="السعر (ل.س)" style="margin:0; padding:0.5rem; font-size:0.85rem;">
-                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:6px; padding:0 1rem; font-size:0.8rem;">حفظ السعر</button>
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية..." style="margin:0; padding:0.45rem; font-size:0.85rem;">
+                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:6px; padding:0 0.85rem; font-size:0.8rem; cursor:pointer; font-weight:bold;">حفظ السعر</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             }
 
-            let missing = availableCategories.filter(c => !(st.categories||[]).includes(c));
-            if(missing.length>0) {
+            let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
+            if (missing.length > 0) {
+                let opts = missing.map(c => `<option value="${c}">${c}</option>`).join('');
                 html += `
-                    <div style="margin-top:1rem; display:flex; gap:0.5rem;">
-                        <select id="newMat_${st.id}" style="margin:0;">${missing.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
-                        <button onclick="addMat('${st.id}')" style="background:#475569; color:white; border:none; border-radius:6px; padding:0 1rem;">إضافة مادة</button>
-                    </div>
-                `;
+                    <div style="margin-top:0.75rem; background:#1E293B; padding:0.75rem; border-radius:8px; border:1px dashed #475569;">
+                        <label style="font-size:0.8rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">➕ إضافة صنف جديد لمحطتك:</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <select id="newMat_${st.id}" style="margin:0; flex:1;">${opts}</select>
+                            <button onclick="addMat('${st.id}')" style="background:#0284C7; color:white; border:none; border-radius:6px; padding:0 1rem; font-weight:bold; cursor:pointer;">إضافة</button>
+                        </div>
+                    </div>`;
             }
-            
+
             html += `
-                <h4 style="color:#F8FAFC; border-bottom:1px solid #334155; padding-bottom:0.5rem; margin-top:1.5rem;">الإعدادات</h4>
-                <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone||st.phone}" placeholder="رقم التواصل المفتوح">
-                <label style="display:flex; align-items:center; gap:0.5rem; color:#94A3B8; font-size:0.85rem; margin-bottom:0.75rem;"><input type="checkbox" id="shwCon_${st.id}" ${st.showContact?'checked':''} style="width:auto; margin:0;"> إظهار رقم التواصل للمستهلكين</label>
-                <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="background:#334155;">حفظ الإعدادات</button>
-                
-                <button onclick="showSection('stationPortal')" class="btn-danger" style="margin-top:2rem;">تسجيل خروج</button>
+                <h4 style="color:#F8FAFC; border-bottom:1px solid #334155; padding-bottom:0.4rem; margin-top:1.25rem;">إعدادات التواصل والخصوصية:</h4>
+                <label style="font-size:0.8rem; color:#94A3B8;">رقم واتساب العام للجمهور:</label>
+                <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10">
+                <label style="display:flex; align-items:center; gap:0.5rem; color:#94A3B8; font-size:0.85rem; margin-bottom:0.75rem; cursor:pointer;">
+                    <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.1rem; height:1.1rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
+                </label>
+                <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="background:#334155;">حفظ إعدادات التواصل</button>
+                <button onclick="showSection('stationPortal')" class="btn-danger" style="margin-top:1rem; margin-bottom:0;">تسجيل الخروج</button>
             </div>`;
-            
-            document.getElementById('sec-stationDashboard').innerHTML = html;
+
+            let dash = document.getElementById('sec-stationDashboard');
+            dash.innerHTML = html;
             showSection('stationDashboard');
         }
 
         window.toggleMat = async function(id, cat, stat) {
             try {
                 let ref = db.collection("stations").doc(id);
-                await ref.set({ materialsStatus: {[cat]: stat}, lastUpdate: new Date().toISOString() }, {merge:true});
-                showToast("تم تحديث حالة المادة");
-                let doc = await ref.get(); loadMyStationDashboard({id, ...doc.data()});
-            } catch(e){}
-        }
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let mStatus = doc.data().materialsStatus || {};
+                    mStatus[cat] = stat;
+                    await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
+                    showToast("تم تحديث حالة المادة!");
+                    let updated = await ref.get();
+                    loadMyStationDashboard({ id, ...updated.data() });
+                }
+            } catch (e) { showToast("خطأ في التحديث"); }
+        };
+
         window.updatePrc = async function(id, cat) {
-            let val = document.getElementById(`prc_${id}_${cat}`).value;
+            let val = document.getElementById(`prc_${id}_${cat}`).value.trim();
             try {
                 let ref = db.collection("stations").doc(id);
-                await ref.set({ materialsPrices: {[cat]: val} }, {merge:true});
-                showToast("تم حفظ السعر");
-            } catch(e){}
-        }
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let mPrices = doc.data().materialsPrices || {};
+                    mPrices[cat] = val;
+                    await ref.update({ materialsPrices: mPrices, lastUpdate: new Date().toISOString() });
+                    showToast("تم حفظ السعر بنجاح!");
+                }
+            } catch (e) { showToast("خطأ في حفظ السعر"); }
+        };
+
         window.addMat = async function(id) {
             let cat = document.getElementById(`newMat_${id}`).value;
+            if (!cat) return;
             try {
                 let ref = db.collection("stations").doc(id);
-                let doc = await ref.get(); let d = doc.data();
-                let cArr = d.categories||[]; cArr.push(cat);
-                await ref.set({ categories: cArr, materialsStatus: {[cat]:false}, materialsPrices: {[cat]:""} }, {merge:true});
-                showToast("تم إضافة المادة");
-                doc = await ref.get(); loadMyStationDashboard({id, ...doc.data()});
-            } catch(e){}
-        }
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let d = doc.data();
+                    let cArr = d.categories || [];
+                    if (!cArr.includes(cat)) cArr.push(cat);
+                    let mStat = d.materialsStatus || {}; mStat[cat] = false;
+                    let mPrc = d.materialsPrices || {}; mPrc[cat] = "";
+                    await ref.update({ categories: cArr, materialsStatus: mStat, materialsPrices: mPrc });
+                    showToast("تمت إضافة المادة لمحطتك!");
+                    let updated = await ref.get();
+                    loadMyStationDashboard({ id, ...updated.data() });
+                }
+            } catch (e) { showToast("خطأ أثناء الإضافة"); }
+        };
+
         window.saveStSet = async function(id) {
-            let ph = document.getElementById(`pubPhone_${id}`).value;
+            let ph = document.getElementById(`pubPhone_${id}`).value.trim();
             let sh = document.getElementById(`shwCon_${id}`).checked;
+            if (!/^09[0-9]{8}$/.test(ph)) return showToast("رقم التواصل غير صحيح");
             try {
                 await db.collection("stations").doc(id).update({ publicPhone: ph, showContact: sh });
-                showToast("تم حفظ الإعدادات");
-            } catch(e){}
-        }
+                showToast("تم حفظ إعدادات التواصل!");
+            } catch (e) { showToast("خطأ أثناء الحفظ"); }
+        };
+
         window.sendVIPBroadcast = async function(id) {
-            let msg = document.getElementById(`bcMsg_${id}`).value;
-            if(!msg) return showToast("اكتب الرسالة أولاً");
-            // Placeholder: In a real environment, this would write to a 'broadcasts' collection to trigger FCM cloud function.
-            showToast("تم إرسال البث لجميع المستخدمين في نطاقك!");
-            document.getElementById(`bcMsg_${id}`).value = '';
+            let msg = document.getElementById(`bcMsg_${id}`).value.trim();
+            try {
+                await db.collection("stations").doc(id).update({ broadcastMsg: msg, lastUpdate: new Date().toISOString() });
+                showToast(msg ? "تم نشر الإشعار الفوري في بطاقة محطتك!" : "تم مسح الإشعار الفوري.");
+            } catch (e) { showToast("خطأ في النشر"); }
+        };
+
+        // --- Admin Room Full Management ---
+        async function loadAdminPanel() {
+            if (!db) return;
+            loadCategoriesAndInit();
+            const listCont = document.getElementById('adminCloudList');
+            listCont.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                // Settings
+                let cfg = await db.collection("settings").doc("config").get();
+                if (cfg.exists) {
+                    document.getElementById('settingFeeInput').value = cfg.data().regFee || "";
+                    document.getElementById('settingShamCashInput').value = cfg.data().shamCash || "";
+                    if (cfg.data().defaultRingtone) {
+                        document.getElementById('adminDefaultRingtone').value = cfg.data().defaultRingtone;
+                    }
+                }
+
+                // Users Stats
+                let uSnap = await db.collection("users").get();
+                let totalUsers = uSnap.size;
+                let active24h = 0;
+                let now = new Date();
+                uSnap.forEach(u => {
+                    let la = u.data().lastActive || u.data().joinedAt;
+                    if (la && (now - new Date(la)) <= 86400000) active24h++;
+                });
+                document.getElementById('admTotalUsers').textContent = totalUsers;
+                document.getElementById('admActiveUsers').textContent = active24h;
+
+                // Stations & Totals
+                let sSnap = await db.collection("stations").get();
+                allStations = [];
+                let totalAlerts = 0;
+                let totalClicks = 0;
+                sSnap.forEach(doc => {
+                    let d = doc.data();
+                    totalAlerts += (d.alertsReceivedCount || 0);
+                    totalClicks += (d.accessCount || 0);
+                    allStations.push({ id: doc.id, ...d });
+                });
+                document.getElementById('admTotalAlerts').textContent = totalAlerts;
+                document.getElementById('admTotalClicks').textContent = totalClicks;
+
+                renderAdminStationsList(allStations);
+            } catch (e) {
+                listCont.innerHTML = '<p style="color:#EF4444; text-align:center;">خطأ في تحميل بيانات الإدارة.</p>';
+            }
         }
 
+        function renderAdminStationsList(stations) {
+            const container = document.getElementById('adminCloudList');
+            if (!container) return;
+            // Sort canceled & pending first so admin sees them immediately
+            stations.sort((a, b) => {
+                let order = { 'canceled': 0, 'pending': 1, 'approved': 2 };
+                return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+            });
 
-        // --- Admin Room ---
-        async function loadAdminPanel() {
-            let panel = document.getElementById('adminPanelContent');
-            panel.innerHTML = '<div class="spinner"></div>';
-            
-            try {
-                let uSnap = await db.collection("users").get();
-                let sSnap = await db.collection("stations").get();
-                
-                let statsHtml = `
-                    <div style="background:#064E3B; border:1px solid #10B981; padding:1rem; border-radius:12px; margin-bottom:1.5rem; text-align:center;">
-                        <h3 style="color:#34D399; margin:0 0 0.5rem 0;">📊 إحصائيات المنصة</h3>
-                        <p style="color:#A7F3D0; margin:0;">المستخدمين: <b style="font-size:1.2rem;">${uSnap.size}</b> | المحطات: <b style="font-size:1.2rem;">${sSnap.size}</b></p>
-                    </div>
-                `;
+            let html = '';
+            stations.forEach(st => {
+                let id = st.id;
+                let isCanc = st.status === 'canceled';
+                let isApp = st.status === 'approved';
+                let cardBg = isCanc ? '#450A0A' : '#0F172A';
+                let cardBorder = isCanc ? '#EF4444' : (st.isVip ? '#FBBF24' : '#334155');
+                let badgeBg = isCanc ? '#DC2626' : (isApp ? '#064E3B' : '#78350F');
+                let badgeCol = isCanc ? '#FEF2F2' : (isApp ? '#34D399' : '#FDE68A');
+                let statusText = isCanc ? '⚠️ تراجع المستخدم (طلب ملغى)' : (isApp ? 'معتمدة ✓' : 'قيد الانتظار ⏳');
+                let catsList = st.categories ? st.categories.join('، ') : 'لا توجد فئات';
+                let currentRadius = st.alertRadius || (st.isVip ? 15.0 : 5.0);
 
-                let reqHtml = '<h3 style="color:#FBBF24; margin-bottom:0.5rem;">إدارة المحطات</h3>';
-                sSnap.forEach(doc => {
-                    let d = doc.data(); let id = doc.id;
-                    let isCanc = d.status === 'canceled';
-                    let bg = isCanc ? '#450A0A' : '#0F172A';
-                    let border = isCanc ? '#DC2626' : '#334155';
-                    
-                    reqHtml += `
-                        <div style="background:${bg}; border:1px solid ${border}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;">
-                            <div style="display:flex; justify-content:space-between;">
-                                <div>
-                                    <strong style="color:#F8FAFC;">${d.name}</strong> <span style="color:#94A3B8; font-size:0.8rem;">(${d.phone})</span><br>
-                                    <span style="font-size:0.75rem; color:${isCanc?'#FCA5A5':(d.status==='approved'?'#34D399':'#FBBF24')};">
-                                        الحالة: ${isCanc ? 'ملغى (تم اختيار مستخدم بالخطأ)' : (d.status==='approved'?'معتمد':'قيد الانتظار')}
-                                    </span>
+                html += `
+                    <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${st.name} ${st.region} ${st.phone}">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
+                            <div style="flex:1;">
+                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${st.name} ${st.isVip ? '⭐ (VIP)' : ''}</h4>
+                                <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${st.region} | الدخول: <b>${st.phone}</b></p>
+                                <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
+                                <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
+                                <div style="margin: 0.4rem 0; display:flex; align-items:center; gap:0.4rem;">
+                                    <label style="font-size:0.75rem;">نطاق التنبيه (كم):</label>
+                                    <input type="number" id="radius_${id}" value="${currentRadius}" style="width:60px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                    <button onclick="updateRadius('${id}')" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حفظ</button>
                                 </div>
-                                <div style="display:flex; flex-direction:column; gap:0.3rem;">
-                                    ${d.status === 'pending' ? `<button onclick="admApprove('${id}')" style="background:#059669; color:white; border:none; border-radius:4px; font-size:0.75rem; padding:0.3rem;">قبول</button>` : ''}
-                                    <button onclick="admToggleVIP('${id}', ${!d.isVip})" style="background:#D97706; color:white; border:none; border-radius:4px; font-size:0.75rem; padding:0.3rem;">${d.isVip?'- إزالة VIP':'+ منح VIP'}</button>
-                                    <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; border-radius:4px; font-size:0.75rem; padding:0.3rem;">حذف</button>
-                                </div>
+                                <span style="background:${badgeBg}; color:${badgeCol}; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">${statusText}</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:85px;">
+                                ${st.status !== 'approved' ?
+                                    `<button onclick="approveAndNotify('${id}', '${st.name}', '${st.phone}')" style="background:#059669; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">قبول + واتساب</button>` :
+                                    `<button onclick="updateStStatus('${id}', 'pending')" style="background:#475569; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">تعليق</button>`
+                                }
+                                <button onclick="admToggleVIP('${id}', ${!st.isVip})" style="background:#D97706; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">${st.isVip ? 'إلغاء VIP' : 'منح VIP ⭐'}</button>
+                                <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف نهائي</button>
                             </div>
                         </div>
-                    `;
-                });
-                
-                panel.innerHTML = statsHtml + reqHtml;
-            } catch(e) { panel.innerHTML = '<p style="color:#EF4444; text-align:center;">خطأ في جلب البيانات</p>'; }
+                    </div>`;
+            });
+            container.innerHTML = html || '<p style="text-align:center; color:#94A3B8;">لا توجد محطات مسجلة.</p>';
         }
 
-        window.admApprove = async function(id) { await db.collection("stations").doc(id).update({status:'approved'}); loadAdminPanel(); }
-        window.admToggleVIP = async function(id, isVip) { await db.collection("stations").doc(id).update({isVip:isVip}); loadAdminPanel(); }
-        window.admDelete = async function(id) { if(confirm("تأكيد الحذف؟")){ await db.collection("stations").doc(id).delete(); loadAdminPanel(); } }
+        window.filterAdminList = function() {
+            let q = document.getElementById('adminSearchInput').value.toLowerCase();
+            document.querySelectorAll('.admin-station-card').forEach(card => {
+                let txt = card.getAttribute('data-search').toLowerCase();
+                card.style.display = txt.includes(q) ? 'block' : 'none';
+            });
+        };
 
+        window.saveRegistrationFee = async function() {
+            let val = document.getElementById('settingFeeInput').value;
+            try { await db.collection("settings").doc("config").set({ regFee: val }, { merge: true }); showToast("تم حفظ التكلفة!"); } catch (e) {}
+        };
+        window.saveShamCashID = async function() {
+            let val = document.getElementById('settingShamCashInput').value;
+            try { await db.collection("settings").doc("config").set({ shamCash: val }, { merge: true }); showToast("تم حفظ معرف شام كاش!"); } catch (e) {}
+        };
+        window.saveAdminDefaultRingtone = async function() {
+            let val = document.getElementById('adminDefaultRingtone').value;
+            try { await db.collection("settings").doc("config").set({ defaultRingtone: val }, { merge: true }); showToast("تم تعيين النغمة الافتراضية!"); } catch (e) {}
+        };
+
+        function updateAdminCategoriesList() {
+            const container = document.getElementById('adminCategoriesList');
+            if (!container) return;
+            let html = '';
+            availableCategories.forEach(cat => {
+                let docId = categoryDocs[cat] || '';
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:0.45rem 0.65rem; border-radius:6px; border:1px solid #475569;">
+                        <span style="font-size:0.85rem;"><b>${cat}</b></span>
+                        <div style="display:flex; gap:0.4rem;">
+                            <button onclick="editCategory('${docId}', '${cat}')" style="background:#0284C7; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">تعديل</button>
+                            <button onclick="deleteCategory('${docId}')" style="background:#EF4444; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حذف</button>
+                        </div>
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!db) return;
+            const catName = document.getElementById('newCategoryName').value.trim();
+            if (catName && !availableCategories.includes(catName)) {
+                try {
+                    await db.collection("categories").add({ name: catName });
+                    document.getElementById('newCategoryName').value = '';
+                    showToast("تمت إضافة الفئة!");
+                    loadCategoriesAndInit();
+                } catch (err) {}
+            }
+        });
+
+        window.editCategory = async function(docId, oldName) {
+            if (!docId || !db) return;
+            let newName = prompt("أدخل الاسم الجديد للصنف:", oldName);
+            if (newName && newName.trim() !== "" && newName !== oldName) {
+                await db.collection("categories").doc(docId).update({ name: newName.trim() });
+                showToast("تم تعديل الصنف!");
+                loadCategoriesAndInit();
+            }
+        };
+
+        window.deleteCategory = async function(docId) {
+            if (!docId || !db) return;
+            if (confirm("هل أنت متأكد من حذف هذا الصنف؟")) {
+                await db.collection("categories").doc(docId).delete();
+                showToast("تم الحذف!");
+                loadCategoriesAndInit();
+            }
+        };
+
+        window.updateRadius = async function(id) {
+            let val = parseFloat(document.getElementById('radius_' + id).value);
+            if (isNaN(val) || val <= 0) return showToast("قيمة النطاق غير صحيحة");
+            await db.collection("stations").doc(id).update({ alertRadius: val });
+            showToast("تم تحديث النطاق!");
+            loadAdminPanel();
+        };
+
+        window.approveAndNotify = async function(id, stName, stPhone) {
+            await db.collection("stations").doc(id).update({ status: 'approved' });
+            showToast("تم قبول المحطة!");
+            loadAdminPanel();
+            let formatted = stPhone.startsWith('0') ? '963' + stPhone.substring(1) : stPhone;
+            let msg = `مرحباً بك في منصة "متوفر هناا" ⛽.\nتم قبول اعتماد محطتكم (${stName}) بنجاح. يمكنك الآن الدخول للوحة التحكم برقم هاتفك ورمزك السري.`;
+            window.open(`https://wa.me/${formatted}?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+
+        window.updateStStatus = async function(id, status) {
+            await db.collection("stations").doc(id).update({ status: status });
+            loadAdminPanel();
+        };
+
+        window.admToggleVIP = async function(id, isVip) {
+            let newRadius = isVip ? 15.0 : 5.0;
+            await db.collection("stations").doc(id).update({ isVip: isVip, alertRadius: newRadius });
+            showToast(isVip ? "تم منح اشتراك VIP وتوسيع الرادار لـ 15 كم!" : "تم إلغاء اشتراك VIP");
+            loadAdminPanel();
+        };
+
+        window.admDelete = async function(id) {
+            if (confirm("تأكيد حذف المحطة نهائياً؟")) {
+                await db.collection("stations").doc(id).delete();
+                showToast("تم الحذف");
+                loadAdminPanel();
+            }
+        };
     </script>
 </body>
 </html>
