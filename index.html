@@ -1268,21 +1268,22 @@
                 let ratingCount = st.ratingCount || 1;
 
                 let broadcastHtml = '';
-                if (isVip && st.broadcastMsg) {
-                    let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
-                    let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
-                    broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                if (isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '') {
+                    // Check if broadcast is older than 3 hours (10800000 ms)
+                    let broadcastTime = st.broadcastId ? parseInt(st.broadcastId) : (st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0);
+                    let isExpired = (Date.now() - broadcastTime) > 10800000;
+                    if (!isExpired) {
+                        let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
+                        let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
+                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                    }
                 }
 
                 let locationCoordsHtml = '';
                 if (st.lat && st.lon) {
                     locationCoordsHtml = `
-                        <div style="background:#0F172A; border:1px solid #334155; padding:0.55rem 0.7rem; border-radius:8px; margin:0.45rem 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                            <div>
-                                <div style="font-size:0.72rem; color:#94A3B8;">🌐 الإحداثيات الدقيقة للمحطة:</div>
-                                <div style="font-size:0.8rem; color:#34D399; font-family:monospace; font-weight:bold; direction:ltr; text-align:right;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
-                            </div>
-                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="background:#0284C7; color:white; text-decoration:none; padding:0.4rem 0.75rem; border-radius:6px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">🗺️ فتح الموقع على خرائط Google</a>
+                        <div style="margin: 0.5rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.6rem; border-radius:10px; font-weight:bold; font-size:0.85rem; box-shadow:0 4px 10px rgba(2,132,199,0.3);">🗺️ الانتقال للموقع الدقيق عبر خرائط Google</a>
                         </div>`;
                 }
 
@@ -1442,16 +1443,20 @@
                     let isWithinRange = (uLat === null || uLon === null) ? true : (dist <= stRadius);
                     let hasVipPrivilege = (getStationTierLevel(st) >= 1);
 
-                    // 1. Check Loud Prominent VIP / VIP+ Broadcast (within Alert Range)
+                    // 1. Check Loud Prominent VIP / VIP+ Broadcast (within Alert Range & within 3 hours)
                     if (hasVipPrivilege && st.broadcastMsg && st.broadcastMsg.trim() !== '' && isWithinRange) {
-                        let bKey = `${st.id}_bc`;
-                        let currentBcSignature = `${st.broadcastMsg.trim()}_${st.broadcastId || ''}`;
-                        if (lastBroadcasts[bKey] !== currentBcSignature) {
-                            lastBroadcasts[bKey] = currentBcSignature;
-                            broadcastChanged = true;
-                            let distLabel = (uLat !== null && uLon !== null) ? ` (تبعد ${dist.toFixed(1)} كم)` : '';
-                            vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${st.name} - ${st.region}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${st.broadcastMsg}"</span>`);
-                            batchUpdateIds.add(st.id);
+                        let broadcastTime = st.broadcastId ? parseInt(st.broadcastId) : (st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0);
+                        let isExpired = (Date.now() - broadcastTime) > 10800000;
+                        if (!isExpired) {
+                            let bKey = `${st.id}_bc`;
+                            let currentBcSignature = `${st.broadcastMsg.trim()}_${st.broadcastId || ''}`;
+                            if (lastBroadcasts[bKey] !== currentBcSignature) {
+                                lastBroadcasts[bKey] = currentBcSignature;
+                                broadcastChanged = true;
+                                let distLabel = (uLat !== null && uLon !== null) ? ` (تبعد ${dist.toFixed(1)} كم)` : '';
+                                vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${st.name} - ${st.region}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${st.broadcastMsg}"</span>`);
+                                batchUpdateIds.add(st.id);
+                            }
                         }
                     }
 
@@ -1880,51 +1885,98 @@
                     </div>
                     <p style="color:#34D399; font-size:0.82rem; font-weight:bold; margin:0 0 0.65rem 0;">حالة الاعتماد: معتمدة ✓ | 🔍 نطاق البحث: <b>${sRadius} كم</b> | 🔔 نطاق التنبيه: <b>${aRadius} كم</b></p>
 
-                    <!-- Promotional Upgrade Button for Station Owner -->
-                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:0.75rem; border-radius:12px; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                        <div style="flex:1; min-width:180px;">
-                            <div style="color:#E9D5FF; font-weight:900; font-size:0.88rem;">👑 هل ترغب بمضاعفة نطاق محطتك وزبائنك؟</div>
-                            <div style="color:#CBD5E1; font-size:0.75rem;">استعرض مزايا باقات (VIP و VIP+ الملكية) لتوسيع البحث حتى 30 كم+</div>
-                        </div>
-                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.55rem 0.9rem; border-radius:8px; font-weight:900; font-size:0.8rem; cursor:pointer; white-space:nowrap; box-shadow:0 0 10px rgba(192,132,252,0.5);">🚀 ترقية الباقة الآن</button>
-                    </div>
-                    
-                    <!-- Feature 3: Emergency Panic Switches (إغلاق طارئ / فتح الكل) -->
-                    <div style="display:flex; gap:0.6rem; margin:1rem 0;">
-                        <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.85rem; border-radius:10px; font-weight:900; font-size:0.9rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.4);">🚨 إغلاق طارئ (نفد الكل)</button>
-                        <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.85rem; border-radius:10px; font-weight:900; font-size:0.9rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.4);">🟢 فتح الكل (متوفر)</button>
-                    </div>
-
-                    <!-- Feature 5: Activity Feed Summary -->
-                    <div style="background:#1E293B; border:1px solid #334155; padding:0.85rem; border-radius:12px; margin-bottom:1rem;">
-                        <h4 style="color:#60A5FA; margin:0 0 0.5rem 0; font-size:0.85rem;">📊 ملخص نشاط محطتك:</h4>
-                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; text-align:center;">
-                            <div style="background:#0F172A; padding:0.5rem; border-radius:8px;">
-                                <div style="font-size:1.1rem; color:#38BDF8; font-weight:bold;">${st.impressionsCount || 0}</div>
-                                <div style="font-size:0.7rem; color:#94A3B8;">ظهور بالرادار</div>
-                            </div>
-                            <div style="background:#0F172A; padding:0.5rem; border-radius:8px;">
-                                <div style="font-size:1.1rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
-                                <div style="font-size:0.75rem; color:#94A3B8;">تنبيهات صوتية</div>
-                            </div>
-                            <div style="background:#0F172A; padding:0.5rem; border-radius:8px;">
-                                <div style="font-size:1.1rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
-                                <div style="font-size:0.7rem; color:#94A3B8;">نقرات واتساب</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    ${isVip ? `
-                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1rem;">
-                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (إشعار منسدل فوري):</h4>
-                        <div style="display:flex; gap:0.5rem; flex-direction:column;">
-                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا (تظهر كإشعار صاخب في هواتف المستهلكين)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
-                            <button onclick="sendVIPBroadcast('${st.id}')" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.95rem; cursor:pointer;">🚀 إطلاق البث الصاخب الفوري الآن</button>
-                        </div>
-                    </div>` : ''}
-
-                    <h4 style="color:#F8FAFC; border-bottom:1px solid #334155; padding-bottom:0.5rem; margin-bottom:0.85rem; font-size:1rem;">📦 إدارة المواد (انقر للتبديل السريع):</h4>
+                    <!-- 1. MATERIAL TOGGLES AT THE VERY TOP FOR EASY USAGE -->
+                    <h4 style="color:#F8FAFC; border-bottom:1px solid #334155; padding-bottom:0.5rem; margin-bottom:0.85rem; font-size:1rem; margin-top:0.5rem;">📦 إدارة المواد والتوفر (انقر للتبديل الفوري):</h4>
             `;
+
+            if (st.categories && st.categories.length > 0) {
+                st.categories.forEach(cat => {
+                    let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                    let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
+                    let cardBg = isAvail ? '#064E3B' : '#7F1D1D';
+                    let cardBorder = isAvail ? '#10B981' : '#EF4444';
+                    let statusText = isAvail ? '🟢 متوفر حالياً (انقر للإيقاف)' : '🔴 نفدت الكمية (انقر للتفعيل)';
+                    
+                    html += `
+                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; transition:all 0.2s;">
+                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.5rem;">
+                                <span style="font-size:1.05rem; font-weight:bold; color:#FFFFFF;">📦 ${cat}</span>
+                                <span style="background:rgba(0,0,0,0.3); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.85rem; font-weight:900; color:#FFFFFF;">${statusText}</span>
+                            </div>
+                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية..." style="margin:0; padding:0.6rem; font-size:0.9rem; background:#0F172A; font-weight:bold;">
+                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:bold; cursor:pointer; white-space:nowrap;">حفظ السعر</button>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
+            if (missing.length > 0) {
+                let opts = missing.map(c => `<option value="${c}">${c}</option>`).join('');
+                html += `
+                    <div style="margin-top:0.75rem; background:#1E293B; padding:0.75rem; border-radius:8px; border:1px dashed #475569;">
+                        <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.4rem;">➕ إضافة صنف جديد لمحطتك:</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.6rem; font-size:0.9rem;">${opts}</select>
+                            <button onclick="addMat('${st.id}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0 1.2rem; font-weight:bold; cursor:pointer;">إضافة</button>
+                        </div>
+                    </div>`;
+            }
+
+            html += `
+                <!-- Feature 3: Emergency Panic Switches (إغلاق طارئ / فتح الكل) -->
+                <div style="display:flex; gap:0.6rem; margin:1.25rem 0 1rem 0;">
+                    <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.85rem; border-radius:10px; font-weight:900; font-size:0.9rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.4);">🚨 إغلاق طارئ (نفد الكل)</button>
+                    <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.85rem; border-radius:10px; font-weight:900; font-size:0.9rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.4);">🟢 فتح الكل (متوفر)</button>
+                </div>
+
+                <!-- Promotional Upgrade Button for Station Owner -->
+                <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:0.75rem; border-radius:12px; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:180px;">
+                        <div style="color:#E9D5FF; font-weight:900; font-size:0.88rem;">👑 هل ترغب بمضاعفة نطاق محطتك وزبائنك؟</div>
+                        <div style="color:#CBD5E1; font-size:0.75rem;">استعرض مزايا باقات (VIP و VIP+ الملكية) لتوسيع البحث حتى 30 كم+</div>
+                    </div>
+                    <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.55rem 0.9rem; border-radius:8px; font-weight:900; font-size:0.8rem; cursor:pointer; white-space:nowrap; box-shadow:0 0 10px rgba(192,132,252,0.5);">🚀 ترقية الباقة الآن</button>
+                </div>
+
+                <!-- Feature 5: Activity Feed Summary -->
+                <div style="background:#1E293B; border:1px solid #334155; padding:0.85rem; border-radius:12px; margin-bottom:1rem;">
+                    <h4 style="color:#60A5FA; margin:0 0 0.5rem 0; font-size:0.85rem;">📊 ملخص نشاط محطتك:</h4>
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; text-align:center;">
+                        <div style="background:#0F172A; padding:0.5rem; border-radius:8px;">
+                            <div style="font-size:1.1rem; color:#38BDF8; font-weight:bold;">${st.impressionsCount || 0}</div>
+                            <div style="font-size:0.7rem; color:#94A3B8;">ظهور بالرادار</div>
+                        </div>
+                        <div style="background:#0F172A; padding:0.5rem; border-radius:8px;">
+                            <div style="font-size:1.1rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
+                            <div style="font-size:0.75rem; color:#94A3B8;">تنبيهات صوتية</div>
+                        </div>
+                        <div style="background:#0F172A; padding:0.5rem; border-radius:8px;">
+                            <div style="font-size:1.1rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
+                            <div style="font-size:0.7rem; color:#94A3B8;">نقرات واتساب</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${isVip ? `
+                <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1rem;">
+                    <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (إشعار منسدل فوري):</h4>
+                    <div style="display:flex; gap:0.5rem; flex-direction:column;">
+                        <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا (تظهر كإشعار صاخب في هواتف المستهلكين)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
+                        <button onclick="sendVIPBroadcast('${st.id}')" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.95rem; cursor:pointer;">🚀 إطلاق البث الصاخب الفوري الآن</button>
+                    </div>
+                </div>` : ''}
+
+                <h4 style="color:#F8FAFC; border-bottom:1px solid #334155; padding-bottom:0.4rem; margin-top:1.5rem; font-size:1rem;">إعدادات التواصل والخصوصية:</h4>
+                <label style="font-size:0.85rem; color:#94A3B8;">رقم واتساب العام للجمهور:</label>
+                <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.75rem; font-size:0.95rem;">
+                <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.9rem; margin-bottom:1rem; cursor:pointer; background:#1E293B; padding:0.75rem; border-radius:8px;">
+                    <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.2rem; height:1.2rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
+                </label>
+                <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.9rem; font-size:1rem;">حفظ إعدادات التواصل</button>
+                <button onclick="logoutStationOwner()" class="btn-danger" style="margin-top:1.25rem; margin-bottom:0; padding:0.9rem; font-size:1rem;">تسجيل الخروج من الحساب</button>
+            </div>`;
 
             if (st.categories && st.categories.length > 0) {
                 st.categories.forEach(cat => {
