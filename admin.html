@@ -12,6 +12,9 @@
             navigator.serviceWorker.register('sw.js');
         }
     </script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
 </head>
 <body>
     <header>
@@ -34,13 +37,14 @@
         </div>
     </main>
 
-    <script type="module">
-        import { db, collection, getDocs, doc, updateDoc, deleteDoc } from "./firebase-config.js";
+    <script>
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         async function loadAdminCloud() {
             const container = document.getElementById('adminCloudList');
             try {
-                const querySnapshot = await getDocs(collection(db, "stations"));
+                const querySnapshot = await db.collection("stations").get();
                 let html = '';
                 
                 querySnapshot.forEach((docSnap) => {
@@ -72,14 +76,14 @@
             }
         }
 
-        window.updateSt = async function(id, action) {
+        async function updateSt(id, action) {
             try {
-                const docRef = doc(db, "stations", id);
+                const docRef = db.collection("stations").doc(id);
                 if (action === 'revoked') {
-                    await deleteDoc(docRef);
+                    await docRef.delete();
                     alert('تم نزع الصلاحية وإزالة المحطة من السحابة!');
                 } else {
-                    await updateDoc(docRef, { status: 'approved' });
+                    await docRef.update({ status: 'approved' });
                     alert('تمت الموافقة واعتماد المحطة سحابياً!');
                 }
                 loadAdminCloud();
