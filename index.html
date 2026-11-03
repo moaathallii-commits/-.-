@@ -152,34 +152,28 @@
             z-index: 5;
         }
         
-                /* VIP+ Ultra Luxurious Card Styles */
-        .vip-plus-card {
-            border: 3px solid #C084FC !important;
-            box-shadow: 0 0 25px rgba(192, 132, 252, 0.4) !important;
-            background: linear-gradient(135deg, #1E1B4B 0%, #311005 100%) !important;
-        }
-        .vip-plus-badge {
-            background: linear-gradient(135deg, #C084FC 0%, #9333EA 100%);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 900;
-            margin-bottom: 0.5rem;
-            display: inline-block;
-            box-shadow: 0 0 10px rgba(147,51,234,0.5);
-        }
-
-        /* VIP Card & Broadcast Styles */
+        /* VIP & VIP+ Card & Broadcast Styles */
         .vip-card {
             border: 2px solid #FBBF24 !important;
             box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
             background: linear-gradient(180deg, #1E293B 0%, #172033 100%) !important;
         }
+        .vip-plus-card {
+            border: 2px solid #C084FC !important;
+            box-shadow: 0 0 22px rgba(192, 132, 252, 0.4) !important;
+            background: linear-gradient(180deg, #2E1065 0%, #1E1B4B 60%, #0F172A 100%) !important;
+            position: relative;
+            overflow: hidden;
+        }
         @keyframes pulseGlowVIP {
             0% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); transform: scale(1); }
             50% { box-shadow: 0 0 22px rgba(251, 191, 36, 0.95); transform: scale(1.015); }
             100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); transform: scale(1); }
+        }
+        @keyframes pulseGlowVIPPlus {
+            0% { box-shadow: 0 0 10px rgba(192, 132, 252, 0.45); }
+            50% { box-shadow: 0 0 26px rgba(147, 51, 234, 0.95); }
+            100% { box-shadow: 0 0 10px rgba(192, 132, 252, 0.45); }
         }
         .vip-broadcast-banner {
             background: linear-gradient(135deg, #78350F 0%, #451A03 100%);
@@ -193,6 +187,18 @@
             text-align: center;
             animation: pulseGlowVIP 2s infinite ease-in-out;
         }
+        .vip-plus-broadcast-banner {
+            background: linear-gradient(135deg, #9333EA 0%, #4C1D95 100%);
+            border: 2px solid #C084FC;
+            color: #F3E8FF;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 900;
+            margin: 0.65rem 0;
+            text-align: center;
+            animation: pulseGlowVIPPlus 2s infinite ease-in-out;
+        }
         .vip-badge {
             background: #FBBF24;
             color: #0F172A;
@@ -202,6 +208,40 @@
             font-weight: bold;
             margin-bottom: 0.5rem;
             display: inline-block;
+        }
+        .vip-plus-badge {
+            background: linear-gradient(135deg, #C084FC 0%, #9333EA 100%);
+            color: #FFFFFF;
+            border: 1px solid #E9D5FF;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            box-shadow: 0 0 12px rgba(192, 132, 252, 0.6);
+            letter-spacing: 0.5px;
+        }
+        .local-sponsor-banner {
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            border: 1px solid #FBBF24;
+            border-radius: 14px;
+            padding: 0.75rem;
+            margin: 0.75rem 0;
+            text-align: center;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
+            display: none;
+        }
+        .adsense-bottom-container {
+            background: #0F172A;
+            border: 1px dashed #334155;
+            border-radius: 12px;
+            padding: 0.65rem;
+            margin: 1.25rem 0 0.5rem 0;
+            text-align: center;
+            min-height: 50px;
+            display: none;
+            overflow: hidden;
         }
 
         /* Utilities */
@@ -250,18 +290,7 @@
             background: #1E293B; border: 2px solid #FBBF24; padding: 1.5rem; border-radius: 16px;
             width: 90%; max-width: 400px; text-align: center;
         }
-            /* VIP Pricing Modal */
-        #vipModalOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center;
-            z-index: 10005; padding: 1rem; box-sizing: border-box;
-        }
-        .vip-modal-box {
-            background: #1E293B; border: 2px solid #FBBF24; border-radius: 18px;
-            max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); text-align: right;
-        }
-</style>
+    </style>
 </head>
 <body>
 
@@ -273,6 +302,46 @@
             <h3 style="color: #FBBF24; margin-top: 0;">🚨 تنبيه ذكي هام</h3>
             <div id="alertModalBody" style="font-size: 0.95rem; margin-bottom: 1.25rem; color: #F8FAFC; line-height: 1.5;"></div>
             <button onclick="closeAlertModal()" class="btn-primary" style="padding: 0.6rem; margin-bottom:0;">حسناً، فهمت</button>
+        </div>
+    </div>
+
+    <!-- Station Upgrade Packages Modal (VIP & VIP+) -->
+    <div id="upgradeModalOverlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 440px; border-color: #C084FC; text-align: right; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color: #FBBF24; margin-top: 0; text-align: center;">👑 ترقية حساب المحطة (باقات التميز)</h3>
+            <p style="font-size: 0.82rem; color: #94A3B8; text-align: center; margin-bottom: 1rem;">ضاعف مبيعاتك واجعل محطتك الخيار الأول للمستهلكين في منطقتك والقرى المجاورة:</p>
+
+            <!-- VIP Basic Package -->
+            <div style="background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%); border: 2px solid #FBBF24; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                    <span style="color:#FBBF24; font-weight:900; font-size:1.05rem;">⭐ باقة VIP الأساسية</span>
+                    <span class="vip-badge" style="margin:0;">الأكثر طلباً</span>
+                </div>
+                <ul style="font-size:0.82rem; color:#F8FAFC; padding-right:1.2rem; margin:0.5rem 0; line-height:1.7;">
+                    <li>توسيع <b>نطاق البحث</b> ليصل إلى <b>15 كم</b> بدلاً من 5 كم.</li>
+                    <li>توسيع <b>نطاق التنبيه الصوتي</b> ليصل إلى <b>15 كم</b>.</li>
+                    <li>إطار ذهبي مضيء وشارة موزع معتمد VIP وأولوية في الظهور.</li>
+                    <li>ميزة إرسال إشعارات بث فورية صاخبة للمستهلكين يومياً.</li>
+                </ul>
+                <button onclick="requestPackageUpgrade('VIP الأساسية')" style="background:#D97706; color:white; border:none; width:100%; padding:0.7rem; border-radius:8px; font-weight:900; cursor:pointer; font-size:0.9rem;">💬 طلب تفعيل باقة VIP عبر واتساب</button>
+            </div>
+
+            <!-- VIP+ Royal Package -->
+            <div style="background: linear-gradient(180deg, #2E1065 0%, #1E1B4B 100%); border: 2px solid #C084FC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; box-shadow: 0 0 18px rgba(192,132,252,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                    <span style="color:#E9D5FF; font-weight:900; font-size:1.05rem;">👑 باقة VIP+ الملكية الفاخرة</span>
+                    <span class="vip-plus-badge" style="margin:0;">أقصى انتشار</span>
+                </div>
+                <ul style="font-size:0.82rem; color:#F3E8FF; padding-right:1.2rem; margin:0.5rem 0; line-height:1.7;">
+                    <li>توسيع <b>نطاق البحث</b> ليصل إلى <b>30 كم أو أكثر</b> (تغطية شاملة للمنطقة).</li>
+                    <li>توسيع <b>نطاق التنبيه الصوتي</b> الفوري وحصريته في القرى المجاورة.</li>
+                    <li>تصميم ملكي أرجواني متوهج (VIP+) مع شارة التاج الملكي وتصدر مطلق للقائمة.</li>
+                    <li>رصيد مضاعف من رسائل البث العاجل المنسدلة في هواتف المستهلكين.</li>
+                </ul>
+                <button onclick="requestPackageUpgrade('VIP+ الملكية الفاخرة 👑')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; width:100%; padding:0.75rem; border-radius:8px; font-weight:900; cursor:pointer; font-size:0.9rem;">👑 طلب تفعيل باقة VIP+ الملكية عبر واتساب</button>
+            </div>
+
+            <button onclick="closeUpgradeModal()" class="btn-secondary" style="background:#334155; margin-bottom:0; padding:0.65rem;">إغلاق النافذة</button>
         </div>
     </div>
 
@@ -317,7 +386,13 @@
                 <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
             </div>
 
+            <!-- Local Sponsor / Promotional Banner (Top of Search Results) -->
+            <div id="localSponsorBanner" class="local-sponsor-banner"></div>
+
             <div id="consumerStationsList" style="margin-top: 1rem;"></div>
+
+            <!-- Google AdSense Container (Bottom of Consumer Screen) -->
+            <div id="adsenseBottomContainer" class="adsense-bottom-container"></div>
         </section>
 
         <!-- 3. Consumer Settings -->
@@ -444,35 +519,6 @@
                 </div>
             </div>
 
-                        <!-- VIP Packages Control Section -->
-            <div style="background: #0F172A; border: 1px solid #EC4899; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
-                <h3 style="font-size: 0.95rem; color: #F472B6; margin-top: 0;">👑 التحكم في عروض وباقات VIP & VIP+ (مدى الحياة)</h3>
-                
-                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                    <h4 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:0.85rem;">⭐ إعدادات باقة VIP الأساسية (مدى الحياة):</h4>
-                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; font-size:0.8rem;">
-                        <div><label>السعر ($ مدى الحياة):</label><input type="number" id="vip1_price" placeholder="25" style="margin:0;"></div>
-                        <div><label>نطاق التنبيه (كم):</label><input type="number" id="vip1_alert" placeholder="15" style="margin:0;"></div>
-                        <div><label>نطاق البحث (كم):</label><input type="number" id="vip1_search" placeholder="15" style="margin:0;"></div>
-                        <div><label>عدد البث اليومي:</label><input type="number" id="vip1_bc" placeholder="3" style="margin:0;"></div>
-                    </div>
-                    <input type="text" id="vip1_desc" placeholder="الوصف المختصر للباقة..." style="margin:0.5rem 0 0 0; font-size:0.8rem;">
-                </div>
-
-                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                    <h4 style="color:#F472B6; margin:0 0 0.4rem 0; font-size:0.85rem;">👑 إعدادات باقة VIP+ الفاخرة (مدى الحياة):</h4>
-                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; font-size:0.8rem;">
-                        <div><label>السعر ($ مدى الحياة):</label><input type="number" id="vip2_price" placeholder="50" style="margin:0;"></div>
-                        <div><label>نطاق التنبيه (كم):</label><input type="number" id="vip2_alert" placeholder="30" style="margin:0;"></div>
-                        <div><label>نطاق البحث (كم):</label><input type="number" id="vip2_search" placeholder="30" style="margin:0;"></div>
-                        <div><label>عدد البث اليومي:</label><input type="number" id="vip2_bc" placeholder="10" style="margin:0;"></div>
-                    </div>
-                    <input type="text" id="vip2_desc" placeholder="الوصف المختصر للباقة..." style="margin:0.5rem 0 0 0; font-size:0.8rem;">
-                </div>
-
-                <button onclick="saveVipPackagesAdminSettings()" style="background:#BE185D; color:white; border:none; padding:0.75rem; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">💾 حفظ وتحديث عروض وباقات VIP في المنصة</button>
-            </div>
-
             <!-- Settings (Sham Cash & Fee & Ringtone) -->
             <div style="background: #0F172A; border: 1px solid #3B82F6; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <h3 style="font-size: 0.95rem; color: #60A5FA; margin-top: 0;">💳 إعدادات الشام كاش والتكلفة</h3>
@@ -511,6 +557,39 @@
                 <div style="display:flex; gap:0.5rem;">
                     <input type="text" id="settingAdminWaMsgInput" placeholder="مثال: مرحباً، قمت بتسجيل محطتي وأرجو تفعيل الحساب..." style="margin:0;">
                     <button onclick="saveAdminWaSettings()" style="background:#059669; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
+                </div>
+            </div>
+
+            <!-- Local Sponsor Banner & Google AdSense Management -->
+            <div style="background: #0F172A; border: 1px solid #C084FC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.95rem; color: #E9D5FF; margin-top: 0;">📢 إدارة الإعلانات والرعاية المحلية (بانر ترويجي + Google AdSense)</h3>
+                
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.85rem; border:1px solid #334155;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <strong style="font-size:0.85rem; color:#FBBF24;">1. الإعلان الخاص (رعاية محلية أعلى البحث):</strong>
+                        <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; color:#34D399; cursor:pointer;">
+                            <input type="checkbox" id="settingSponsorActive" style="width:1.1rem; height:1.1rem; margin:0;"> تفعيل الإعلان
+                        </label>
+                    </div>
+                    <label style="font-size:0.78rem; color:#94A3B8;">عنوان الإعلان أو النص الترويجي:</label>
+                    <input type="text" id="settingSponsorTitle" placeholder="مثال: برعاية شركة الأمان للمحروقات - خدمة التوصيل متوفرة..." style="margin-bottom:0.4rem;">
+                    <label style="font-size:0.78rem; color:#94A3B8;">رابط صورة البانر (اختياري - اتركه فارغاً لإعلان نصي أنيق):</label>
+                    <input type="url" id="settingSponsorImg" placeholder="https://example.com/banner.jpg" style="margin-bottom:0.4rem;">
+                    <label style="font-size:0.78rem; color:#94A3B8;">رابط الانتقال عند النقر (رابط واتساب أو موقع إلكتروني):</label>
+                    <input type="url" id="settingSponsorLink" placeholder="https://wa.me/9639xxxxxxxx" style="margin-bottom:0.5rem;">
+                    <button onclick="saveSponsorAdSettings()" style="background:#9333EA; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; width:100%; font-size:0.85rem;">💾 حفظ وتحديث الإعلان المحلي فوراً</button>
+                </div>
+
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; border:1px solid #334155;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <strong style="font-size:0.85rem; color:#60A5FA;">2. شفرة إعلانات قوقل أدسنس (أسفل شاشة المستهلك):</strong>
+                        <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; color:#34D399; cursor:pointer;">
+                            <input type="checkbox" id="settingAdsenseActive" style="width:1.1rem; height:1.1rem; margin:0;"> تفعيل AdSense
+                        </label>
+                    </div>
+                    <label style="font-size:0.78rem; color:#94A3B8;">الصق كود الإعلان (HTML / Script):</label>
+                    <textarea id="settingAdsenseCode" rows="3" placeholder="<ins class='adsbygoogle' ...></ins>" style="background:#0F172A; color:#F8FAFC; border:1px solid #475569; padding:0.6rem; border-radius:8px; width:100%; box-sizing:border-box; font-family:monospace; font-size:0.78rem; margin-bottom:0.5rem;"></textarea>
+                    <button onclick="saveAdsenseSettings()" style="background:#0284C7; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; width:100%; font-size:0.85rem;">💾 حفظ إعدادات قوقل أدسنس</button>
                 </div>
             </div>
 
@@ -837,7 +916,57 @@
             }
         }
 
-        // --- Consumer Radar & Preferences ---
+        // --- Consumer Radar, Ads & Preferences ---
+        let configAdsUnsubscribe = null;
+        let lastAdsenseRenderedCode = "";
+
+        function renderConsumerAdsFromConfig(data) {
+            if (!data) return;
+            if (data.adminWaPhone) globalAdminWaPhone = data.adminWaPhone;
+
+            // 1. Local Sponsor / Promotional Banner (Top of Search Results)
+            const sponsorEl = document.getElementById('localSponsorBanner');
+            if (sponsorEl) {
+                if (data.sponsorActive && (data.sponsorTitle || data.sponsorImg)) {
+                    let titleHtml = data.sponsorTitle ? `<div style="color:#FBBF24; font-weight:900; font-size:0.9rem; margin-bottom:${data.sponsorImg ? '0.5rem' : '0'};">✨ ${data.sponsorTitle}</div>` : '';
+                    let imgHtml = data.sponsorImg ? `<img src="${data.sponsorImg}" alt="إعلان راعي" style="max-width:100%; max-height:140px; border-radius:8px; display:block; margin:auto;">` : '';
+                    let innerContent = `${titleHtml}${imgHtml}`;
+                    if (data.sponsorLink && data.sponsorLink.trim() !== '') {
+                        sponsorEl.innerHTML = `<a href="${data.sponsorLink.trim()}" target="_blank" style="text-decoration:none; display:block;">${innerContent}<div style="font-size:0.72rem; color:#38BDF8; margin-top:0.35rem; font-weight:bold;">🔗 اضغط هنا للتفاصيل والتواصل</div></a>`;
+                    } else {
+                        sponsorEl.innerHTML = innerContent;
+                    }
+                    sponsorEl.style.display = 'block';
+                } else {
+                    sponsorEl.style.display = 'none';
+                    sponsorEl.innerHTML = '';
+                }
+            }
+
+            // 2. Google AdSense Container (Bottom of Consumer Screen)
+            const adsenseEl = document.getElementById('adsenseBottomContainer');
+            if (adsenseEl) {
+                if (data.adsenseActive && data.adsenseCode && data.adsenseCode.trim() !== '') {
+                    adsenseEl.style.display = 'block';
+                    if (lastAdsenseRenderedCode !== data.adsenseCode.trim()) {
+                        lastAdsenseRenderedCode = data.adsenseCode.trim();
+                        adsenseEl.innerHTML = `<div style="font-size:0.65rem; color:#64748B; margin-bottom:0.25rem;">إعلان ممول</div>` + lastAdsenseRenderedCode;
+                        // Execute any embedded script tags safely for AdSense
+                        Array.from(adsenseEl.querySelectorAll('script')).forEach(oldScript => {
+                            const newScript = document.createElement('script');
+                            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
+                        });
+                    }
+                } else {
+                    adsenseEl.style.display = 'none';
+                    adsenseEl.innerHTML = '';
+                    lastAdsenseRenderedCode = "";
+                }
+            }
+        }
+
         async function initConsumerSettingsState() {
             if (localStorage.getItem('bg_alarm_active') === null) {
                 localStorage.setItem('bg_alarm_active', 'true');
@@ -855,13 +984,22 @@
             let toneEl = document.getElementById('userRingtoneSelect');
             if (tone && toneEl) {
                 toneEl.value = tone;
-            } else if (db) {
-                try {
-                    let doc = await db.collection("settings").doc("config").get();
-                    if (doc.exists && doc.data().defaultRingtone && toneEl) {
-                        toneEl.value = doc.data().defaultRingtone;
-                    }
-                } catch (e) {}
+            }
+
+            if (db) {
+                if (!configAdsUnsubscribe) {
+                    try {
+                        configAdsUnsubscribe = db.collection("settings").doc("config").onSnapshot(doc => {
+                            if (doc.exists) {
+                                let d = doc.data();
+                                if (!localStorage.getItem('user_ringtone') && d.defaultRingtone && toneEl) {
+                                    toneEl.value = d.defaultRingtone;
+                                }
+                                renderConsumerAdsFromConfig(d);
+                            }
+                        }, err => {});
+                    } catch (e) {}
+                }
             }
 
             let stations = await loadCloudStationsData();
@@ -930,6 +1068,30 @@
             }
         };
 
+        function getStationDefaultSearchRadius(st) {
+            if (st.searchRadius !== undefined && !isNaN(parseFloat(st.searchRadius))) {
+                return parseFloat(st.searchRadius);
+            }
+            if (st.isVipPlus || st.vipTier === 'vip_plus') return 30.0;
+            if (st.isVip || st.vipTier === 'vip') return 15.0;
+            return 5.0;
+        }
+
+        function getStationDefaultAlertRadius(st) {
+            if (st.alertRadius !== undefined && !isNaN(parseFloat(st.alertRadius))) {
+                return parseFloat(st.alertRadius);
+            }
+            if (st.isVipPlus || st.vipTier === 'vip_plus') return 25.0;
+            if (st.isVip || st.vipTier === 'vip') return 15.0;
+            return 5.0;
+        }
+
+        function getStationTierLevel(st) {
+            if (st.isVipPlus || st.vipTier === 'vip_plus') return 2;
+            if (st.isVip || st.vipTier === 'vip') return 1;
+            return 0;
+        }
+
         function renderConsumerStations(stations) {
             const list = document.getElementById('consumerStationsList');
             const dotsCont = document.getElementById('radarDotsContainer');
@@ -943,27 +1105,24 @@
                 }
             });
 
+            // Filter by status, category, AND independent Search Range (نطاق البحث)
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
-                
-                // Check independent search range (نطاق البحث)
-                let defaultSearchRadius = st.isVip ? 15 : 5;
-                let maxSearchRange = st.searchRadius || defaultSearchRadius;
-                if (st.distance !== undefined && st.distance > maxSearchRange) {
-                    return false;
-                }
-
                 if (currentCategoryFilter !== 'all') {
-                    return st.materialsStatus && st.materialsStatus[currentCategoryFilter] === true;
+                    if (!st.materialsStatus || st.materialsStatus[currentCategoryFilter] !== true) return false;
+                }
+                if (st.distance !== undefined) {
+                    let allowedSearchRange = getStationDefaultSearchRadius(st);
+                    if (st.distance > allowedSearchRange) return false;
                 }
                 return true;
             });
 
-            // Sort: VIP gets priority, then by distance
+            // Sort: VIP+ (Tier 2) first, then VIP (Tier 1), then Free (Tier 0), then by distance
             filtered.sort((a, b) => {
-                let aVip = a.isVip ? 1 : 0;
-                let bVip = b.isVip ? 1 : 0;
-                if (aVip !== bVip) return bVip - aVip;
+                let tierA = getStationTierLevel(a);
+                let tierB = getStationTierLevel(b);
+                if (tierA !== tierB) return tierB - tierA;
                 return (a.distance || 999) - (b.distance || 999);
             });
 
@@ -972,24 +1131,27 @@
             let dotsHtml = '';
 
             if (topResults.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1rem; border-radius:12px;">لا توجد محطات معتمدة مطابقة حالياً.</p>';
+                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1rem; border-radius:12px;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
                 dotsCont.innerHTML = '';
                 return;
             }
 
             topResults.forEach((st, idx) => {
                 activityBatch.impressions[st.id] = (activityBatch.impressions[st.id] || 0) + 1;
-                let isVip = st.isVip === true;
-                let isVipPlus = st.isVipPlus === true || (st.isVip && st.vipType === 'VIP+');
+                let tierLevel = getStationTierLevel(st);
+                let isVipPlus = (tierLevel === 2);
+                let isVip = (tierLevel >= 1);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
-                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع معتمد VIP+ فاخر جداً</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
+                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
                 let distText = st.distance !== undefined ? `<p style="font-size:0.8rem; color:#38BDF8; margin: 0.25rem 0; font-weight:bold;">📍 المسافة: ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</p>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 let ratingCount = st.ratingCount || 1;
 
                 let broadcastHtml = '';
                 if (isVip && st.broadcastMsg) {
-                    broadcastHtml = `<div class="vip-broadcast-banner">🚨📢 بث عاجل من المالك:<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                    let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
+                    let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
+                    broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
                 }
 
                 let locationCoordsHtml = '';
@@ -1053,7 +1215,7 @@
                 let rad = angle * Math.PI / 180;
                 let top = 50 - (Math.cos(rad) * radiusPercent);
                 let left = 50 + (Math.sin(rad) * radiusPercent);
-                let dotColor = isVip ? '#FBBF24' : '#10B981';
+                let dotColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#10B981');
                 dotsHtml += `<div class="station-dot" title="${st.name}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
             });
 
@@ -1153,13 +1315,13 @@
 
             stations.forEach(st => {
                 if (st.status === 'approved') {
-                    let defaultRadius = st.isVip ? 15.0 : 5.0;
-                    let stRadius = st.alertRadius || defaultRadius;
+                    let stRadius = getStationDefaultAlertRadius(st);
                     let dist = (uLat !== null && uLon !== null && st.lat && st.lon) ? calculateDistance(uLat, uLon, st.lat, st.lon) : 0;
                     let isWithinRange = (uLat === null || uLon === null) ? true : (dist <= stRadius);
+                    let hasVipPrivilege = (getStationTierLevel(st) >= 1);
 
-                    // 1. Check Loud Prominent VIP Broadcast (works even if user hasn't set material filters)
-                    if (st.isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '' && isWithinRange) {
+                    // 1. Check Loud Prominent VIP / VIP+ Broadcast (within Alert Range)
+                    if (hasVipPrivilege && st.broadcastMsg && st.broadcastMsg.trim() !== '' && isWithinRange) {
                         let bKey = `${st.id}_bc`;
                         let currentBcSignature = `${st.broadcastMsg.trim()}_${st.broadcastId || ''}`;
                         if (lastBroadcasts[bKey] !== currentBcSignature) {
@@ -1435,7 +1597,10 @@
                     lon: capturedLon,
                     locationFormatted: `${capturedLat.toFixed(6)}, ${capturedLon.toFixed(6)}`,
                     googleMapsUrl: `https://maps.google.com/?q=${capturedLat},${capturedLon}`,
+                    searchRadius: 5.0,
                     alertRadius: 5.0,
+                    vipTier: 'free',
+                    isVipPlus: false,
                     rating: 5,
                     ratingCount: 1,
                     alertsReceivedCount: 0,
@@ -1512,20 +1677,55 @@
             resetRouting('consumer');
         };
 
-        // --- Station Dashboard ---
+        // --- Station Dashboard & Upgrade Modal ---
+        let currentDashboardStationInfo = { name: '', region: '', phone: '' };
+
+        window.openUpgradeModal = function(stName, stRegion, stPhone) {
+            currentDashboardStationInfo = { name: stName, region: stRegion, phone: stPhone };
+            let ol = document.getElementById('upgradeModalOverlay');
+            if (ol) ol.style.display = 'flex';
+        };
+
+        window.closeUpgradeModal = function() {
+            let ol = document.getElementById('upgradeModalOverlay');
+            if (ol) ol.style.display = 'none';
+        };
+
+        window.requestPackageUpgrade = async function(packageName) {
+            await loadRegistrationFee();
+            let cleanPhone = (globalAdminWaPhone || "0965461504").replace(/[^0-9]/g, '');
+            let waNum = cleanPhone.startsWith('0') ? '963' + cleanPhone.substring(1) : cleanPhone;
+            let msg = `مرحباً إدارة منصة "متوفر هناا" ⛽👑\nأود طلب ترقية حساب محطتي إلى باقة: [${packageName}]\n\n⛽ اسم المحطة: ${currentDashboardStationInfo.name}\n📍 المنطقة: ${currentDashboardStationInfo.region}\n📞 رقم الهاتف المسجل: ${currentDashboardStationInfo.phone}\n\nيرجى تزويدي بتفاصيل التفعيل، وشكراً لكم.`;
+            closeUpgradeModal();
+            window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+
         function loadMyStationDashboard(st) {
             let avgRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
+            let tierLevel = getStationTierLevel(st);
+            let isVipPlus = (tierLevel === 2);
+            let isVip = (tierLevel >= 1);
+            let sRadius = getStationDefaultSearchRadius(st);
+            let aRadius = getStationDefaultAlertRadius(st);
+            let borderColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#334155');
+            let badgeHtml = isVipPlus ? '<span class="vip-plus-badge" style="margin:0;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0; font-size:0.85rem; padding:0.3rem 0.7rem;">⭐ VIP</span>' : '<span style="background:#334155; color:#94A3B8; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">الباقة المجانية</span>');
+
             let html = `
-                <div style="background:#0F172A; padding:1.25rem; border-radius:16px; border:2px solid ${st.isVip ? '#FBBF24' : '#334155'};">
+                <div style="background:#0F172A; padding:1.25rem; border-radius:16px; border:2px solid ${borderColor};">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                         <h3 style="color:#FBBF24; margin:0; font-size:1.25rem;">${st.name} (${st.region})</h3>
-                        ${st.isVip ? '<span class="vip-badge" style="margin:0; font-size:0.85rem; padding:0.3rem 0.7rem;">⭐ VIP</span>' : ''}
+                        ${badgeHtml}
                     </div>
-                    <p style="color:#34D399; font-size:0.85rem; font-weight:bold; margin-top:0;">حالة الاعتماد: معتمدة ✓ (نطاق الرادار: ${st.alertRadius || (st.isVip ? 15 : 5)} كم)</p>
-                    
-                    <button onclick="openVipModal()" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #0F172A; border: none; padding: 0.9rem; border-radius: 12px; font-weight: 900; font-size: 1rem; width: 100%; margin: 0.75rem 0 1rem 0; cursor: pointer; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);">
-                        ⭐ عرض باقات VIP & VIP+ وترقية الحساب
-                    </button>
+                    <p style="color:#34D399; font-size:0.82rem; font-weight:bold; margin:0 0 0.65rem 0;">حالة الاعتماد: معتمدة ✓ | 🔍 نطاق البحث: <b>${sRadius} كم</b> | 🔔 نطاق التنبيه: <b>${aRadius} كم</b></p>
+
+                    <!-- Promotional Upgrade Button for Station Owner -->
+                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:0.75rem; border-radius:12px; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:180px;">
+                            <div style="color:#E9D5FF; font-weight:900; font-size:0.88rem;">👑 هل ترغب بمضاعفة نطاق محطتك وزبائنك؟</div>
+                            <div style="color:#CBD5E1; font-size:0.75rem;">استعرض مزايا باقات (VIP و VIP+ الملكية) لتوسيع البحث حتى 30 كم+</div>
+                        </div>
+                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.55rem 0.9rem; border-radius:8px; font-weight:900; font-size:0.8rem; cursor:pointer; white-space:nowrap; box-shadow:0 0 10px rgba(192,132,252,0.5);">🚀 ترقية الباقة الآن</button>
+                    </div>
                     
                     <!-- Feature 3: Emergency Panic Switches (إغلاق طارئ / فتح الكل) -->
                     <div style="display:flex; gap:0.6rem; margin:1rem 0;">
@@ -1552,7 +1752,7 @@
                         </div>
                     </div>
 
-                    ${st.isVip ? `
+                    ${isVip ? `
                     <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1rem;">
                         <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (إشعار منسدل فوري):</h4>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
@@ -1760,24 +1960,14 @@
                     document.getElementById('settingRegNoteInput').value = cData.prominentRegNote || globalProminentNote;
                     document.getElementById('settingAdminWaMsgInput').value = cData.adminWaMsg || globalAdminWaMsg;
 
-                    if (cData.vipPkg1) {
-                        document.getElementById('vip1_price').value = cData.vipPkg1.price || "25";
-                        document.getElementById('vip1_alert').value = cData.vipPkg1.alertRange || "15";
-                        document.getElementById('vip1_search').value = cData.vipPkg1.searchRange || "15";
-                        document.getElementById('vip1_bc').value = cData.vipPkg1.broadcastCount || "3";
-                        document.getElementById('vip1_desc').value = cData.vipPkg1.desc || "";
-                    } else {
-                        document.getElementById('vip1_price').value = "25"; document.getElementById('vip1_alert').value = "15"; document.getElementById('vip1_search').value = "15"; document.getElementById('vip1_bc').value = "3";
-                    }
-                    if (cData.vipPkg2) {
-                        document.getElementById('vip2_price').value = cData.vipPkg2.price || "50";
-                        document.getElementById('vip2_alert').value = cData.vipPkg2.alertRange || "30";
-                        document.getElementById('vip2_search').value = cData.vipPkg2.searchRange || "30";
-                        document.getElementById('vip2_bc').value = cData.vipPkg2.broadcastCount || "10";
-                        document.getElementById('vip2_desc').value = cData.vipPkg2.desc || "";
-                    } else {
-                        document.getElementById('vip2_price').value = "50"; document.getElementById('vip2_alert').value = "30"; document.getElementById('vip2_search').value = "30"; document.getElementById('vip2_bc').value = "10";
-                    }
+                    // Load Sponsor Ad & AdSense settings
+                    document.getElementById('settingSponsorActive').checked = (cData.sponsorActive === true);
+                    document.getElementById('settingSponsorTitle').value = cData.sponsorTitle || "";
+                    document.getElementById('settingSponsorImg').value = cData.sponsorImg || "";
+                    document.getElementById('settingSponsorLink').value = cData.sponsorLink || "";
+
+                    document.getElementById('settingAdsenseActive').checked = (cData.adsenseActive === true);
+                    document.getElementById('settingAdsenseCode').value = cData.adsenseCode || "";
                 } else {
                     document.getElementById('settingAdminWaPhoneInput').value = "0965461504";
                     document.getElementById('settingRegNoteInput').value = globalProminentNote;
@@ -1830,19 +2020,25 @@
                 let id = st.id;
                 let isCanc = st.status === 'canceled';
                 let isApp = st.status === 'approved';
-                let cardBg = isCanc ? '#450A0A' : '#0F172A';
-                let cardBorder = isCanc ? '#EF4444' : (st.isVip ? '#FBBF24' : '#334155');
+                let tierLevel = getStationTierLevel(st);
+                let isVipPlus = (tierLevel === 2);
+                let isVip = (tierLevel >= 1);
+
+                let cardBg = isCanc ? '#450A0A' : (isVipPlus ? '#1E1B4B' : '#0F172A');
+                let cardBorder = isCanc ? '#EF4444' : (isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#334155'));
                 let badgeBg = isCanc ? '#DC2626' : (isApp ? '#064E3B' : '#78350F');
                 let badgeCol = isCanc ? '#FEF2F2' : (isApp ? '#34D399' : '#FDE68A');
                 let statusText = isCanc ? '⚠️ تراجع المستخدم (طلب ملغى)' : (isApp ? 'معتمدة ✓' : 'قيد الانتظار ⏳');
                 let catsList = st.categories ? st.categories.join('، ') : 'لا توجد فئات';
-                let currentRadius = st.alertRadius || (st.isVip ? 15.0 : 5.0);
+                let currentAlertRadius = getStationDefaultAlertRadius(st);
+                let currentSearchRadius = getStationDefaultSearchRadius(st);
+                let tierLabel = isVipPlus ? '<span class="vip-plus-badge" style="margin:0 0.3rem;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0 0.3rem;">⭐ VIP</span>' : '');
 
                 html += `
                     <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${st.name} ${st.region} ${st.phone}">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
                             <div style="flex:1;">
-                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${st.name} ${st.isVip ? '⭐ (VIP)' : ''}</h4>
+                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${st.name} ${tierLabel}</h4>
                                 <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${st.region} | الدخول: <b>${st.phone}</b></p>
                                 <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
                                 <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
@@ -1853,29 +2049,30 @@
                                         <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold;">🗺️ فتح الموقع على خرائط Google</a>
                                     ` : `<span style="color:#EF4444;">غير مسجل</span>`}
                                 </div>
-                                <div style="margin: 0.4rem 0; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-                                    <div style="display:flex; align-items:center; gap:0.3rem;">
-                                        <label style="font-size:0.75rem;">نطاق التنبيه(كم):</label>
-                                        <input type="number" id="radius_${id}" value="${currentRadius}" style="width:50px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                <div style="background:#0F172A; border:1px solid #334155; padding:0.5rem; border-radius:8px; margin: 0.4rem 0; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                    <div style="display:flex; align-items:center; gap:0.25rem;">
+                                        <label style="font-size:0.73rem; color:#38BDF8; font-weight:bold;">🔍 نطاق البحث(كم):</label>
+                                        <input type="number" id="sradius_${id}" value="${currentSearchRadius}" style="width:52px; padding:0.2rem; margin:0; font-size:0.8rem;">
                                     </div>
-                                    <div style="display:flex; align-items:center; gap:0.3rem;">
-                                        <label style="font-size:0.75rem;">نطاق البحث(كم):</label>
-                                        <input type="number" id="searchradius_${id}" value="${st.searchRadius || (st.isVip ? 15 : 5)}" style="width:50px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                    <div style="display:flex; align-items:center; gap:0.25rem;">
+                                        <label style="font-size:0.73rem; color:#34D399; font-weight:bold;">🔔 نطاق التنبيه(كم):</label>
+                                        <input type="number" id="radius_${id}" value="${currentAlertRadius}" style="width:52px; padding:0.2rem; margin:0; font-size:0.8rem;">
                                     </div>
-                                    <div style="display:flex; align-items:center; gap:0.3rem;">
-                                        <label style="font-size:0.75rem;">حد البث:</label>
-                                        <input type="number" id="viplimit_${id}" value="${st.vipDailyLimit !== undefined ? st.vipDailyLimit : 3}" style="width:45px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                    <div style="display:flex; align-items:center; gap:0.25rem;">
+                                        <label style="font-size:0.73rem; color:#FBBF24; font-weight:bold;">📢 حد البث اليومي:</label>
+                                        <input type="number" id="viplimit_${id}" value="${st.vipDailyLimit !== undefined ? st.vipDailyLimit : (isVipPlus ? 6 : 3)}" style="width:45px; padding:0.2rem; margin:0; font-size:0.8rem;">
                                     </div>
-                                    <button onclick="updateStationLimits('${id}')" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حفظ الإعدادات</button>
+                                    <button onclick="updateStationLimits('${id}')" style="background:#0284C7; color:white; border:none; padding:0.3rem 0.65rem; border-radius:6px; cursor:pointer; font-size:0.75rem; font-weight:bold;">حفظ النطاقات</button>
                                 </div>
-                                <span style="background:${badgeBg}; color:${badgeCol}; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">${statusText} (مستخدم اليوم: ${st.broadcastCountToday || 0})</span>
+                                <span style="background:${badgeBg}; color:${badgeCol}; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">${statusText} (بث اليوم: ${st.broadcastCountToday || 0})</span>
                             </div>
-                            <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:85px;">
+                            <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:95px;">
                                 ${st.status !== 'approved' ?
                                     `<button onclick="approveAndNotify('${id}', '${st.name}', '${st.phone}')" style="background:#059669; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">قبول + واتساب</button>` :
                                     `<button onclick="updateStStatus('${id}', 'pending')" style="background:#475569; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">تعليق</button>`
                                 }
-                                <button onclick="admToggleVIP('${id}', ${!st.isVip})" style="background:#D97706; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">${st.isVip ? 'إلغاء VIP' : 'منح VIP ⭐'}</button>
+                                <button onclick="admSetTier('${id}', 'vip')" style="background:${(isVip && !isVipPlus) ? '#475569' : '#D97706'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${(isVip && !isVipPlus) ? 'إلغاء VIP' : 'تفعيل VIP ⭐'}</button>
+                                <button onclick="admSetTier('${id}', 'vip_plus')" style="background:${isVipPlus ? '#475569' : 'linear-gradient(135deg, #C084FC 0%, #9333EA 100%)'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${isVipPlus ? 'إلغاء VIP+' : 'تفعيل VIP+ 👑'}</button>
                                 <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف نهائي</button>
                             </div>
                         </div>
@@ -1904,35 +2101,6 @@
             let val = document.getElementById('adminDefaultRingtone').value;
             try { await db.collection("settings").doc("config").set({ defaultRingtone: val }, { merge: true }); showToast("تم تعيين النغمة الافتراضية!"); } catch (e) {}
         };
-        
-        window.saveVipPackagesAdminSettings = async function() {
-            if (!db) return;
-            let vipPkg1 = {
-                price: document.getElementById('vip1_price').value || "25",
-                alertRange: document.getElementById('vip1_alert').value || "15",
-                searchRange: document.getElementById('vip1_search').value || "15",
-                broadcastCount: document.getElementById('vip1_bc').value || "3",
-                desc: document.getElementById('vip1_desc').value || "النطاق الأساسي الموسع مع بث عاجل يومي وتصدر النتائج."
-            };
-            let vipPkg2 = {
-                price: document.getElementById('vip2_price').value || "50",
-                alertRange: document.getElementById('vip2_alert').value || "30",
-                searchRange: document.getElementById('vip2_search').value || "30",
-                broadcastCount: document.getElementById('vip2_bc').value || "10",
-                desc: document.getElementById('vip2_desc').value || "النطاق الأقصى الشامل مع بث عاجل غير محدود وتألق ذهبي فائق."
-            };
-            try {
-                await db.collection("settings").doc("config").set({
-                    vipPkg1: vipPkg1,
-                    vipPkg2: vipPkg2
-                }, { merge: true });
-                showToast("✅ تم حفظ وتحديث عروض وباقات VIP بنجاح!");
-            } catch(e) {
-                showToast("خطأ أثناء حفظ باقات VIP");
-            }
-        };
-
-
         window.saveAdminWaSettings = async function() {
             let waPhone = document.getElementById('settingAdminWaPhoneInput').value.trim() || "0965461504";
             let regNote = document.getElementById('settingRegNoteInput').value.trim();
@@ -2011,20 +2179,54 @@
             loadAdminPanel();
         };
 
+        window.saveSponsorAdSettings = async function() {
+            if (!db) return;
+            let isActive = document.getElementById('settingSponsorActive').checked;
+            let title = document.getElementById('settingSponsorTitle').value.trim();
+            let img = document.getElementById('settingSponsorImg').value.trim();
+            let link = document.getElementById('settingSponsorLink').value.trim();
+            try {
+                await db.collection("settings").doc("config").set({
+                    sponsorActive: isActive,
+                    sponsorTitle: title,
+                    sponsorImg: img,
+                    sponsorLink: link
+                }, { merge: true });
+                showToast("✅ تم حفظ وتحديث الإعلان الترويجي المحلي فوراً!");
+            } catch (e) {
+                showToast("حدث خطأ أثناء حفظ الإعلان المحلي");
+            }
+        };
+
+        window.saveAdsenseSettings = async function() {
+            if (!db) return;
+            let isActive = document.getElementById('settingAdsenseActive').checked;
+            let code = document.getElementById('settingAdsenseCode').value.trim();
+            try {
+                await db.collection("settings").doc("config").set({
+                    adsenseActive: isActive,
+                    adsenseCode: code
+                }, { merge: true });
+                showToast("✅ تم حفظ وتحديث إعدادات Google AdSense بنجاح!");
+            } catch (e) {
+                showToast("حدث خطأ أثناء حفظ إعدادات AdSense");
+            }
+        };
+
         window.updateStationLimits = async function(id) {
-            let radiusVal = parseFloat(document.getElementById('radius_' + id).value);
-            let searchRadiusVal = parseFloat(document.getElementById('searchradius_' + id).value);
+            let searchRadiusVal = parseFloat(document.getElementById('sradius_' + id).value);
+            let alertRadiusVal = parseFloat(document.getElementById('radius_' + id).value);
             let limitVal = parseInt(document.getElementById('viplimit_' + id).value);
-            if (isNaN(radiusVal) || radiusVal <= 0) return showToast("قيمة نطاق التنبيه غير صحيحة");
             if (isNaN(searchRadiusVal) || searchRadiusVal <= 0) return showToast("قيمة نطاق البحث غير صحيحة");
+            if (isNaN(alertRadiusVal) || alertRadiusVal <= 0) return showToast("قيمة نطاق التنبيه غير صحيحة");
             if (isNaN(limitVal) || limitVal < 0) return showToast("حد البث اليومي غير صحيح");
             try {
                 await db.collection("stations").doc(id).update({
-                    alertRadius: radiusVal,
                     searchRadius: searchRadiusVal,
+                    alertRadius: alertRadiusVal,
                     vipDailyLimit: limitVal
                 });
-                showToast("تم حفظ إعدادات نطاق التنبيه والبحث والحد اليومي بنجاح!");
+                showToast("✅ تم حفظ نطاق البحث ونطاق التنبيه وحد البث بنجاح!");
                 loadAdminPanel();
             } catch(e) {
                 showToast("خطأ أثناء الحفظ");
@@ -2052,80 +2254,6 @@
             }
         };
 
-        
-        window.openVipModal = async function() {
-            let overlay = document.getElementById('vipModalOverlay');
-            let container = document.getElementById('vipPackagesCardsContainer');
-            if (!overlay || !container) return;
-
-            // Fetch VIP package settings from config
-            let vipPkg1 = { name: "VIP", price: "25", alertRange: "15", searchRange: "15", broadcastCount: "3", desc: "النطاق الأساسي الموسع مع بث عاجل يومي وتصدر النتائج." };
-            let vipPkg2 = { name: "VIP+", price: "50", alertRange: "30", searchRange: "30", broadcastCount: "10", desc: "النطاق الأقصى الشامل مع بث عاجل غير محدود وتألق ذهبي فائق." };
-
-            if (db) {
-                try {
-                    let doc = await db.collection("settings").doc("config").get();
-                    if (doc.exists) {
-                        let d = doc.data();
-                        if (d.vipPkg1) vipPkg1 = d.vipPkg1;
-                        if (d.vipPkg2) vipPkg2 = d.vipPkg2;
-                    }
-                } catch(e){}
-            }
-
-            let stationNameInput = document.querySelector('#sec-stationDashboard h3');
-            let stName = stationNameInput ? stationNameInput.textContent : 'محطتي';
-
-            container.innerHTML = `
-                <div style="background:linear-gradient(135deg, #1E293B 0%, #111827 100%); border:2px solid #FBBF24; padding:1.25rem; border-radius:14px; text-align:right; box-shadow:0 0 15px rgba(251,191,36,0.15);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                        <h4 style="color:#FBBF24; margin:0; font-size:1.15rem;">⭐ باقة VIP المميزة (مدى الحياة)</h4>
-                        <span style="background:#FBBF24; color:#0F172A; padding:0.25rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.9rem;">${vipPkg1.price} $ (مدى الحياة)</span>
-                    </div>
-                    <p style="color:#94A3B8; font-size:0.8rem; margin:0.3rem 0 0.75rem 0;">${vipPkg1.desc}</p>
-                    <ul style="color:#E2E8F0; font-size:0.82rem; padding-right:1.2rem; margin:0 0 1rem 0; line-height:1.6;">
-                        <li>📡 نطاق التنبيه الفوري: <b>${vipPkg1.alertRange} كم</b></li>
-                        <li>🔍 نطاق البحث وظهور الرادار: <b>${vipPkg1.searchRange} كم</b></li>
-                        <li>📢 عدد رسائل البث الفوري: <b>${vipPkg1.broadcastCount} رسائل يومياً</b></li>
-                        <li>✨ إطار وشارة ذهبية لامعة في نتائج المستهلك</li>
-                    </ul>
-                    <button onclick="activateVipPackage('VIP', '${vipPkg1.price}', '${stName}')" class="btn-primary" style="background:#D97706; margin-bottom:0; font-weight:900;">💬 تفعيل باقة VIP (مدى الحياة) عبر واتساب الإدارة</button>
-                </div>
-
-                <div style="background:linear-gradient(135deg, #3B0764 0%, #1E1B4B 100%); border:3px solid #C084FC; padding:1.4rem; border-radius:16px; text-align:right; box-shadow:0 0 25px rgba(192,132,252,0.35);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                        <h4 style="color:#F3E8FF; margin:0; font-size:1.25rem;">👑 باقة VIP+ الفاخرة جداً (مدى الحياة)</h4>
-                        <span style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; padding:0.3rem 0.7rem; border-radius:6px; font-weight:900; font-size:0.95rem; box-shadow:0 0 10px rgba(147,51,234,0.5);">${vipPkg2.price} $ (مدى الحياة)</span>
-                    </div>
-                    <p style="color:#E9D5FF; font-size:0.85rem; margin:0.3rem 0 0.75rem 0; font-weight:bold;">${vipPkg2.desc}</p>
-                    <ul style="color:#F3E8FF; font-size:0.85rem; padding-right:1.2rem; margin:0 0 1rem 0; line-height:1.6;">
-                        <li>📡 نطاق التنبيه الفوري: <b>${vipPkg2.alertRange} كم</b></li>
-                        <li>🔍 نطاق البحث وظهور الرادار: <b>${vipPkg2.searchRange} كم</b></li>
-                        <li>📢 عدد رسائل البث الفوري: <b>${vipPkg2.broadcastCount} رسائل يومياً</b></li>
-                        <li>💎 شكل مميز جداً وإضاءة ملكية متوهجة وتصدر كامل لقائمة النتائج</li>
-                    </ul>
-                    <button onclick="activateVipPackage('VIP+', '${vipPkg2.price}', '${stName}')" class="btn-primary" style="background:linear-gradient(135deg, #9333EA 0%, #7E22CE 100%); margin-bottom:0; font-weight:900; box-shadow:0 4px 15px rgba(147,51,234,0.6);">💬 تفعيل باقة VIP+ (مدى الحياة) عبر واتساب الإدارة</button>
-                </div>
-            `;
-
-            overlay.style.display = 'flex';
-        };
-
-        window.closeVipModal = function() {
-            let overlay = document.getElementById('vipModalOverlay');
-            if (overlay) overlay.style.display = 'none';
-        };
-
-        window.activateVipPackage = function(pkgName, pkgPrice, stName) {
-            let cleanPhone = (globalAdminWaPhone || "0965461504").replace(/[^0-9]/g, '');
-            let waNum = cleanPhone.startsWith('0') ? '963' + cleanPhone.substring(1) : cleanPhone;
-            let msg = `مرحباً إدارة منصة متوفر هناا ⛽\nأود ترقية محطتي (${stName}) إلى باقة الاشتراك المدفوع (${pkgName}) بقيمة (${pkgPrice} دولار). يرجى إرشادي لخطوات الدفع والتفعيل عبر شام كاش.`;
-            let url = `https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
-            closeVipModal();
-        };
-
-
         window.approveAndNotify = async function(id, stName, stPhone) {
             await db.collection("stations").doc(id).update({ status: 'approved' });
             showToast("تم قبول المحطة!");
@@ -2140,11 +2268,53 @@
             loadAdminPanel();
         };
 
-        window.admToggleVIP = async function(id, isVip) {
-            let newRadius = isVip ? 15.0 : 5.0;
-            await db.collection("stations").doc(id).update({ isVip: isVip, alertRadius: newRadius });
-            showToast(isVip ? "تم منح اشتراك VIP وتوسيع الرادار لـ 15 كم!" : "تم إلغاء اشتراك VIP");
-            loadAdminPanel();
+        window.admSetTier = async function(id, targetTier) {
+            if (!db) return;
+            try {
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (!doc.exists) return;
+                let st = doc.data();
+                let currentLevel = getStationTierLevel(st);
+
+                if ((targetTier === 'vip' && currentLevel === 1) || (targetTier === 'vip_plus' && currentLevel === 2)) {
+                    // Revert to Free package (Search: 5km, Alert: 5km)
+                    await ref.update({
+                        isVip: false,
+                        isVipPlus: false,
+                        vipTier: 'free',
+                        searchRadius: 5.0,
+                        alertRadius: 5.0,
+                        vipDailyLimit: 0
+                    });
+                    showToast("تم إعادة المحطة إلى الباقة المجانية (نطاق 5 كم).");
+                } else if (targetTier === 'vip') {
+                    // Activate Basic VIP (Search: 15km, Alert: 15km, Limit: 3)
+                    await ref.update({
+                        isVip: true,
+                        isVipPlus: false,
+                        vipTier: 'vip',
+                        searchRadius: 15.0,
+                        alertRadius: 15.0,
+                        vipDailyLimit: 3
+                    });
+                    showToast("⭐ تم تفعيل باقة VIP الأساسية (نطاق بحث وتنبيه 15 كم)!");
+                } else if (targetTier === 'vip_plus') {
+                    // Activate Royal VIP+ (Search: 30km, Alert: 25km, Limit: 6)
+                    await ref.update({
+                        isVip: true,
+                        isVipPlus: true,
+                        vipTier: 'vip_plus',
+                        searchRadius: 30.0,
+                        alertRadius: 25.0,
+                        vipDailyLimit: 6
+                    });
+                    showToast("👑 تم تفعيل باقة VIP+ الملكية الفاخرة (نطاق بحث 30 كم وتنبيه 25 كم)!");
+                }
+                loadAdminPanel();
+            } catch (e) {
+                showToast("حدث خطأ أثناء تغيير باقة المحطة");
+            }
         };
 
         window.admDelete = async function(id) {
@@ -2155,21 +2325,5 @@
             }
         };
     </script>
-    <!-- VIP Subscription Modal -->
-    <div id="vipModalOverlay" class="modal-overlay">
-        <div class="vip-modal-box">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                <h3 style="color:#FBBF24; margin:0; font-size:1.3rem;">⭐ باقات الترقي إلى VIP و VIP+</h3>
-                <button onclick="closeVipModal()" style="background:#334155; color:white; border:none; width:32px; height:32px; border-radius:50%; font-weight:bold; cursor:pointer;">✕</button>
-            </div>
-            <p style="color:#94A3B8; font-size:0.85rem; margin-bottom:1.25rem;">ضاعف مبيعاتك واجعل محطتك تتصدر نتائج البحث وتصل لأكبر عدد من الزبائن في أوقات الأزمات.</p>
-            
-            <div id="vipPackagesCardsContainer" style="display:flex; flex-direction:column; gap:1rem; margin-bottom:1.25rem;">
-                <!-- Injected dynamically based on admin settings -->
-            </div>
-
-            <button onclick="closeVipModal()" class="btn-secondary" style="background:#334155; margin-bottom:0;">إغلاق</button>
-        </div>
-    </div>
 </body>
 </html>
