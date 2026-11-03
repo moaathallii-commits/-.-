@@ -20,7 +20,7 @@
 
     <header style="background: #10B981; color: white; padding: 1rem; text-align: center;">
         <h1>متوفر هناا</h1>
-        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (سحابي)</p>
+        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (سحابي متقدم)</p>
     </header>
 
     <!-- شريط التنقل السريع بين الأقسام -->
@@ -43,7 +43,7 @@
             </button>
 
             <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <button onclick="showSection('consumer')" style="background: #10B981; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🔍 البحث عن المواد وترتيبها بالأقرب</button>
+                <button onclick="showSection('consumer')" style="background: #10B981; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🔍 البحث عن المواد (أقرب 10 نتائج)</button>
                 <button onclick="showSection('station')" style="background: #0284C7; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⛽ بوابة المحطات والموزعين (تسجيل)</button>
                 <button onclick="showSection('admin')" style="background: #334155; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⚙️ لوحة الإدارة العامة (الاعتمادات)</button>
             </div>
@@ -51,7 +51,7 @@
 
         <!-- 2. قسم المستهلك -->
         <section id="sec-consumer" class="app-section" style="display: none;">
-            <h2>المحطات المعتمدة (مرتبة حسب الأقرب)</h2>
+            <h2>أقرب 10 محطات معتمدة لموقعك</h2>
             
             <div style="display: flex; gap: 0.5rem; margin: 1rem 0; overflow-x: auto; padding-bottom: 0.5rem;">
                 <button onclick="filterStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">الكل</button>
@@ -61,12 +61,12 @@
             </div>
 
             <button type="button" onclick="getGPSAndSort()" style="background-color: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
-                📍 تحديث موقعي وترتيب المحطات بالأقرب (GPS)
+                📍 تفعيل GPS وعرض أقرب 10 نتائج + تنبيه القرب
             </button>
             <p id="gpsMsg" style="font-size: 0.85rem; color: #64748B; text-align: center;"></p>
 
             <div id="cloudStationsList" style="margin-top: 1rem;">
-                <p style="text-align: center; color: #64748B;">جاري تحميل المحطات وتحديد المسافات...</p>
+                <p style="text-align: center; color: #64748B;">جاري تحميل المحطات وترتيبها...</p>
             </div>
         </section>
 
@@ -125,8 +125,8 @@
         let allStations = [];
         let userLat = null;
         let userLon = null;
-        let stationLat = 35.5; // قيمة افتراضية
-        let stationLon = 36.3; // قيمة افتراضية
+        let stationLat = 35.5; 
+        let stationLon = 36.3; 
 
         function showSection(sectionId) {
             document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
@@ -136,7 +136,6 @@
             window.scrollTo(0, 0);
         }
 
-        // التقاط موقع المحطة أثناء التسجيل
         function getStationGPS() {
             const status = document.getElementById('stationGpsStatus');
             if (navigator.geolocation) {
@@ -144,17 +143,16 @@
                 navigator.geolocation.getCurrentPosition(pos => {
                     stationLat = pos.coords.latitude;
                     stationLon = pos.coords.longitude;
-                    status.textContent = `تم تسجيل إحداثيات المحطة بنجاح (${stationLat.toFixed(4)}, ${stationLon.toFixed(4)})`;
+                    status.textContent = `تم تسجيل إحداثيات المحطة (${stationLat.toFixed(4)}, ${stationLon.toFixed(4)})`;
                 }, () => {
                     status.textContent = 'تعذر الحصول على الموقع، سيتم استخدام الإحداثيات الافتراضية.';
                 });
             }
         }
 
-        // حساب المسافة بين نقطتين جغرافياً (كيلومتر)
         function calculateDistance(lat1, lon1, lat2, lon2) {
             if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
-            const R = 6371; // نصف قطر الأرض بالكيلومتر
+            const R = 6371; 
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -164,20 +162,39 @@
             return R * c;
         }
 
-        // جلب إحداثيات المستخدم وترتيب المحطات
         function getGPSAndSort() {
             const msg = document.getElementById('gpsMsg');
             if (navigator.geolocation) {
-                msg.textContent = 'جاري تحديد موقعك وترتيب الأقرب...';
+                msg.textContent = 'جاري تحديد موقعك وتفعيل تنبيهات القرب...';
                 navigator.geolocation.getCurrentPosition(pos => {
                     userLat = pos.coords.latitude;
                     userLon = pos.coords.longitude;
-                    msg.textContent = `تم تحديد موقعك بدقة. جاري فرز المحطات حسب القرب...`;
+                    msg.textContent = `تم تحديد موقعك. يتم عرض أقرب 10 نتائج حالياً.`;
+                    
+                    // التحقق من وجود محطة قريبة جداً (أقل من 3 كيلومترات) وإطلاق إشعار قوي
+                    checkNearbyAlerts(allStations, userLat, userLon);
+
                     renderStations(allStations);
                 }, () => {
-                    msg.textContent = 'تعذر الحصول على موقعك الحالي، تعرض المحطات بالترتيب العادي.';
+                    msg.textContent = 'تعذر الحصول على موقعك الحالي.';
                     renderStations(allStations);
                 });
+            }
+        }
+
+        // إشعار قوي عند توفر المادة في مكان قريب (أقل من 3 كم)
+        function checkNearbyAlerts(stations, uLat, uLon) {
+            let nearbyFound = false;
+            stations.forEach(st => {
+                if (st.status === 'approved' && st.lat && st.lon) {
+                    let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
+                    if (dist <= 3.0) {
+                        nearbyFound = true;
+                    }
+                }
+            });
+            if (nearbyFound) {
+                alert('🚨 تنبيه هام جداً: توفرت مواد (محروقات/غاز) في محطة قريبة جداً من موقعك الحالي (أقل من 3 كم)! سارع بالتفقد.');
             }
         }
 
@@ -198,7 +215,6 @@
         function renderStations(stations) {
             const container = document.getElementById('cloudStationsList');
             
-            // إذا كان المستخدم قد حدد موقعه، نقوم بحساب المسافة وترتيب المحطات تصاعدياً (الأقرب فالأبعد)
             if (userLat !== null && userLon !== null) {
                 stations.forEach(st => {
                     st.distance = calculateDistance(userLat, userLon, st.lat || 35.5, st.lon || 36.3);
@@ -206,30 +222,58 @@
                 stations.sort((a, b) => a.distance - b.distance);
             }
 
+            // تصفية وعرض أقرب 10 نتائج فقط
+            const top10Stations = stations.filter(st => st.status === 'approved').slice(0, 10);
+
             let html = '';
             let found = false;
 
-            stations.forEach((st) => {
-                if (st.status === 'approved') {
-                    found = true;
-                    let whatsappNum = st.phone ? st.phone.replace(/[^0-9]/g, '') : '963900000000';
-                    let distText = st.distance !== undefined ? `📍 تبعد عنك حوالي: <b>${st.distance.toFixed(1)} كم</b>` : '';
-                    
-                    html += `
-                        <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1.25rem; border-radius:12px; margin-bottom:1rem;">
-                            <h4 style="color:#1E293B; font-size:1.1rem; margin-bottom: 0.25rem;">${st.name}</h4>
-                            <p style="font-size:0.85rem; color:#64748B; margin-bottom: 0.25rem;">المنطقة: ${st.region} | المادة: ${st.material}</p>
-                            ${distText ? `<p style="font-size:0.85rem; color:#0284C7; margin-bottom: 0.5rem;">${distText}</p>` : ''}
-                            <div style="background:#E2E8F0; padding:0.5rem; border-radius:6px; font-size:0.85rem; margin-bottom: 0.75rem; color: #1E293B;">
-                                📦 الكمية: <b>${st.quantity}</b> | السعر: <b>${st.price}</b>
-                            </div>
-                            <a href="https://wa.me/${whatsappNum}?text=${encodeURIComponent('مرحباً، أود طلب مواد من ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
-                                💬 طلب عبر واتساب المالك
-                            </a>
-                        </div>`;
-                }
+            top10Stations.forEach((st) => {
+                found = true;
+                let whatsappNum = st.phone ? st.phone.replace(/[^0-9]/g, '') : '963900000000';
+                let distText = st.distance !== undefined ? `📍 تبعد عنك حوالي: <b>${st.distance.toFixed(1)} كم</b>` : '';
+                let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : 'لا يوجد تقييم';
+
+                html += `
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1.25rem; border-radius:12px; margin-bottom:1rem;">
+                        <h4 style="color:#1E293B; font-size:1.1rem; margin-bottom: 0.25rem;">${st.name}</h4>
+                        <p style="font-size:0.85rem; color:#64748B; margin-bottom: 0.25rem;">المنطقة: ${st.region} | المادة: ${st.material}</p>
+                        ${distText ? `<p style="font-size:0.85rem; color:#0284C7; margin-bottom: 0.25rem;">${distText}</p>` : ''}
+                        <p style="font-size:0.85rem; color:#D97706; margin-bottom: 0.5rem;">⭐ التقييم العام: <b>${currentRating}</b></p>
+                        <div style="background:#E2E8F0; padding:0.5rem; border-radius:6px; font-size:0.85rem; margin-bottom: 0.75rem; color: #1E293B;">
+                            📦 الكمية: <b>${st.quantity}</b> | السعر: <b>${st.price}</b>
+                        </div>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                            <button onclick="rateStation('${st.id}', 5)" style="background:#F59E0B; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.8rem; flex:1;">⭐ تقييم ممتاز</button>
+                            <button onclick="rateStation('${st.id}', 3)" style="background:#94A3B8; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.8rem; flex:1;">⭐ تقييم متوسط</button>
+                        </div>
+                        <a href="https://wa.me/${whatsappNum}?text=${encodeURIComponent('مرحباً، أود طلب مواد من ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
+                            💬 طلب عبر واتساب المالك
+                        </a>
+                    </div>`;
             });
-            container.innerHTML = found ? html : '<p style="text-align:center; color:#64748B;">لا توجد محطات مطابقة حالياً.</p>';
+            container.innerHTML = found ? html : '<p style="text-align:center; color:#64748B;">لا توجد محطات قريبة معتمدة حالياً.</p>';
+        }
+
+        // دالة حفظ التقييم في سحابة فايربيس
+        window.rateStation = async function(id, score) {
+            try {
+                const docRef = db.collection("stations").doc(id);
+                const docSnap = await docRef.get();
+                if (docSnap.exists) {
+                    let data = docSnap.data();
+                    let currentTotal = data.rating || 0;
+                    let count = data.ratingCount || 0;
+                    await docRef.update({
+                        rating: currentTotal + score,
+                        ratingCount: count + 1
+                    });
+                    alert('شكراً لك! تم تسجيل تقييمك بنجاح.');
+                    loadCloudStations();
+                }
+            } catch (error) {
+                alert('حدث خطأ أثناء إرسال التقييم.');
+            }
         }
 
         function filterStations(materialType) {
@@ -241,7 +285,6 @@
             }
         }
 
-        // إرسال طلب المحطة مع الإحداثيات
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('stName').value;
@@ -255,9 +298,10 @@
                 await db.collection("stations").add({
                     name, region, phone, material, quantity, price, 
                     lat: stationLat, lon: stationLon, 
+                    rating: 5, ratingCount: 1,
                     status: 'pending', createdAt: new Date().toISOString()
                 });
-                alert('تم إرسال طلبك بنجاح مع إحداثيات الموقع! بانتظار موافقة الإدارة.');
+                alert('تم إرسال طلبك بنجاح! بانتظار موافقة الإدارة.');
                 document.getElementById('cloudStationForm').reset();
                 showSection('home');
             } catch (error) {
@@ -265,7 +309,6 @@
             }
         });
 
-        // جلب الإدارة
         async function loadAdminCloud() {
             const container = document.getElementById('adminCloudList');
             try {
@@ -315,7 +358,6 @@
             }
         }
 
-        // PWA Install
         let deferredPrompt;
         const installBtn = document.getElementById('installBtn');
         window.addEventListener('beforeinstallprompt', (e) => {
