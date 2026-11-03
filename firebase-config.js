@@ -1,4 +1,3 @@
-// لا تحتاج لعمليات import هنا، سنستدعي السكريبتات مباشرة في صفحات الـ HTML
 const firebaseConfig = {
   apiKey: "AIzaSyCGbp7GwcE1ELk3PH2FMpvMQJ_KLliZg2s",
   authDomain: "motaofer.firebaseapp.com",
