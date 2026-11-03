@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متوفر هناا - بوابة المحطات والموزعين</title>
+    <title>متوفر هناا - بوابة المحطات</title>
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#10B981">
-    <link rel="manifest" href="manifest.json">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-    </script>
 </head>
 <body>
-
     <header>
         <div class="logo-container">
             <div class="logo-icon">⛽</div>
             <div class="logo-text">
-                <h1>متوفر هناا</h1>
-                <p>إدارة الكميات والأسعار</p>
+                <h1>بوابة المحطات</h1>
+                <p>إرسال الطلبات للسحابة</p>
             </div>
         </div>
     </header>
@@ -28,51 +21,58 @@
     <main>
         <div class="station-container">
             <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            <h2>تحديث توفر المواد والكميات</h2>
-            <p>قم بتحديث الحالة، الكمية المتوفرة، والأسعار ليراها المستهلكون مباشرة.</p>
+            <h2>تسجيل محطة أو تحديث بياناتها</h2>
 
-            <form id="updateStockForm" onsubmit="updateStock(event)">
+            <form id="cloudStationForm">
                 <div class="form-group">
-                    <label for="materialSelect">المادة:</label>
-                    <select id="materialSelect" class="form-control" required>
-                        <option value="بنزين">بنزين</option>
-                        <option value="مازوت">مازوت</option>
-                        <option value="غاز منزلي">غاز منزلي</option>
+                    <label>اسم المحطة أو الموزع:</label>
+                    <input type="text" id="stName" class="form-control" placeholder="مثال: محطة الأمان" required>
+                </div>
+                <div class="form-group">
+                    <label>المنطقة / القرية:</label>
+                    <input type="text" id="stRegion" class="form-control" placeholder="مثال: العوينة" required>
+                </div>
+                <div class="form-group">
+                    <label>التصنيف والمادة:</label>
+                    <select id="stType" class="form-control">
+                        <option value="محطة وقود">محطة وقود (بنزين/مازوت)</option>
+                        <option value="موزع غاز">موزع غاز منزلي</option>
                     </select>
                 </div>
-
                 <div class="form-group">
-                    <label for="quantityInput">الكمية المتوفرة (مثلاً: 500 ليتر / 25 جرة):</label>
-                    <input type="text" id="quantityInput" class="form-control" placeholder="أدخل الكمية المتاحة..." required>
+                    <label>الكمية المتوفرة:</label>
+                    <input type="text" id="stQty" class="form-control" placeholder="مثال: 500 ليتر / 20 جرة" required>
                 </div>
-
                 <div class="form-group">
-                    <label for="priceInput">السعر:</label>
-                    <input type="text" id="priceInput" class="form-control" placeholder="أدخل السعر..." required>
+                    <label>السعر:</label>
+                    <input type="text" id="stPrice" class="form-control" placeholder="السعر الحالي..." required>
                 </div>
-
-                <button type="submit" class="btn-primary">حفظ وتحديث البيانات</button>
+                <button type="submit" class="btn-primary">إرسال الطلب للإدارة سحابياً</button>
             </form>
         </div>
     </main>
 
-    <footer>
-        <p>جميع الحقوق محفوظة &copy; 2026 - متوفر هناا</p>
-    </footer>
+    <script type="module">
+        import { db, collection, addDoc } from "./firebase-config.js";
 
-    <script>
-        function updateStock(event) {
-            event.preventDefault();
-            const material = document.getElementById('materialSelect').value;
-            const quantity = document.getElementById('quantityInput').value;
-            const price = document.getElementById('priceInput').value;
+        document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('stName').value;
+            const region = document.getElementById('stRegion').value;
+            const type = document.getElementById('stType').value;
+            const quantity = document.getElementById('stQty').value;
+            const price = document.getElementById('stPrice').value;
 
-            // حفظ بيانات المخزون محلياً للمحطة
-            const stockData = { material, quantity, price, updatedAt: new Date().toLocaleTimeString() };
-            localStorage.setItem('stationStock', JSON.stringify(stockData));
-
-            alert('تم تحديث الكميات والأسعار بنجاح وتوجيهها للمستودع والسيرفر!');
-        }
+            try {
+                await addDoc(collection(db, "stations"), {
+                    name, region, type, quantity, price, status: 'pending', createdAt: new Date().toISOString()
+                });
+                alert('تم إرسال طلب الاعتماد بنجاح إلى سحابة الفايربيس!');
+                document.getElementById('cloudStationForm').reset();
+            } catch (error) {
+                alert('حدث خطأ أثناء الإرسال. تأكد من إعدادات قاعدة البيانات.');
+            }
+        });
     </script>
 </body>
 </html>
