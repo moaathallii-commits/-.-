@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متوفر هناا - الصفحة الرئيسية</title>
+    <title>متوفر هناا - الرئيسية</title>
     <link rel="stylesheet" href="style.css">
-    <!-- إعدادات الـ PWA -->
     <meta name="theme-color" content="#10B981">
     <link rel="manifest" href="manifest.json">
     <script>
@@ -20,26 +19,60 @@
             <div class="logo-icon">⛽</div>
             <div class="logo-text">
                 <h1>متوفر هناا</h1>
-                <p>نظام توفر المحروقات والغاز في سوريا</p>
+                <p>تحديد توفر المحروقات والغاز في سوريا</p>
             </div>
         </div>
     </header>
 
-    <main>
-        <div class="home-container" style="text-align: center; padding: 2rem 1rem;">
-            <h2>مرحباً بك في منصة متوفر هناا</h2>
-            <p style="color: #64748B; margin-bottom: 2rem;">اختر البوابة المناسبة للمتابعة:</p>
+    <main style="padding: 2rem 1rem; max-width: 600px; margin: auto; text-align: center;">
+        <h2 style="color: #1E293B; margin-bottom: 1rem;">أهلاً بك في منصة متوفر هناا</h2>
+        <p style="color: #64748B; margin-bottom: 2rem;">اختر القسم المناسب لمتابعة التوفر أو إدارة المحطات:</p>
 
-            <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 300px; margin: 0 auto;">
-                <a href="consumer.html" class="btn-primary" style="background-color: #10B981; text-decoration: none; padding: 0.75rem; border-radius: 8px; color: white; font-weight: 600;">🔍 بحث عن المواد (للمستهلكين)</a>
-                <a href="station.html" class="btn-primary" style="background-color: #0284C7; text-decoration: none; padding: 0.75rem; border-radius: 8px; color: white; font-weight: 600;">⛽ بوابة المحطات والموزعين</a>
-                <a href="admin.html" class="btn-primary" style="background-color: #475569; text-decoration: none; padding: 0.75rem; border-radius: 8px; color: white; font-weight: 600;">⚙️ لوحة الإدارة العامة</a>
-            </div>
+        <!-- زر تثبيت التطبيق على الهاتف (يظهر تلقائياً عندما يكون التطبيق قابلاً للتثبيت) -->
+        <button id="installBtn" style="display: none; background: #8B5CF6; color: white; padding: 1rem; border-radius: 12px; border: none; width: 100%; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+            📲 تثبيت التطبيق على الشاشة الرئيسية
+        </button>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <a href="consumer.html" style="background: #10B981; color: white; padding: 1rem; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.1rem;">
+                🔍 البحث عن المواد (بنزين، مازوت، غاز)
+            </a>
+            <a href="station.html" style="background: #0284C7; color: white; padding: 1rem; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.1rem;">
+                ⛽ بوابة المحطات والموزعين (تسجيل وتحديث)
+            </a>
+            <a href="admin.html" style="background: #334155; color: white; padding: 1rem; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 1.1rem;">
+                ⚙️ لوحة الإدارة العامة (الاعتمادات)
+            </a>
         </div>
     </main>
 
-    <footer>
+    <footer style="text-align: center; padding: 1.5rem; color: #64748B; font-size: 0.85rem;">
         <p>جميع الحقوق محفوظة &copy; 2026 - متوفر هناا</p>
     </footer>
+
+    <script>
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // منع المتصفح من إظهار رسالة التثبيت التلقائية الافتراضية
+            e.preventDefault();
+            deferredPrompt = e;
+            // إظهار زر التثبيت الخاص بنا
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('تم قبول تثبيت التطبيق');
+                }
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
