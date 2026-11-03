@@ -6,6 +6,12 @@
     <title>متوفر هناا - لوحة الإدارة السحابية</title>
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#10B981">
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </head>
 <body>
     <header>
@@ -18,10 +24,10 @@
         </div>
     </header>
 
-    <main>
+    <main style="padding: 1.5rem; max-width: 600px; margin: auto;">
         <div class="admin-container">
-            <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            <h2>إدارة طلبات ومحطات السحابة</h2>
+            <a href="index.html" class="back-link" style="color: #0284C7; text-decoration: none; font-weight: 600;">← العودة للرئيسية</a>
+            <h2 style="margin-top: 1rem; color: #1E293B;">إدارة طلبات ومحطات السحابة</h2>
             <div id="adminCloudList" style="margin-top: 1.5rem;">
                 <p style="text-align: center; color: #64748B;">جاري جلب الطلبات من السحابة...</p>
             </div>
@@ -48,8 +54,8 @@
                     html += `
                         <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
                             <div>
-                                <h4 style="font-size:0.95rem;">${st.name}</h4>
-                                <p style="font-size:0.8rem; color:#64748B;">${st.region} | <span style="background:${badgeColor}; color:${textColor}; padding:0.1rem 0.4rem; border-radius:4px;">${statusText}</span></p>
+                                <h4 style="font-size:0.95rem; color: #1E293B; margin-bottom: 0.2rem;">${st.name}</h4>
+                                <p style="font-size:0.8rem; color:#64748B;">${st.region} | <span style="background:${badgeColor}; color:${textColor}; padding:0.1rem 0.4rem; border-radius:4px; font-weight: 600;">${statusText}</span></p>
                             </div>
                             <div style="display:flex; gap:0.4rem;">
                                 ${st.status === 'pending' ? 
