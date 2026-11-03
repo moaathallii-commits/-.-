@@ -18,7 +18,7 @@
 </head>
 <body style="font-family: Tahoma, sans-serif; background: #F1F5F9; margin: 0; padding: 0;">
 
-    <!-- الترويسة مع النمط السري الدقيق (5 نقرات + انتظار 3-5 ثوانٍ + نقرة أخيرة) -->
+    <!-- ترويسة مع النمط السري الدقيق (5 نقرات + مهلة 3-5 ثوانٍ + نقرة سادسة) -->
     <header onclick="handleSecretClick()" style="background: #10B981; color: white; padding: 1rem; text-align: center; cursor: pointer; user-select: none;">
         <h1 style="margin: 0;">متوفر هناا</h1>
         <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا</p>
@@ -54,6 +54,14 @@
         <section id="sec-consumer" class="app-section" style="display: none;">
             <h2>أقرب 10 محطات معتمدة لموقعك</h2>
             
+            <!-- تخصيص تفضيلات التنبيه للمستهلك -->
+            <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
+                <p style="font-size: 0.85rem; font-weight: 600; color: #1E293B; margin-top: 0; margin-bottom: 0.5rem;">⚙️ تخصيص المواد التي ترغب باستقبال تنبيهات قريبة عنها:</p>
+                <div id="consumerAlertPreferences" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <!-- تعبئة ديناميكية -->
+                </div>
+            </div>
+
             <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 1rem 0; overflow-x: auto; padding-bottom: 0.5rem;">
                 <button onclick="filterStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">الكل</button>
             </div>
@@ -91,7 +99,7 @@
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اختر الفئات التي تقدمها:</label>
                     <div id="checkboxCategoriesContainer" style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 0.75rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem;">
-                        <!-- يتم تعبئتها ديناميكياً -->
+                        <!-- تعبئة ديناميكية -->
                     </div>
                 </div>
 
@@ -102,7 +110,7 @@
             </form>
         </section>
 
-        <!-- 4. لوحة تحكم المالك المستقلة -->
+        <!-- 4. لوحة تحكم المالك -->
         <section id="sec-stationPanel" class="app-section" style="display: none;">
             <h2>🎛️ لوحة تحكم مالك المحطة</h2>
             <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل ورمزك السري للوصول:</p>
@@ -131,6 +139,14 @@
                 </form>
             </div>
 
+            <!-- إدارة وتعديل وفئات النظام السابقة -->
+            <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1rem; color: #1E293B; margin-top: 0;">🛠️ إدارة الفئات والأصناف الحالية</h3>
+                <div id="adminCategoriesList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- تعبئة ديناميكية -->
+                </div>
+            </div>
+
             <div style="margin-bottom: 1rem;">
                 <input type="text" id="adminSearchInput" oninput="filterAdminList()" placeholder="🔍 ابحث عن محطة بالاسم، المنطقة أو الهاتف..." style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
             </div>
@@ -147,16 +163,16 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let allStations = [];
-        let availableCategories = ["بنزين", "مازوت", "غاز منزلي"];
+        let availableCategories = [];
+        let categoryDocs = {}; // لتخزين معرفات فئات فايربيس
         let userLat = null;
         let userLon = null;
         let stationLat = 35.5; 
         let stationLon = 36.3; 
 
-        // تشفير كلمة المرور الخاصة بالإدارة (Base64)
         const ENCODED_ADMIN_KEY = "TUhBQDE5OTcvL01PQUFUSFM="; // MHA@1997//MOAATHS
         
-        // المتغيرات الخاصة بالنمط السري الجديد (5 ضغطات + مهلة 3-5 ثوانٍ + ضغطة أخيرة)
+        // المتغيرات الخاصة بالنمط السري الدقيق (5 نقرات + انتظار إلزامي 3-5 ثوانٍ + نقرة سادسة)
         let secretStep = 0;
         let secretTimer = null;
         let waitingForFinalClick = false;
@@ -166,26 +182,20 @@
             if (!waitingForFinalClick) {
                 secretStep++;
                 if (secretStep === 1) {
-                    // بدء مراقبة الـ 5 ضغطات الأولى ضمن نافذة زمنية قصيرة (ثانيتين)
                     clearTimeout(secretTimer);
-                    secretTimer = setTimeout(() => {
-                        secretStep = 0;
-                    }, 2000);
+                    secretTimer = setTimeout(() => { secretStep = 0; }, 2500);
                 }
                 if (secretStep === 5) {
                     clearTimeout(secretTimer);
                     waitingForFinalClick = true;
-                    // فتح نافذة الانتظار الإلزامية (بين 3 إلى 5 ثوانٍ) للضغطة الأخيرة
+                    // مهلة انتظار إلزامية بين 3 إلى 5 ثوانٍ قبل الضغطة الأخيرة
                     secretTimer = setTimeout(() => {
-                        // انقضت المهلة ولم تكتمل الضغطة السادسة
                         secretStep = 0;
                         waitingForFinalClick = false;
-                    }, 5000); // حد أقصى 5 ثوانٍ
+                    }, 5000); 
                 }
             } else {
-                // نحن في مرحلة الانتظار المطلوبة (بين 3 إلى 5 ثوانٍ)، وتتم الضغطة الأخيرة الآن
                 clearTimeout(secretTimer);
-                let elapsedCheck = true; // تمت ضمن الفترة
                 secretStep = 0;
                 waitingForFinalClick = false;
 
@@ -221,20 +231,28 @@
         async function loadCategoriesAndInit() {
             try {
                 const snapshot = await db.collection("categories").get();
+                availableCategories = [];
+                categoryDocs = {};
                 if (!snapshot.empty) {
-                    availableCategories = [];
                     snapshot.forEach(doc => {
-                        availableCategories.push(doc.data().name);
+                        let catName = doc.data().name;
+                        availableCategories.push(catName);
+                        categoryDocs[catName] = doc.id;
                     });
                 } else {
-                    for (let cat of availableCategories) {
-                        await db.collection("categories").add({ name: cat });
+                    let defaults = ["بنزين", "مازوت", "غاز منزلي"];
+                    for (let cat of defaults) {
+                        let ref = await db.collection("categories").add({ name: cat });
+                        availableCategories.push(cat);
+                        categoryDocs[cat] = ref.id;
                     }
                 }
             } catch (err) {
-                console.log("استخدام الفئات الافتراضية محلياً");
+                availableCategories = ["بنزين", "مازوت", "غاز منزلي"];
             }
             updateCategoryUI();
+            updateAdminCategoriesList();
+            updateConsumerPreferencesUI();
         }
 
         function updateCategoryUI() {
@@ -257,6 +275,49 @@
             }
         }
 
+        // عرض الأصناف في لوحة الإدارة مع خيار التعديل أو الحذف
+        function updateAdminCategoriesList() {
+            const container = document.getElementById('adminCategoriesList');
+            if (!container) return;
+            let html = '';
+            availableCategories.forEach(cat => {
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:0.5rem; border-radius:6px; border:1px solid #CBD5E1;">
+                        <span><b>${cat}</b></span>
+                        <div style="display:flex; gap:0.4rem;">
+                            <button onclick="editCategory('${categoryDocs[cat]}', '${cat}')" style="background:#0284C7; color:white; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">تعديل الاسم</button>
+                            <button onclick="deleteCategory('${categoryDocs[cat]}')" style="background:#EF4444; color:white; border:none; padding:0.3rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حذف</button>
+                        </div>
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        window.editCategory = async function(docId, oldName) {
+            let newName = prompt("أدخل الاسم الجديد للصنف:", oldName);
+            if (newName && newName.trim() !== "" && newName !== oldName) {
+                try {
+                    await db.collection("categories").doc(docId).update({ name: newName.trim() });
+                    alert('تم تعديل اسم الصنف بنجاح!');
+                    loadCategoriesAndInit();
+                } catch (err) {
+                    alert('خطأ أثناء تعديل الصنف.');
+                }
+            }
+        }
+
+        window.deleteCategory = async function(docId) {
+            if (confirm("هل أنت متأكد من حذف هذا الصنف من النظام؟")) {
+                try {
+                    await db.collection("categories").doc(docId).delete();
+                    alert('تم حذف الصنف بنجاح!');
+                    loadCategoriesAndInit();
+                } catch (err) {
+                    alert('خطأ أثناء الحذف.');
+                }
+            }
+        }
+
         document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const catName = document.getElementById('newCategoryName').value.trim();
@@ -273,6 +334,26 @@
                 alert('هذه الفئة موجودة مسبقاً أو الاسم فارغ.');
             }
         });
+
+        // واجهة اختيار تفضيلات التنبيه للمستهلك
+        function updateConsumerPreferencesUI() {
+            const container = document.getElementById('consumerAlertPreferences');
+            if (!container) return;
+            let savedPrefs = JSON.parse(localStorage.getItem('alert_prefs') || '[]');
+            let html = '';
+            availableCategories.forEach(cat => {
+                let isChecked = savedPrefs.length === 0 || savedPrefs.includes(cat) ? 'checked' : '';
+                html += `<label style="display:flex; align-items:center; gap:0.3rem; font-size:0.8rem; cursor:pointer;"><input type="checkbox" value="${cat}" class="pref-checkbox" ${isChecked} onchange="saveConsumerPreferences()" style="width:1rem; height:1rem;"> ${cat}</label>`;
+            });
+            container.innerHTML = html;
+        }
+
+        window.saveConsumerPreferences = function() {
+            let checkboxes = document.querySelectorAll('.pref-checkbox:checked');
+            let prefs = [];
+            checkboxes.forEach(cb => prefs.push(cb.value));
+            localStorage.setItem('alert_prefs', JSON.stringify(prefs));
+        }
 
         function getStationGPS() {
             const status = document.getElementById('stationGpsStatus');
@@ -300,7 +381,6 @@
             return R * c;
         }
 
-        // تسجيل الموقع الآلي للمستهلك عند فتح التطبيق أو تحديثه وفحص التنبيهات الذكية بالخلفية
         function initConsumerGPS() {
             const msg = document.getElementById('gpsMsg');
             if (navigator.geolocation) {
@@ -320,7 +400,6 @@
             }
         }
 
-        // تشغيل الفحص التلقائي بالخلفية عند تحميل الصفحة إذا كانت الإحداثيات محفوظة مسبقاً
         window.addEventListener('DOMContentLoaded', () => {
             let savedLat = localStorage.getItem('user_lat');
             let savedLon = localStorage.getItem('user_lon');
@@ -346,23 +425,50 @@
             }
         }
 
+        // التنبيه الذكي البارز مع صوت وتحديد نوع المادة وتفضيلات المستخدم
         function checkSmartNearbyAlerts(stations, uLat, uLon) {
+            let savedPrefs = JSON.parse(localStorage.getItem('alert_prefs') || '[]');
             let alertsList = [];
+            
             stations.forEach(st => {
                 if (st.status === 'approved' && st.lat && st.lon && st.materialsStatus) {
-                    let hasAnyMaterial = Object.values(st.materialsStatus).some(val => val === true);
-                    if (hasAnyMaterial) {
-                        let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
-                        let customRadius = st.alertRadius || 5.0; 
-                        if (dist <= customRadius) {
-                            alertsList.push(`${st.name} (تبعد ${dist.toFixed(1)} كم)`);
+                    for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
+                        if (isAvail === true) {
+                            // التحقق مما إذا كان المستخدم مفضلاً لهذه المادة
+                            if (savedPrefs.length === 0 || savedPrefs.includes(mat)) {
+                                let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
+                                let customRadius = st.alertRadius || 5.0; 
+                                if (dist <= customRadius) {
+                                    alertsList.push(`محطة (${st.name}) في ${st.region} أعلنت توفر مادة [${mat}] - تبعد عنك ${dist.toFixed(1)} كم بسعر ${st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] + ' ل.س' : 'غير محدد'}`);
+                                }
+                            }
                         }
                     }
                 }
             });
+
             if (alertsList.length > 0) {
-                // إظهار تنبيه ذكي قوي للمستهلك
-                alert(`🚨 تنبيه ذكي للمنطقة!\nتوفرت مواد في المحطات القريبة منك:\n- ` + alertsList.join('\n- '));
+                // تشغيل صوت التنبيه (تنبيه صوتي متكرر عبر Web Audio API)
+                playAlertSound();
+                alert(`🚨 تنبيه ذكي هام جداً للمنطقة!\n\n` + alertsList.join('\n\n'));
+            }
+        }
+
+        // دالة توليد صوت التنبيه الذكي
+        function playAlertSound() {
+            try {
+                let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // تردد عالي واضح
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.6);
+            } catch (e) {
+                console.log("الصوت غير مدعوم تلقائياً بدون تفاعلات مستخدم سابقة");
             }
         }
 
@@ -406,11 +512,11 @@
                         let badgeBg = isAvailable ? '#D1FAE5' : '#FEE2E2';
                         let badgeColor = isAvailable ? '#059669' : '#DC2626';
                         let textStatus = isAvailable ? '✓ متوفر' : '✗ انتهت الكمية';
-                        materialsHtml += `<span style="background:${badgeBg}; color:${badgeColor}; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.75rem; margin-left:0.3rem; display:inline-block; margin-bottom:0.2rem;"><b>${mat}</b>: ${textStatus}</span>`;
+                        let priceText = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b>${st.materialsPrices[mat]} ل.س</b>` : '';
+                        materialsHtml += `<div style="background:${badgeBg}; color:${badgeColor}; padding:0.3rem 0.5rem; border-radius:6px; font-size:0.8rem; margin-bottom:0.3rem;"><b>${mat}</b>: ${textStatus} ${priceText}</div>`;
                     }
                 }
 
-                // التحقق من خيار إظهار أو إخفاء رقم التواصل للجميع حسب رغبة المالك
                 let whatsappBtn = '';
                 if (st.showContact && st.publicPhone) {
                     let cleanPhone = st.publicPhone.replace(/[^0-9]/g, '');
@@ -472,7 +578,6 @@
             }
         }
 
-        // تسجيل محطة جديدة (تعيين رقم تواصل عام افتراضي مطابق لرقم التسجيل في البداية)
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('stName').value;
@@ -495,17 +600,20 @@
             }
 
             let materialsStatus = {};
+            let materialsPrices = {};
             selectedCategories.forEach(cat => {
                 materialsStatus[cat] = false;
+                materialsPrices[cat] = ""; // السعر الأولي فارغ يحدده المالك لاحقاً
             });
 
             try {
                 await db.collection("stations").add({
                     name, region, phone, pinCode, 
-                    publicPhone: phone, // الرقم المستقل للاتصال
-                    showContact: true,   // خيار الإظهار للجميع افتراضياً
+                    publicPhone: phone, 
+                    showContact: true,   
                     categories: selectedCategories,
                     materialsStatus: materialsStatus,
+                    materialsPrices: materialsPrices,
                     lat: stationLat, lon: stationLon, 
                     alertRadius: 5.0, 
                     rating: 5, ratingCount: 1,
@@ -519,7 +627,7 @@
             }
         });
 
-        // 🎛️ لوحة تحكم المالك (إدارة رقم التواصل المستقل وتفعيل خيار الظهور)
+        // 🎛️ لوحة تحكم المالك (تحديد السعر بالليرة السورية وتحديث التوفر)
         async function loadMyStationPanel() {
             const phoneInput = document.getElementById('loginPhone').value.trim();
             const pinInput = document.getElementById('loginPin').value.trim();
@@ -576,20 +684,27 @@
                             </div>
 
                             <hr style="border:0; border-top:1px solid #E2E8F0; margin:0.75rem 0;">
-                            <p style="font-weight:600; font-size:0.9rem; color:#1E293B;">حدد توفر الأصناف لديك:</p>
+                            <p style="font-weight:600; font-size:0.9rem; color:#1E293B;">حدد توفر الأصناف والأسعار المعتمدة (ل.س):</p>
                     `;
 
                     if (st.categories && st.categories.length > 0) {
                         st.categories.forEach(cat => {
                             let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                            let currentPrice = st.materialsPrices && st.materialsPrices[cat] ? st.materialsPrices[cat] : '';
                             let btnBg = isAvail ? '#EF4444' : '#10B981';
                             let btnText = isAvail ? '🔴 إعلان انتهاء الكمية' : '🟢 إعلان متوفر الآن';
                             let statusBadge = isAvail ? '<span style="color:#059669; font-weight:bold;">متوفر</span>' : '<span style="color:#DC2626; font-weight:bold;">انتهت الكمية</span>';
 
                             html += `
-                                <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:0.6rem; border-radius:6px; margin-bottom:0.5rem; border:1px solid #E2E8F0;">
-                                    <span><b>${cat}</b>: ${statusBadge}</span>
-                                    <button onclick="toggleMaterialStatus('${id}', '${cat}', ${!isAvail})" style="background:${btnBg}; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">${btnText}</button>
+                                <div style="background:white; padding:0.75rem; border-radius:6px; margin-bottom:0.75rem; border:1px solid #E2E8F0;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                        <span><b>${cat}</b>: ${statusBadge}</span>
+                                        <button onclick="toggleMaterialStatus('${id}', '${cat}', ${!isAvail})" style="background:${btnBg}; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">${btnText}</button>
+                                    </div>
+                                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                                        <input type="number" id="price_${id}_${cat}" value="${currentPrice}" placeholder="السعر المعتمد (ل.س)..." style="flex:1; padding:0.4rem; border:1px solid #CBD5E1; border-radius:4px; font-size:0.85rem;">
+                                        <button onclick="updateMaterialPrice('${id}', '${cat}')" style="background:#0284C7; color:white; border:none; padding:0.4rem 0.8rem; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:600;">حفظ السعر</button>
+                                    </div>
                                 </div>`;
                         });
                     } else {
@@ -605,7 +720,6 @@
             }
         }
 
-        // حفظ إعدادات رقم التواصل المستقل وصلاحية الظهور
         window.updateContactSettings = async function(id) {
             let newPubPhone = document.getElementById('pubPhone_' + id).value.trim();
             let newShowContact = document.getElementById('showContact_' + id).checked;
@@ -627,6 +741,25 @@
             }
         }
 
+        window.updateMaterialPrice = async function(stationId, categoryName) {
+            let priceVal = document.getElementById(`price_${stationId}_${categoryName}`).value.trim();
+            try {
+                const docRef = db.collection("stations").doc(stationId);
+                const docSnap = await docRef.get();
+                if (docSnap.exists) {
+                    let data = docSnap.data();
+                    let matsPrices = data.materialsPrices || {};
+                    matsPrices[categoryName] = priceVal;
+
+                    await docRef.update({ materialsPrices: matsPrices });
+                    alert('تم تحديث السعر المعتمد بالليرة السورية بنجاح!');
+                    loadMyStationPanel();
+                }
+            } catch (error) {
+                alert('خطأ أثناء تحديث السعر.');
+            }
+        }
+
         window.toggleMaterialStatus = async function(stationId, categoryName, newStatus) {
             try {
                 const docRef = db.collection("stations").doc(stationId);
@@ -645,7 +778,6 @@
             }
         }
 
-        // لوحة الإدارة المخفية مع دعم البحث وتعديل نطاق التنبيه
         async function loadAdminCloud() {
             loadCategoriesAndInit();
             const container = document.getElementById('adminCloudList');
@@ -678,7 +810,7 @@
                             <div>
                                 <h4 style="font-size:1rem; color: #1E293B; margin-bottom: 0.2rem;">${st.name}</h4>
                                 <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region} | تسجيل الدخول: ${st.phone}</p>
-                                <p style="font-size:0.85rem; color:#0284C7;">📞 رقم التواصل العام: <b>${st.publicPhone || st.phone}</b> (${st.showContact !== false ? 'يظهر للجميع' : 'مخفي'})</p>
+                                <p style="font-size:0.85rem; color:#0284C7;">📞 رقم التواصل العام: <b>${st.publicPhone || st.phone}</b></p>
                                 <p style="font-size:0.85rem; color:#D97706;">🔑 الرمز السري: <b>${st.pinCode || 'غير متوفر'}</b></p>
                                 <p style="font-size:0.85rem; color:#0284C7;">الفئات: <b>${catsList}</b></p>
                                 <div style="margin: 0.5rem 0; display:flex; align-items:center; gap:0.5rem;">
@@ -736,7 +868,7 @@
                 loadAdminCloud();
 
                 let formattedPhone = stationPhone.startsWith('0') ? '963' + stationPhone.substring(1) : stationPhone;
-                let msg = `مرحباً بك في منصة "متوفر هناا" ⛽.\nيسعدنا إعلامك بأنه تم قبول اعتماد محطتكم (${stationName}) بنجاح.\nيمكنك الآن الدخول إلى لوحة التحكم الخاصة بك عبر التطبيق باستخدام رقم هاتفك ورمزك السري وتحديث توفر المواد مباشرة.\nشكراً لانضمامكم إلينا!`;
+                let msg = `مرحباً بك في منصة "متوفر هناا" ⛽.\nيسعدنا إعلامك بأنه تم قبول اعتماد محطتكم (${stationName}) بنجاح.\nيمكنك الآن الدخول إلى لوحة التحكم الخاصة بك عبر التطبيق باستخدام رقم هاتفك ورمزك السري وتحديث توفر المواد والأسعار مباشرة.\nشكراً لانضمامكم إلينا!`;
                 
                 let waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
                 window.open(waUrl, '_blank');
