@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متوفر هناا - لوحة الإدارة العامة</title>
+    <title>متوفر هناا - لوحة الإدارة</title>
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#10B981">
-    <link rel="manifest" href="manifest.json">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-    </script>
 </head>
 <body>
-
     <header>
         <div class="logo-container">
             <div class="logo-icon">⚙️</div>
             <div class="logo-text">
-                <h1>متوفر هناا</h1>
-                <p>لوحة الإدارة والتحكم الشامل</p>
+                <h1>لوحة الإدارة الشاملة</h1>
+                <p>تحكم كامل بصلاحيات المحطات</p>
             </div>
         </div>
     </header>
@@ -28,84 +21,65 @@
     <main>
         <div class="admin-container">
             <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            <h2>إدارة وصلاحيات المحطات</h2>
-            <p>التحكم الكامل بقبول المحطات أو سحب الصلاحيات منها.</p>
+            <h2>إدارة المحطات المعتمدة والطلبات</h2>
 
-            <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem;">طلبات الاعتماد المعلقة:</h3>
-            <div id="pendingStationsList"></div>
+            <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem 0;">طلبات الاعتماد المعلقة:</h3>
+            <div id="pendingList"></div>
 
-            <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem 0; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem;">المحطات المعتمدة حالياً (إدارة الصلاحيات):</h3>
-            <div id="approvedStationsAdminList"></div>
+            <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem 0;">المحطات المعتمدة (تحكم كامل):</h3>
+            <div id="approvedList"></div>
         </div>
     </main>
 
-    <footer>
-        <p>جميع الحقوق محفوظة &copy; 2026 - متوفر هناا</p>
-    </footer>
-
     <script>
-        function loadAdminData() {
-            const pendingContainer = document.getElementById('pendingStationsList');
-            const approvedContainer = document.getElementById('approvedStationsAdminList');
+        function loadAdmin() {
             let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
+            
+            // عرض الطلبات المعلقة
+            let pendingHTML = '';
+            // عرض المحطات المعتمدة
+            let approvedHTML = '';
 
-            // الطلبات المعلقة
-            const pending = stations.filter(s => s.status === 'pending');
-            if (pending.length === 0) {
-                pendingContainer.innerHTML = '<p style="color: #64748B; font-size: 0.85rem;">لا توجد طلبات معلقة.</p>';
-            } else {
-                pendingContainer.innerHTML = '';
-                stations.forEach((station, index) => {
-                    if (station.status === 'pending') {
-                        pendingContainer.innerHTML += `
-                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <div>
-                                    <h4 style="font-size: 0.95rem;">${station.name}</h4>
-                                    <p style="font-size: 0.8rem; color: #64748B;">${station.region}</p>
-                                </div>
-                                <button onclick="changeStatus(${index}, 'approved')" style="background-color: #D1FAE5; color: #059669; border: 1px solid #10B981; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600; cursor: pointer;">قبول</button>
+            stations.forEach((st, idx) => {
+                if (st.status === 'pending') {
+                    pendingHTML += `
+                        <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                            <div>
+                                <h4>${st.name}</h4>
+                                <p style="font-size:0.8rem; color:#64748B;">${st.region}</p>
                             </div>
-                        `;
-                    }
-                });
-            }
+                            <button onclick="updateStatus(${idx}, 'approved')" style="background:#D1FAE5; color:#059669; border:1px solid #10B981; padding:0.4rem 0.8rem; border-radius:8px; font-weight:600; cursor:pointer;">قبول الاعتماد</button>
+                        </div>`;
+                } else if (st.status === 'approved') {
+                    approvedHTML += `
+                        <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                            <div>
+                                <h4>${st.name}</h4>
+                                <p style="font-size:0.8rem; color:#059669;">حالة الصلاحية: مفعلة ومعتمدة</p>
+                            </div>
+                            <button onclick="updateStatus(${idx}, 'revoked')" style="background:#FEE2E2; color:#DC2626; border:1px solid #EF4444; padding:0.4rem 0.8rem; border-radius:8px; font-weight:600; cursor:pointer;">نزع الصلاحية وإيقاف</button>
+                        </div>`;
+                }
+            });
 
-            // المحطات المعتمدة (مع إمكانية سحب الصلاحية)
-            const approved = stations.filter(s => s.status === 'approved');
-            if (approved.length === 0) {
-                approvedContainer.innerHTML = '<p style="color: #64748B; font-size: 0.85rem;">لا توجد محطات معتمدة حالياً.</p>';
-            } else {
-                approvedContainer.innerHTML = '';
-                stations.forEach((station, index) => {
-                    if (station.status === 'approved') {
-                        approvedContainer.innerHTML += `
-                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <div>
-                                    <h4 style="font-size: 0.95rem;">${station.name}</h4>
-                                    <p style="font-size: 0.8rem; color: #059669;">معتمدة حالياً</p>
-                                </div>
-                                <button onclick="changeStatus(${index}, 'revoked')" style="background-color: #FEE2E2; color: #DC2626; border: 1px solid #EF4444; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600; cursor: pointer;">سحب الصلاحية وإيقاف</button>
-                            </div>
-                        `;
-                    }
-                });
-            }
+            document.getElementById('pendingList').innerHTML = pendingHTML || '<p style="color:#64748B;">لا توجد طلبات معلقة.</p>';
+            document.getElementById('approvedList').innerHTML = approvedHTML || '<p style="color:#64748B;">لا توجد محطات معتمدة حالياً.</p>';
         }
 
-        function changeStatus(index, newStatus) {
+        function updateStatus(index, action) {
             let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
-            if (newStatus === 'revoked') {
-                stations.splice(index, 1); // إزالة المحطة أو إلغاء اعتمادها
-                alert('تم سحب الصلاحية وإزالة المحطة من النظام بنجاح!');
+            if (action === 'revoked') {
+                stations.splice(index, 1); // حذف المحطة وإلغاء صلاحيتها تماماً
+                alert('تم نزع الصلاحية وإيقاف المحطة بنجاح!');
             } else {
-                stations[index].status = newStatus;
+                stations[index].status = 'approved';
                 alert('تمت الموافقة واعتماد المحطة!');
             }
             localStorage.setItem('stationsRequests', JSON.stringify(stations));
-            loadAdminData();
+            loadAdmin();
         }
 
-        window.onload = loadAdminData;
+        window.onload = loadAdmin;
     </script>
 </body>
 </html>
