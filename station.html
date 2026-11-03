@@ -20,7 +20,7 @@
             <div class="logo-icon">⛽</div>
             <div class="logo-text">
                 <h1>متوفر هناا</h1>
-                <p>بوابة تسجيل وإدارة المحطات</p>
+                <p>إدارة الكميات والأسعار</p>
             </div>
         </div>
     </header>
@@ -28,29 +28,30 @@
     <main>
         <div class="station-container">
             <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            <h2>تسجيل محطة أو موزع معتمد</h2>
-            <p>أدخل بيانات محطتك أو مؤسستك ليتم مراجعتها واعتمادها من قبل الإدارة العامة.</p>
+            <h2>تحديث توفر المواد والكميات</h2>
+            <p>قم بتحديث الحالة، الكمية المتوفرة، والأسعار ليراها المستهلكون مباشرة.</p>
 
-            <form id="stationForm" onsubmit="submitStationRequest(event)">
+            <form id="updateStockForm" onsubmit="updateStock(event)">
                 <div class="form-group">
-                    <label for="stationName">اسم المحطة أو الموزع:</label>
-                    <input type="text" id="stationName" class="form-control" placeholder="مثال: محطة الأمان للمحروقات" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="stationRegion">المنطقة / القرية:</label>
-                    <input type="text" id="stationRegion" class="form-control" placeholder="مثال: قرية العوينة - الشارع الرئيسي" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="stationType">التصنيف:</label>
-                    <select id="stationType" class="form-control" required>
-                        <option value="محطة وقود">محطة وقود</option>
-                        <option value="موزع غاز">موزع غاز معتمد</option>
+                    <label for="materialSelect">المادة:</label>
+                    <select id="materialSelect" class="form-control" required>
+                        <option value="بنزين">بنزين</option>
+                        <option value="مازوت">مازوت</option>
+                        <option value="غاز منزلي">غاز منزلي</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn-primary">إرسال طلب الاعتماد للإدارة</button>
+                <div class="form-group">
+                    <label for="quantityInput">الكمية المتوفرة (مثلاً: 500 ليتر / 25 جرة):</label>
+                    <input type="text" id="quantityInput" class="form-control" placeholder="أدخل الكمية المتاحة..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="priceInput">السعر:</label>
+                    <input type="text" id="priceInput" class="form-control" placeholder="أدخل السعر..." required>
+                </div>
+
+                <button type="submit" class="btn-primary">حفظ وتحديث البيانات</button>
             </form>
         </div>
     </main>
@@ -60,18 +61,17 @@
     </footer>
 
     <script>
-        function submitStationRequest(event) {
+        function updateStock(event) {
             event.preventDefault();
-            const name = document.getElementById('stationName').value;
-            const region = document.getElementById('stationRegion').value;
-            const type = document.getElementById('stationType').value;
+            const material = document.getElementById('materialSelect').value;
+            const quantity = document.getElementById('quantityInput').value;
+            const price = document.getElementById('priceInput').value;
 
-            let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
-            stations.push({ name, region, type, status: 'pending' });
-            localStorage.setItem('stationsRequests', JSON.stringify(stations));
+            // حفظ بيانات المخزون محلياً للمحطة
+            const stockData = { material, quantity, price, updatedAt: new Date().toLocaleTimeString() };
+            localStorage.setItem('stationStock', JSON.stringify(stockData));
 
-            alert('تم إرسال طلبك بنجاح إلى الإدارة العامة بانتظار الاعتماد!');
-            document.getElementById('stationForm').reset();
+            alert('تم تحديث الكميات والأسعار بنجاح وتوجيهها للمستودع والسيرفر!');
         }
     </script>
 </body>
