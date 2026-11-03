@@ -12,6 +12,9 @@
             navigator.serviceWorker.register('sw.js');
         }
     </script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
 </head>
 <body>
     <header>
@@ -58,8 +61,9 @@
         </div>
     </main>
 
-    <script type="module">
-        import { db, collection, addDoc } from "./firebase-config.js";
+    <script>
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -70,13 +74,13 @@
             const price = document.getElementById('stPrice').value;
 
             try {
-                await addDoc(collection(db, "stations"), {
+                await db.collection("stations").add({
                     name, region, type, quantity, price, status: 'pending', createdAt: new Date().toISOString()
                 });
                 alert('تم إرسال طلب الاعتماد بنجاح إلى سحابة الفايربيس!');
                 document.getElementById('cloudStationForm').reset();
             } catch (error) {
-                alert('حدث خطأ أثناء الإرسال. تأكد من إعدادات قاعدة البيانات.');
+                alert('حدث خطأ أثناء الإرسال: ' + error.message);
             }
         });
     </script>
