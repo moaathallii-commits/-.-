@@ -20,7 +20,7 @@
             <div class="logo-icon">✓</div>
             <div class="logo-text">
                 <h1>متوفر هناا</h1>
-                <p>البحث عن المواد المتوفرة</p>
+                <p>البحث وتحديد الموقع GPS</p>
             </div>
         </div>
     </header>
@@ -29,11 +29,14 @@
         <div class="search-container">
             <a href="index.html" class="back-link">← العودة للرئيسية</a>
             <h2>ابحث عن المواد المتوفرة قربك</h2>
-            <p>النتائج أدناه تعرض المحطات والموزعين المعتمدين مع إمكانية التواصل المباشر لطلب المادة.</p>
+            <p>استخدم تحديد الموقع الجغرافي لمعرفة المحطات المتاحة بدقة وحسب الكميات والأسعار الحالية.</p>
 
-            <div id="approvedStationsList" style="margin-top: 1.5rem;">
-                <!-- سيتم عرض المحطات مع زر الواتساب تلقائياً -->
-            </div>
+            <button type="button" onclick="getLocation()" class="btn-primary" style="margin-bottom: 1.5rem; background-color: #0284C7;">
+                📍 تحديد موقعي الحالي تلقائياً (GPS)
+            </button>
+            <p id="locationStatus" style="font-size: 0.85rem; color: #64748B; margin-bottom: 1rem; text-align: center;"></p>
+
+            <div id="approvedStationsList"></div>
         </div>
     </main>
 
@@ -42,9 +45,28 @@
     </footer>
 
     <script>
+        function getLocation() {
+            const status = document.getElementById('locationStatus');
+            if (!navigator.geolocation) {
+                status.textContent = 'متصفحك لا يدعم تحديد الموقع الجغرافي.';
+                return;
+            }
+            status.textContent = 'جاري تحديد موقعك الجغرافي...';
+            navigator.geolocation.getCurrentPosition((position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                status.textContent = `تم تحديد موقعك بنجاح (خط العرض: ${lat.toFixed(2)}, خط الطول: ${lon.toFixed(2)})`;
+                loadApprovedStations();
+            }, () => {
+                status.textContent = 'تعذر الحصول على موقعك. يرجى السماح للمتصفح بالوصول للموقع.';
+                loadApprovedStations();
+            });
+        }
+
         function loadApprovedStations() {
             const container = document.getElementById('approvedStationsList');
             let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
+            let stock = JSON.parse(localStorage.getItem('stationStock')) || { material: 'بنزين', quantity: 'متوفر', price: 'حسب السعر الرسمي' };
             
             const approved = stations.filter(s => s.status === 'approved');
 
@@ -53,22 +75,24 @@
                 return;
             }
 
-            container.innerHTML = '<h3 style="font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem;">المحطات والموزعون المعتمدون:</h3>';
+            container.innerHTML = '<h3 style="font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem;">المحطات القريبة والمتاحة:</h3>';
             
             approved.forEach(station => {
-                // رقم هاتف افتراضي للتواصل أو رقم مخصص للمحطة (يمكن تخصيصه لاحقاً)
-                const phone = station.phone || '963900000000'; 
-                const whatsappMessage = encodeURIComponent(`مرحباً، أود الاستفسار عن توفر المواد في ${station.name} عبر تطبيق متوفر هناا.`);
+                const phone = '963900000000';
+                const whatsappMessage = encodeURIComponent(`مرحباً، أود حجز مادة ${stock.material} من ${station.name} عبر تطبيق متوفر هناا.`);
 
                 container.innerHTML += `
-                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1.25rem; border-radius: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1.25rem; border-radius: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
                         <div>
-                            <h4 style="color: #1E293B; font-size: 1.1rem; margin-bottom: 0.25rem;">${station.name}</h4>
-                            <p style="font-size: 0.85rem; color: #64748B;">المنطقة: ${station.region} | التصنيف: ${station.type}</p>
+                            <h4 style="color: #1E293B; font-size: 1.1rem;">${station.name}</h4>
+                            <p style="font-size: 0.85rem; color: #64748B;">المنطقة: ${station.region} (${station.type})</p>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 0.75rem;">
-                            <span style="background-color: #D1FAE5; color: #059669; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600;">متوفر ومتاح</span>
-                            <a href="https://wa.me/${phone}?text=${whatsappMessage}" target="_blank" style="background-color: #25D366; color: white; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                        <div style="background: #E2E8F0; padding: 0.5rem; border-radius: 8px; font-size: 0.85rem; color: #1E293B;">
+                            📦 المادة: <b>${stock.material}</b> | الكمية: <b>${stock.quantity}</b> | السعر: <b>${stock.price}</b>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 0.5rem;">
+                            <span style="background-color: #D1FAE5; color: #059669; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600;">متاح للطلب</span>
+                            <a href="https://wa.me/${phone}?text=${whatsappMessage}" target="_blank" style="background-color: #25D366; color: white; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 4px;">
                                 <span>طلب عبر واتساب</span> 💬
                             </a>
                         </div>
