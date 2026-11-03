@@ -152,11 +152,28 @@
             z-index: 5;
         }
         
-        /* VIP Card Styles */
+        /* VIP Card & Broadcast Styles */
         .vip-card {
             border: 2px solid #FBBF24 !important;
             box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
             background: linear-gradient(180deg, #1E293B 0%, #172033 100%) !important;
+        }
+        @keyframes pulseGlowVIP {
+            0% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); transform: scale(1); }
+            50% { box-shadow: 0 0 22px rgba(251, 191, 36, 0.95); transform: scale(1.015); }
+            100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); transform: scale(1); }
+        }
+        .vip-broadcast-banner {
+            background: linear-gradient(135deg, #78350F 0%, #451A03 100%);
+            border: 2px solid #FBBF24;
+            color: #FEF3C7;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 900;
+            margin: 0.65rem 0;
+            text-align: center;
+            animation: pulseGlowVIP 2s infinite ease-in-out;
         }
         .vip-badge {
             background: #FBBF24;
@@ -759,6 +776,9 @@
 
         // --- Consumer Radar & Preferences ---
         async function initConsumerSettingsState() {
+            if (localStorage.getItem('bg_alarm_active') === null) {
+                localStorage.setItem('bg_alarm_active', 'true');
+            }
             let isBg = localStorage.getItem('bg_alarm_active') === 'true';
             let bgToggle = document.getElementById('bgAlarmToggle');
             if (bgToggle) bgToggle.checked = isBg;
@@ -897,7 +917,19 @@
 
                 let broadcastHtml = '';
                 if (isVip && st.broadcastMsg) {
-                    broadcastHtml = `<div style="background:#451A03; border:1px solid #F59E0B; color:#FDE68A; padding:0.5rem; border-radius:8px; font-size:0.8rem; margin:0.5rem 0;">📢 <b>إشعار فوري من المالك:</b> ${st.broadcastMsg}</div>`;
+                    broadcastHtml = `<div class="vip-broadcast-banner">🚨📢 بث عاجل من المالك:<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                }
+
+                let locationCoordsHtml = '';
+                if (st.lat && st.lon) {
+                    locationCoordsHtml = `
+                        <div style="background:#0F172A; border:1px solid #334155; padding:0.55rem 0.7rem; border-radius:8px; margin:0.45rem 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                            <div>
+                                <div style="font-size:0.72rem; color:#94A3B8;">🌐 الإحداثيات الدقيقة للمحطة:</div>
+                                <div style="font-size:0.8rem; color:#34D399; font-family:monospace; font-weight:bold; direction:ltr; text-align:right;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
+                            </div>
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="background:#0284C7; color:white; text-decoration:none; padding:0.4rem 0.75rem; border-radius:6px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">🗺️ فتح الموقع على خرائط Google</a>
+                        </div>`;
                 }
 
                 let matsHtml = '';
@@ -925,6 +957,7 @@
                         <h4 style="color:#FBBF24; font-size:1.1rem; margin:0 0 0.2rem 0;">${st.name}</h4>
                         <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.25rem 0;">المنطقة: ${st.region}</p>
                         ${distText}
+                        ${locationCoordsHtml}
                         ${broadcastHtml}
                         <div style="margin: 0.6rem 0;">${matsHtml}</div>
                         <p style="font-size:0.8rem; color:#F59E0B; margin: 0.4rem 0;">⭐ التقييم العام: <b>${currentRating} / 5</b> (${ratingCount} تقييم)</p>
@@ -1006,30 +1039,68 @@
             }
         };
 
+        let realtimeUnsubscribe = null;
+
         function startBackgroundAlarmLoop() {
             if (backgroundAlarmInterval) clearInterval(backgroundAlarmInterval);
+            
+            // Request notification permission & register periodic background sync if supported
+            if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+
+            // Real-time Firestore listener so VIP broadcasts & status changes trigger immediately even when screen is off / browser minimized
+            if (db && !realtimeUnsubscribe) {
+                try {
+                    realtimeUnsubscribe = db.collection("stations").where("status", "==", "approved").onSnapshot(snap => {
+                        let liveStations = [];
+                        snap.forEach(d => liveStations.push({ id: d.id, ...d.data() }));
+                        allStations = liveStations;
+                        checkSmartAlertsSilent(liveStations, userLat, userLon);
+                    }, err => {});
+                } catch (e) {}
+            }
+
             backgroundAlarmInterval = setInterval(async () => {
-                if (!navigator.onLine || userLat === null || userLon === null) return;
+                if (!navigator.onLine) return;
                 let stations = await loadCloudStationsData();
                 checkSmartAlertsSilent(stations, userLat, userLon);
-            }, 60000);
+            }, 45000);
         }
 
         function checkSmartAlertsSilent(stations, uLat, uLon) {
             let savedPrefs = JSON.parse(localStorage.getItem('alert_prefs') || '[]');
             let alertMode = localStorage.getItem('alert_trigger_mode') || 'both';
             let alertsList = [];
+            let vipBroadcastAlerts = [];
             let lastAlerts = JSON.parse(localStorage.getItem('last_alert_states') || '{}');
+            let lastBroadcasts = JSON.parse(localStorage.getItem('last_vip_broadcasts') || '{}');
             let stateChanged = false;
+            let broadcastChanged = false;
             let batchUpdateIds = new Set();
 
             stations.forEach(st => {
-                if (st.status === 'approved' && st.lat && st.lon && st.materialsStatus) {
+                if (st.status === 'approved') {
                     let defaultRadius = st.isVip ? 15.0 : 5.0;
                     let stRadius = st.alertRadius || defaultRadius;
-                    let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
+                    let dist = (uLat !== null && uLon !== null && st.lat && st.lon) ? calculateDistance(uLat, uLon, st.lat, st.lon) : 0;
+                    let isWithinRange = (uLat === null || uLon === null) ? true : (dist <= stRadius);
 
-                    if (dist <= stRadius) {
+                    // 1. Check Loud Prominent VIP Broadcast (works even if user hasn't set material filters)
+                    if (st.isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '' && isWithinRange) {
+                        let bKey = `${st.id}_bc`;
+                        let currentBcSignature = `${st.broadcastMsg.trim()}_${st.broadcastId || ''}`;
+                        if (lastBroadcasts[bKey] !== currentBcSignature) {
+                            lastBroadcasts[bKey] = currentBcSignature;
+                            broadcastChanged = true;
+                            let distLabel = (uLat !== null && uLon !== null) ? ` (تبعد ${dist.toFixed(1)} كم)` : '';
+                            vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${st.name} - ${st.region}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${st.broadcastMsg}"</span>`);
+                            batchUpdateIds.add(st.id);
+                        }
+                    }
+
+                    // 2. Check Standard Material Availability / Out of Stock
+                    if (uLat !== null && uLon !== null && st.lat && st.lon && st.materialsStatus && isWithinRange) {
                         for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
                             if (savedPrefs.length === 0 || savedPrefs.includes(mat)) {
                                 let shouldAlert = false;
@@ -1055,15 +1126,42 @@
 
             if (stateChanged) {
                 localStorage.setItem('last_alert_states', JSON.stringify(lastAlerts));
-                if (db) {
-                    batchUpdateIds.forEach(id => {
-                        db.collection("stations").doc(id).update({
-                            alertsReceivedCount: firebase.firestore.FieldValue.increment(1)
-                        }).catch(e => {});
-                    });
-                }
+            }
+            if (broadcastChanged) {
+                localStorage.setItem('last_vip_broadcasts', JSON.stringify(lastBroadcasts));
+            }
+            if ((stateChanged || broadcastChanged) && db) {
+                batchUpdateIds.forEach(id => {
+                    db.collection("stations").doc(id).update({
+                        alertsReceivedCount: firebase.firestore.FieldValue.increment(1)
+                    }).catch(e => {});
+                });
             }
 
+            // Trigger VIP Loud Siren & Prominent High-Priority System Notification
+            if (vipBroadcastAlerts.length > 0) {
+                playTone('vip_siren');
+                if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
+                showAlertModal(vipBroadcastAlerts.concat(alertsList).join('<br><br>'));
+
+                let cleanNotificationText = vipBroadcastAlerts.map(t => t.replace(/<[^>]*>?/gm, '')).join('\n');
+                if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification("🚨📢 إشعار VIP عاجل - متوفر هناا", {
+                            body: cleanNotificationText,
+                            icon: "icon-192.png",
+                            badge: "icon-192.png",
+                            tag: "vip-broadcast-" + Date.now(),
+                            renotify: true,
+                            requireInteraction: true,
+                            vibrate: [500, 200, 500, 200, 800]
+                        });
+                    }).catch(e => {});
+                }
+                return;
+            }
+
+            // Trigger Standard Alert
             if (alertsList.length > 0) {
                 playTone(localStorage.getItem('user_ringtone') || 'alarm1');
                 showAlertModal(alertsList.join('<br><br>'));
@@ -1072,7 +1170,10 @@
                         reg.showNotification("🚨 تحديث رادار المحروقات", {
                             body: alertsList.join('\n'),
                             icon: "icon-192.png",
-                            vibrate: [200, 100, 200]
+                            tag: "radar-alert-" + Date.now(),
+                            renotify: true,
+                            requireInteraction: true,
+                            vibrate: [300, 150, 300, 150, 400]
                         });
                     }).catch(e => {});
                 }
@@ -1088,11 +1189,23 @@
         function playTone(tone) {
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
-                if (tone === 'alarm2') {
+                if (tone === 'vip_siren') {
+                    // Loud prominent dual-frequency siren for VIP Broadcasts
+                    for (let i = 0; i < 6; i++) {
+                        setTimeout(() => {
+                            let o = ctx.createOscillator(), g = ctx.createGain();
+                            o.type = 'sawtooth';
+                            o.frequency.setValueAtTime(i % 2 === 0 ? 880 : 1180, ctx.currentTime);
+                            g.gain.setValueAtTime(0.45, ctx.currentTime);
+                            o.connect(g); g.connect(ctx.destination);
+                            o.start(); o.stop(ctx.currentTime + 0.38);
+                        }, i * 420);
+                    }
+                } else if (tone === 'alarm2') {
                     for (let i = 0; i < 4; i++) {
                         setTimeout(() => {
                             let o = ctx.createOscillator(), g = ctx.createGain();
-                            o.type = 'square'; o.frequency.value = 500; g.gain.value = 0.2;
+                            o.type = 'square'; o.frequency.value = 500; g.gain.value = 0.25;
                             o.connect(g); g.connect(ctx.destination);
                             o.start(); o.stop(ctx.currentTime + 0.25);
                         }, i * 350);
@@ -1106,7 +1219,7 @@
                     for (let i = 0; i < 3; i++) {
                         setTimeout(() => {
                             let o = ctx.createOscillator(), g = ctx.createGain();
-                            o.type = 'sawtooth'; o.frequency.value = 700 + (i * 150); g.gain.value = 0.3;
+                            o.type = 'sawtooth'; o.frequency.value = 700 + (i * 150); g.gain.value = 0.35;
                             o.connect(g); g.connect(ctx.destination);
                             o.start(); o.stop(ctx.currentTime + 0.4);
                         }, i * 500);
@@ -1478,8 +1591,12 @@
         window.sendVIPBroadcast = async function(id) {
             let msg = document.getElementById(`bcMsg_${id}`).value.trim();
             try {
-                await db.collection("stations").doc(id).update({ broadcastMsg: msg, lastUpdate: new Date().toISOString() });
-                showToast(msg ? "تم نشر الإشعار الفوري في بطاقة محطتك!" : "تم مسح الإشعار الفوري.");
+                await db.collection("stations").doc(id).update({
+                    broadcastMsg: msg,
+                    broadcastId: Date.now().toString(),
+                    lastUpdate: new Date().toISOString()
+                });
+                showToast(msg ? "🚨 تم إطلاق البث الصاخب الفوري لجميع المستهلكين في نطاقك!" : "تم إيقاف ومسح الإشعار الفوري.");
             } catch (e) { showToast("خطأ في النشر"); }
         };
 
