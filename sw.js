@@ -1,11 +1,13 @@
-const CACHE_NAME = 'motaofer-v2';
+const CACHE_NAME = 'motaofer-v3';
 const assets = [
   'index.html',
   'consumer.html',
   'station.html',
   'admin.html',
   'firebase-config.js',
-  'style.css'
+  'style.css',
+  'manifest.json',
+  'icon.png'
 ];
 
 self.addEventListener('install', e => {
