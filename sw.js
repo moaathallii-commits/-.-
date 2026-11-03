@@ -1,4 +1,4 @@
-const CACHE_NAME = 'motaofer-v1';
+const CACHE_NAME = 'motaofer-v2';
 const assets = [
   'index.html',
   'consumer.html',
@@ -17,7 +17,7 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('fetch', e => {
-  e.respondIn(
+  e.respondWith(
     caches.match(e.request).then(response => {
       return response || fetch(e.request);
     })
