@@ -791,6 +791,9 @@
             if (settBtn) settBtn.style.display = (id === 'consumerRadar') ? 'flex' : 'none';
             if (escBtn) escBtn.style.display = (id === 'consumerRadar') ? 'block' : 'none';
 
+            if (id === 'consumerRadar') {
+                fetchAndRenderConsumerAdsDirectly();
+            }
             if (id === 'admin') {
                 loadAdminPanel();
             }
@@ -860,6 +863,7 @@
         // --- Initial Boot ---
         window.addEventListener('DOMContentLoaded', () => {
             updateNetworkStatusBar();
+            checkAndRequestAllPermissionsOnFirstLaunch();
 
             // 1. Show correct route immediately so screen is never blank
             let route = localStorage.getItem('app_route');
@@ -1858,6 +1862,7 @@
         };
 
         function loadMyStationDashboard(st) {
+            startStationOwnerSurveyChecker(st);
             let avgRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
             let tierLevel = getStationTierLevel(st);
             let isVipPlus = (tierLevel === 2);
@@ -2552,6 +2557,188 @@
                 showToast("حدث خطأ أثناء تغيير باقة المحطة");
             }
         };
+
+        
+        // --- 1. Reliable Sponsor & Config Ads Fetch ---
+        async function fetchAndRenderConsumerAdsDirectly() {
+            if (!db) return;
+            try {
+                let doc = await db.collection("settings").doc("config").get();
+                if (doc.exists) {
+                    renderConsumerAdsFromConfig(doc.data());
+                }
+            } catch(e) {}
+        }
+
+        // --- 2. First-Launch Permissions Startup Modal ---
+        function checkAndRequestAllPermissionsOnFirstLaunch() {
+            let hasAsked = localStorage.getItem('app_permissions_asked');
+            if (!hasAsked) {
+                let modalHtml = `
+                    <div id="startupPermissionModal" class="modal-overlay" style="display:flex; z-index:20000;">
+                        <div class="modal-content" style="border-color:#10B981; max-width:420px; text-align:right;">
+                            <h3 style="color:#34D399; margin-top:0; text-align:center;">🌟 أهلاً بك في منصة متوفر هناا</h3>
+                            <p style="font-size:0.85rem; color:#CBD5E1; line-height:1.6; margin-bottom:1.25rem;">
+                                لكي يعمل التطبيق بأفضل كفاءة ويوجهك لأقرب المحطات ويرسل لك إشعارات التنبيه الفورية وصافرات الإنذار، يرجى السماح بالأذونات التالية:
+                            </p>
+                            <div style="background:#0F172A; padding:0.85rem; border-radius:10px; margin-bottom:1.25rem; font-size:0.82rem; color:#F8FAFC; line-height:1.8;">
+                                📍 <b>الموقع الجغرافي (GPS):</b> لحساب المسافة الدقيقة وعرض المحطات القريبة.<br>
+                                🔔 <b>الإشعارات الفورية:</b> لتنبيهك عند توفر المحروقات والغاز.<br>
+                                🔊 <b>تنبيهات الصوت:</b> لإطلاق صفارة الإنذار عند التغيرات اللحظية.
+                            </div>
+                            <button onclick="grantAllAppPermissions()" class="btn-primary" style="background:#059669; padding:0.85rem; font-size:1rem; margin-bottom:0.5rem;">✅ السماح بكافة الأذونات والمتابعة</button>
+                        </div>
+                    </div>
+                `;
+                let div = document.createElement('div');
+                div.innerHTML = modalHtml;
+                document.body.appendChild(div);
+            }
+        }
+
+        window.grantAllAppPermissions = function() {
+            localStorage.setItem('app_permissions_asked', 'true');
+            let modal = document.getElementById('startupPermissionModal');
+            if (modal) modal.remove();
+
+            // 1. Request Notification
+            if ("Notification" in window && Notification.permission !== "granted") {
+                Notification.requestPermission().catch(e => {});
+            }
+
+            // 2. Request Geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    userLat = pos.coords.latitude;
+                    userLon = pos.coords.longitude;
+                    localStorage.setItem('user_lat', userLat);
+                    localStorage.setItem('user_lon', userLon);
+                    showToast("✅ تم منح صلاحية الموقع الجغرافي بنجاح");
+                }, () => {}, { timeout: 6000 });
+            }
+
+            // 3. Unlock Web Audio
+            try {
+                let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                ctx.resume();
+            } catch(e) {}
+        };
+
+        // --- 3. Station Owner 3-Hour Periodic Quick-Survey Modal ---
+        let stationSurveyInterval = null;
+
+        function startStationOwnerSurveyChecker(stationDoc) {
+            if (stationSurveyInterval) clearInterval(stationSurveyInterval);
+            
+            // Check every 3 hours (10800000 ms), or test check on login / section load
+            stationSurveyInterval = setInterval(() => {
+                triggerStationQuickSurveyIfNeeded(stationDoc);
+            }, 10800000);
+        }
+
+        window.triggerStationQuickSurveyIfNeeded = function(st) {
+            let lastSurveyTime = parseInt(localStorage.getItem(`last_survey_${st.id}`) || '0');
+            let now = Date.now();
+            // 3 hours = 3 * 60 * 60 * 1000 = 10800000 ms (For testing/demo, we can check or force if needed)
+            // Let's trigger if 3 hours passed since last survey
+            if (now - lastSurveyTime >= 10800000) {
+                showStationSurveyModal(st);
+            }
+        };
+
+        window.showStationSurveyModal = function(st) {
+            let existing = document.getElementById('stationSurveyModal');
+            if (existing) existing.remove();
+
+            let matsCheckHtml = '';
+            if (st.categories && st.categories.length > 0) {
+                st.categories.forEach(cat => {
+                    let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                    let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
+                    matsCheckHtml += `
+                        <div style="background:#0F172A; padding:0.75rem; border-radius:10px; margin-bottom:0.75rem; border:1px solid #334155; text-align:right;">
+                            <div style="font-weight:bold; color:#FBBF24; margin-bottom:0.3rem; font-size:0.9rem;">📦 ${cat}</div>
+                            <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
+                                <label style="flex:1; background:${isAvail?'#064E3B':'#334155'}; color:white; padding:0.4rem; border-radius:6px; text-align:center; cursor:pointer; font-size:0.8rem; font-weight:bold;">
+                                    <input type="radio" name="surv_avail_${cat}" value="true" ${isAvail?'checked':''} style="margin-left:4px;"> متوفر ✓
+                                </label>
+                                <label style="flex:1; background:${!isAvail?'#7F1D1D':'#334155'}; color:white; padding:0.4rem; border-radius:6px; text-align:center; cursor:pointer; font-size:0.8rem; font-weight:bold;">
+                                    <input type="radio" name="surv_avail_${cat}" value="false" ${!isAvail?'checked':''} style="margin-left:4px;"> نفد ✗
+                                </label>
+                            </div>
+                            <input type="number" id="surv_prc_${cat}" value="${prc}" placeholder="السعر المعتمد (ل.س)..." style="margin:0; padding:0.4rem; font-size:0.85rem;">
+                        </div>
+                    `;
+                });
+            }
+
+            let modalHtml = `
+                <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000;">
+                    <div class="modal-content" style="border-color:#FBBF24; max-width:440px; text-align:right; max-height:85vh; overflow-y:auto;">
+                        <div style="background:#F59E0B; color:#0F172A; padding:0.3rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">⏰ استبيان التحديث الدوري (كل 3 ساعات)</div>
+                        <h3 style="color:#FBBF24; margin-top:0;">مرحباً ${st.name}</h3>
+                        <p style="font-size:0.83rem; color:#94A3B8; margin-bottom:1rem; line-height:1.5;">
+                            نرجو تحديث حالة توفر المواد والأسعار لضمان دقة ظهور محطتك للمستهلكين في الرادار:
+                        </p>
+                        ${matsCheckHtml}
+                        <button onclick="submitStationSurvey('${st.id}')" class="btn-primary" style="background:#059669; padding:0.8rem; font-size:0.95rem; margin-top:0.5rem;">💾 تحديث فوري وحفظ البيانات</button>
+                        <button onclick="closeStationSurveyModal('${st.id}')" style="background:transparent; color:#94A3B8; border:none; width:100%; padding:0.5rem; cursor:pointer; font-size:0.8rem;">تخطي مؤقتاً</button>
+                    </div>
+                </div>
+            `;
+            let div = document.createElement('div');
+            div.innerHTML = modalHtml;
+            document.body.appendChild(div);
+        };
+
+        window.closeStationSurveyModal = function(id) {
+            localStorage.setItem(`last_survey_${id}`, Date.now().toString());
+            let m = document.getElementById('stationSurveyModal');
+            if (m) m.remove();
+        };
+
+        window.submitStationSurvey = async function(id) {
+            if (!db) return;
+            try {
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (!doc.exists) return;
+                let d = doc.data();
+
+                let mStatus = d.materialsStatus || {};
+                let mPrices = d.materialsPrices || {};
+
+                if (d.categories) {
+                    d.categories.forEach(cat => {
+                        let radioEl = document.querySelector(`input[name="surv_avail_${cat}"]:checked`);
+                        if (radioEl) {
+                            mStatus[cat] = (radioEl.value === 'true');
+                        }
+                        let prcEl = document.getElementById(`surv_prc_${cat}`);
+                        if (prcEl) {
+                            mPrices[cat] = prcEl.value.trim();
+                        }
+                    });
+                }
+
+                await ref.update({
+                    materialsStatus: mStatus,
+                    materialsPrices: mPrices,
+                    lastUpdate: new Date().toISOString()
+                });
+
+                localStorage.setItem(`last_survey_${id}`, Date.now().toISOString());
+                let m = document.getElementById('stationSurveyModal');
+                if (m) m.remove();
+                showToast("✅ تم تحديث بيانات المحطة بنجاح عبر الاستبيان السريع!");
+                
+                let updated = await ref.get();
+                loadMyStationDashboard({ id, ...updated.data() });
+            } catch (e) {
+                showToast("حدث خطأ أثناء حفظ الاستبيان");
+            }
+        };
+
 
         window.admDelete = async function(id) {
             if (confirm("تأكيد حذف المحطة نهائياً؟")) {
