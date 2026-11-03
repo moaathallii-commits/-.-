@@ -1,1 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متوفر هناا - البحث عن المحروقات</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#10B981">
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+    <!-- استدعاء فايربيس عبر CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">✓</div>
+            <div class="logo-text">
+                <h1>البحث عن المواد</h1>
+                <p>قاعدة البيانات السحابية</p>
+            </div>
+        </div>
+    </header>
+
+    <main style="padding: 1.5rem; max-width: 600px; margin: auto;">
+        <div class="search-container">
+            <a href="index.html" class="back-link" style="color: #0284C7; text-decoration: none; font-weight: 600;">← العودة للرئيسية</a>
+            <h2 style="margin-top: 1rem; color: #1E293B;">المحطات المعتمدة سحابياً</h2>
+            
+            <button type="button" onclick="getGPS()" style="background-color: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin: 1rem 0;">
+                📍 تحديد موقعي الحالي (GPS)
+            </button>
+            <p id="gpsMsg" style="font-size: 0.85rem; color: #64748B; text-align: center;"></p>
+
+            <div id="cloudStationsList" style="margin-top: 1rem;">
+                <p style="text-align: center; color: #64748B;">جاري تحميل المحطات من السحابة...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function loadCloudStations() {
+            const container = document.getElementById('cloudStationsList');
+            try {
+                const querySnapshot = await db.collection("stations").get();
+                let html = '';
+                let found = false;
+
+                querySnapshot.forEach((doc) => {
+                    let st = doc.data();
+                    if (st.status === 'approved') {
+                        found = true;
+                        html += `
+                            <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1.25rem; border-radius:12px; margin-bottom:1rem;">
+                                <h4 style="color:#1E293B; font-size:1.1rem; margin-bottom: 0.25rem;">${st.name}</h4>
+                                <p style="font-size:0.85rem; color:#64748B; margin-bottom: 0.5rem;">المنطقة: ${st.region} (${st.type})</p>
+                                <div style="background:#E2E8F0; padding:0.5rem; border-radius:6px; font-size:0.85rem; margin-bottom: 0.75rem; color: #1E293B;">
+                                    📦 المادة: <b>${st.material || 'متوفر'}</b> | الكمية: <b>${st.quantity || 'متاحة'}</b> | السعر: <b>${st.price || 'الرسمي'}</b>
+                                </div>
+                                <a href="https://wa.me/963900000000?text=مرحباً، أود طلب مواد من ${encodeURIComponent(st.name)} عبر تطبيق متوفر هناا" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
+                                    💬 طلب عبر واتساب
+                                </a>
+                            </div>`;
+                    }
+                });
+
+                container.innerHTML = found ? html : '<p style="text-align:center; color:#64748B;">لا توجد محطات معتمدة سحابياً حالياً.</p>';
+            } catch (error) {
+                container.innerHTML = '<p style="text-align:center; color:red;">خطأ في الاتصال بقاعدة البيانات السحابية.</p>';
+            }
+        }
+
+        function getGPS() {
+            const msg = document.getElementById('gpsMsg');
+            if (navigator.geolocation) {
+                msg.textContent = 'جاري تحديد الموقع عبر GPS...';
+                navigator.geolocation.getCurrentPosition(pos => {
+                    msg.textContent = `تم تحديد موقعك (${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)})`;
+                }, () => {
+                    msg.textContent = 'تعذر الحصول على الموقع.';
+                });
+            }
+        }
+
+        window.onload = loadCloudStations;
+    </script>
+</body>
+</html>
 
