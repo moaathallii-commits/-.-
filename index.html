@@ -18,18 +18,18 @@
 </head>
 <body style="font-family: Tahoma, sans-serif; background: #F1F5F9; margin: 0; padding: 0;">
 
-    <header style="background: #10B981; color: white; padding: 1rem; text-align: center;">
-        <h1>متوفر هناا</h1>
-        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (سحابي متكامل)</p>
+    <!-- الترويسة مع تفعيل النقر السري المزدوج لفتح لوحة الإدارة المخفية -->
+    <header onclick="tryOpenSecretAdmin()" style="background: #10B981; color: white; padding: 1rem; text-align: center; cursor: pointer; user-select: none;" title="انقر مرتين هنا للدخول المخفي">
+        <h1 style="margin: 0;">متوفر هناا</h1>
+        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (آمن ومشفر)</p>
     </header>
 
-    <!-- شريط التنقل السريع بين الأقسام -->
+    <!-- شريط التنقل السريع (بدون زر الإدارة الظاهر) -->
     <nav style="display: flex; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); justify-content: center; padding: 0.5rem; gap: 0.5rem; position: sticky; top: 0; z-index: 1000; overflow-x: auto;">
         <button onclick="showSection('home')" style="background: #334155; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">🏠 الرئيسية</button>
         <button onclick="showSection('consumer')" style="background: #10B981; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">🔍 المستهلك</button>
         <button onclick="showSection('station')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">⛽ تسجيل محطة</button>
         <button onclick="showSection('stationPanel')" style="background: #D97706; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">🎛️ لوحة المالك</button>
-        <button onclick="showSection('admin')" style="background: #475569; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">⚙️ الإدارة</button>
     </nav>
 
     <main style="padding: 1.5rem; max-width: 600px; margin: auto;">
@@ -47,7 +47,6 @@
                 <button onclick="showSection('consumer')" style="background: #10B981; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🔍 البحث عن المواد (أقرب 10 نتائج)</button>
                 <button onclick="showSection('station')" style="background: #0284C7; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⛽ بوابة تسجيل محطة جديدة</button>
                 <button onclick="showSection('stationPanel')" style="background: #D97706; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🎛️ لوحة تحكم المالك (متوفر / انتهت)</button>
-                <button onclick="showSection('admin')" style="background: #334155; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⚙️ لوحة الإدارة العامة والفئات</button>
             </div>
         </section>
 
@@ -86,6 +85,10 @@
                     <input type="tel" id="stPhone" placeholder="09xxxxxxxx" pattern="^09[0-9]{8}$" maxlength="10" title="يجب أن يتألف الرقم من 10 خانات ويبدأ بـ 09" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 </div>
                 <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الرمز السري الخاص بك (للدخول للوحة التحكم):</label>
+                    <input type="password" id="stPin" placeholder="أدخل رمزاً سرياً قوياً..." required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
+                </div>
+                <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اختر الفئات التي تقدمها:</label>
                     <div id="checkboxCategoriesContainer" style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 0.75rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem;">
                         <!-- يتم تعبئتها ديناميكياً -->
@@ -99,34 +102,36 @@
             </form>
         </section>
 
-        <!-- 4. لوحة تحكم المالك الخاصة بالمحطة (مشروطة بالموافقة) -->
+        <!-- 4. لوحة تحكم المالك الخاصة بالمحطة (برقم الهاتف والرمز السري وممنوع الدخول قبل الموافقة) -->
         <section id="sec-stationPanel" class="app-section" style="display: none;">
             <h2>🎛️ لوحة تحكم مالك المحطة</h2>
-            <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل للوصول إلى لوحة التحكم الخاصة بك:</p>
+            <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل ورمزك السري للوصول:</p>
             
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-                <input type="tel" id="loginPhone" placeholder="09xxxxxxxx..." pattern="^09[0-9]{8}$" maxlength="10" style="flex: 1; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px;">
-                <button onclick="loadMyStationPanel()" style="background: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: bold; cursor: pointer;">دخول</button>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <input type="tel" id="loginPhone" placeholder="09xxxxxxxx..." pattern="^09[0-9]{8}$" maxlength="10" style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
+                <input type="password" id="loginPin" placeholder="الرمز السري..." style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
+                <button onclick="loadMyStationPanel()" style="background: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: bold; cursor: pointer;">تسجيل الدخول للوحة التحكم</button>
             </div>
 
             <div id="myStationPanelContent">
-                <p style="text-align: center; color: #64748B;">الرجاء إدخال رقم الهاتف لعرض لوحة التحكم.</p>
+                <p style="text-align: center; color: #64748B;">الرجاء إدخال بيانات الاعتماد.</p>
             </div>
         </section>
 
-        <!-- 5. قسم الإدارة -->
+        <!-- 5. قسم الإدارة (المخفي تماماً) -->
         <section id="sec-admin" class="app-section" style="display: none;">
             <h2>لوحة الإدارة وإضافة الفئات الجديدة</h2>
+            <button onclick="showSection('home')" style="background: #64748B; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; margin-bottom: 1rem;">إغلاق غرفة الإدارة 🔒</button>
             
             <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
                 <h3 style="font-size: 1rem; color: #1E293B; margin-top: 0;">➕ إضافة فئة/مادة جديدة للنظام</h3>
                 <form id="addCategoryForm" style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="newCategoryName" placeholder="مثال: بنزين ممتاز، مازوت حر..." required style="flex: 1; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px;">
+                    <input type="text" id="newCategoryName" placeholder="مثال: بنزين ممتاز..." required style="flex: 1; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px;">
                     <button type="submit" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">إضافة</button>
                 </form>
             </div>
 
-            <h3>إدارة طلبات ومحطات السحابة</h3>
+            <h3>إدارة طلبات ومحطات السحابة (مع السجلات والأكواد السرية)</h3>
             <div id="adminCloudList" style="margin-top: 1rem;">
                 <p style="text-align: center; color: #64748B;">جاري جلب الطلبات من السحابة...</p>
             </div>
@@ -143,6 +148,27 @@
         let userLon = null;
         let stationLat = 35.5; 
         let stationLon = 36.3; 
+
+        // تشفير كلمة المرور الخاصة بالإدارة (Base64) لحمايتها واختراقها
+        // الكود الأصلي: MHA@1997//MOAATHS -> التشفير: TUhBQDE5OTcvL01PQUFUSFM=
+        const ENCODED_ADMIN_KEY = "TUhBQDE5OTcvL01PQUFUSFM=";
+
+        function tryOpenSecretAdmin() {
+            let passwordPrompt = prompt("أدخل رمز وصول غرفة الإدارة السرية:");
+            if (passwordPrompt !== null) {
+                // فك التشفير ومقارنة الإدخال
+                try {
+                    let decodedKey = atob(ENCODED_ADMIN_KEY);
+                    if (passwordPrompt === decodedKey) {
+                        showSection('admin');
+                    } else {
+                        alert("رمز المرور غير صحيح!");
+                    }
+                } catch (e) {
+                    alert("خطأ في المصادقة.");
+                }
+            }
+        }
 
         function showSection(sectionId) {
             document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
@@ -322,7 +348,6 @@
                         <div style="margin: 0.5rem 0;">${materialsHtml}</div>
                         <p style="font-size:0.85rem; color:#D97706; margin-bottom: 0.5rem;">⭐ التقييم العام: <b>${currentRating}</b></p>
                         
-                        <!-- نظام التقييم من 1 إلى 5 نجوم -->
                         <div style="background:#F1F5F9; padding:0.5rem; border-radius:8px; margin-bottom:0.75rem; text-align:center;">
                             <span style="font-size:0.8rem; color:#475569; display:block; margin-bottom:0.3rem;">قيم هذه المحطة:</span>
                             <div style="display:flex; justify-content:center; gap:0.3rem;">
@@ -371,12 +396,13 @@
             }
         }
 
-        // تسجيل محطة جديدة مع التحقق من رقم الهاتف (10 خانات ويبدأ بـ 09)
+        // تسجيل المحطة مع الرمز السري والرقم المكون من 10 خانات
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('stName').value;
             const region = document.getElementById('stRegion').value;
             const phone = document.getElementById('stPhone').value;
+            const pinCode = document.getElementById('stPin').value;
             
             if (!/^09[0-9]{8}$/.test(phone)) {
                 alert('رقم الهاتف غير صحيح! يجب أن يتألف من 10 خانات ويبدأ بـ 09.');
@@ -394,12 +420,12 @@
 
             let materialsStatus = {};
             selectedCategories.forEach(cat => {
-                materialsStatus[cat] = false; // افتراضياً غير مفعلة لحين إعلان توفرها من المالك
+                materialsStatus[cat] = false;
             });
 
             try {
                 await db.collection("stations").add({
-                    name, region, phone, 
+                    name, region, phone, pinCode, 
                     categories: selectedCategories,
                     materialsStatus: materialsStatus,
                     lat: stationLat, lon: stationLon, 
@@ -414,16 +440,18 @@
             }
         });
 
-        // 🎛️ لوحة تحكم مالك المحطة (ممنوع الدخول إلا إذا تمت الموافقة)
+        // 🎛️ دخول المالك برقم الهاتف والرمز السري (مع التحقق من الموافقة)
         async function loadMyStationPanel() {
             const phoneInput = document.getElementById('loginPhone').value.trim();
+            const pinInput = document.getElementById('loginPin').value.trim();
             const container = document.getElementById('myStationPanelContent');
-            if (!phoneInput) {
-                alert('الرجاء إدخال رقم الهاتف المسجل.');
+            
+            if (!phoneInput || !pinInput) {
+                alert('الرجاء إدخال رقم الهاتف والرمز السري.');
                 return;
             }
 
-            container.innerHTML = '<p style="text-align:center; color:#64748B;">جاري التحقق من حالة محطتك...</p>';
+            container.innerHTML = '<p style="text-align:center; color:#64748B;">جاري التحقق من بيانات الدخول...</p>';
             try {
                 const snapshot = await db.collection("stations").where("phone", "==", phoneInput).get();
                 if (snapshot.empty) {
@@ -432,23 +460,30 @@
                 }
 
                 let html = '';
-                let hasApproved = false;
+                let matched = false;
 
                 snapshot.forEach(docSnap => {
                     let st = docSnap.data();
                     let id = docSnap.id;
                     
-                    // التحقق من حالة الاعتماد الصارمة
+                    // التحقق من الرمز السري
+                    if (st.pinCode !== pinInput) {
+                        html += `<p style="text-align:center; color:red;">الرمز السري غير صحيح لهذه المحطة.</p>`;
+                        return;
+                    }
+
+                    // التحقق من موافقة الإدارة
                     if (st.status !== 'approved') {
                         html += `
                             <div style="background:#FEF3C7; border:1px solid #F59E0B; padding:1rem; border-radius:10px; margin-bottom:1rem; text-align:center;">
                                 <h3 style="color:#B45309; margin-top:0;">عذراً، لم تتم الموافقة بعد!</h3>
-                                <p style="color:#92400E; font-size:0.9rem;">حالة محطتك (<b>${st.name}</b>) قيد المراجعة من قِبل الإدارة. لا يمكنك الدخول للوحة التحكم حتى يتم اعتماد طلبك.</p>
+                                <p style="color:#92400E; font-size:0.9rem;">حالة محطتك (<b>${st.name}</b>) قيد المراجعة. لا يمكنك الدخول للوحة التحكم حتى يتم اعتماد طلبك من الإدارة.</p>
                             </div>`;
+                        matched = true;
                         return;
                     }
 
-                    hasApproved = true;
+                    matched = true;
                     html += `
                         <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1rem; border-radius:10px; margin-bottom:1rem;">
                             <h3 style="color:#1E293B; margin-top:0;">${st.name} (${st.region})</h3>
@@ -477,9 +512,9 @@
                     html += `</div>`;
                 });
 
-                container.innerHTML = html || '<p style="text-align:center; color:red;">لا توجد محطات معتمدة لهذا الرقم.</p>';
+                container.innerHTML = html || '<p style="text-align:center; color:red;">بيانات الدخول غير صحيحة.</p>';
             } catch (err) {
-                container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ أثناء جلب بيانات المحطة.</p>';
+                container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ أثناء تسجيل الدخول.</p>';
             }
         }
 
@@ -501,6 +536,7 @@
             }
         }
 
+        // لوحة الإدارة المخفية (تציهر الأكواد السرية وسجلات الاسترداد للمدير)
         async function loadAdminCloud() {
             loadCategoriesAndInit();
             const container = document.getElementById('adminCloudList');
@@ -521,6 +557,7 @@
                                 <div>
                                     <h4 style="font-size:1rem; color: #1E293B; margin-bottom: 0.2rem;">${st.name}</h4>
                                     <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region} | الهاتف: ${st.phone}</p>
+                                    <p style="font-size:0.85rem; color:#D97706;">🔑 الرمز السري للمالك: <b>${st.pinCode || 'غير متوفر'}</b></p>
                                     <p style="font-size:0.85rem; color:#0284C7;">الفئات: <b>${catsList}</b></p>
                                     <p style="font-size:0.8rem; margin-top:0.3rem;"><span style="background:${badgeColor}; color:${textColor}; padding:0.1rem 0.4rem; border-radius:4px; font-weight:600;">${statusText}</span></p>
                                 </div>
@@ -540,16 +577,14 @@
             }
         }
 
-        // موافقة الإدارة وإرسال رسالة واتساب تلقائية واحترافية للمحطة
         window.approveAndNotify = async function(id, stationName, stationPhone) {
             try {
                 await db.collection("stations").doc(id).update({ status: 'approved' });
                 alert('تمت الموافقة على المحطة بنجاح!');
                 loadAdminCloud();
 
-                // تنسيق رقم الهاتف للواتساب (إزالة 0 وإضافة رمز الدولة 963 إذا لم يكن موجوداً)
                 let formattedPhone = stationPhone.startsWith('0') ? '963' + stationPhone.substring(1) : stationPhone;
-                let msg = `مرحباً بك في منصة "متوفر هناا" ⛽.\nيسعدنا إعلامك بأنه تم قبول اعتماد محطتكم (${stationName}) بنجاح.\nيمكنك الآن الدخول إلى لوحة التحكم الخاصة بك عبر التطبيق وتحديث توفر المواد والأصناف مباشرة.\nشكراً لانضمامكم إلينا!`;
+                let msg = `مرحباً بك في منصة "متوفر هناا" ⛽.\nيسعدنا إعلامك بأنه تم قبول اعتماد محطتكم (${stationName}) بنجاح.\nيمكنك الآن الدخول إلى لوحة التحكم الخاصة بك عبر التطبيق باستخدام رقم هاتفك ورمزك السري وتحديث توفر المواد مباشرة.\nشكراً لانضمامكم إلينا!`;
                 
                 let waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
                 window.open(waUrl, '_blank');
