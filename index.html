@@ -20,7 +20,7 @@
 
     <header style="background: #10B981; color: white; padding: 1rem; text-align: center;">
         <h1>متوفر هناا</h1>
-        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (إدارة المحطات والفئات)</p>
+        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (سحابي متكامل)</p>
     </header>
 
     <!-- شريط التنقل السريع بين الأقسام -->
@@ -69,7 +69,7 @@
             </div>
         </section>
 
-        <!-- 3. قسم تسجيل المحطة (بدون كمية أو سعر، مع اختيار عدة فئات) -->
+        <!-- 3. قسم تسجيل المحطة -->
         <section id="sec-station" class="app-section" style="display: none;">
             <h2>تسجيل محطة أو موزع جديد</h2>
             <form id="cloudStationForm" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
@@ -82,11 +82,11 @@
                     <input type="text" id="stRegion" placeholder="مثال: العوينة" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رقم واتساب المالك (سيعمل كمعرف للوحة تحكمك):</label>
-                    <input type="tel" id="stPhone" placeholder="مثال: 9639xxxxxxxxx" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رقم الهاتف (10 خانات ويبدأ بـ 09):</label>
+                    <input type="tel" id="stPhone" placeholder="09xxxxxxxx" pattern="^09[0-9]{8}$" maxlength="10" title="يجب أن يتألف الرقم من 10 خانات ويبدأ بـ 09" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اختر الفئات التي تقدمها (يمكنك اختيار أكثر من فئة):</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اختر الفئات التي تقدمها:</label>
                     <div id="checkboxCategoriesContainer" style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 0.75rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem;">
                         <!-- يتم تعبئتها ديناميكياً -->
                     </div>
@@ -99,18 +99,18 @@
             </form>
         </section>
 
-        <!-- 4. لوحة تحكم المالك الخاصة بالمحطة -->
+        <!-- 4. لوحة تحكم المالك الخاصة بالمحطة (مشروطة بالموافقة) -->
         <section id="sec-stationPanel" class="app-section" style="display: none;">
             <h2>🎛️ لوحة تحكم مالك المحطة</h2>
-            <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل لعرض محطتك وتحديث توفر المواد بضغطة زر:</p>
+            <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل للوصول إلى لوحة التحكم الخاصة بك:</p>
             
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-                <input type="tel" id="loginPhone" placeholder="رقم هاتفك المسجل..." style="flex: 1; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px;">
+                <input type="tel" id="loginPhone" placeholder="09xxxxxxxx..." pattern="^09[0-9]{8}$" maxlength="10" style="flex: 1; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px;">
                 <button onclick="loadMyStationPanel()" style="background: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: bold; cursor: pointer;">دخول</button>
             </div>
 
             <div id="myStationPanelContent">
-                <p style="text-align: center; color: #64748B;">الرجاء إدخال رقم الهاتف لعرض لوحة التحكم الخاصة بك.</p>
+                <p style="text-align: center; color: #64748B;">الرجاء إدخال رقم الهاتف لعرض لوحة التحكم.</p>
             </div>
         </section>
 
@@ -177,7 +177,6 @@
         }
 
         function updateCategoryUI() {
-            // 1. تحديث حقول اختيار الفئات المتعددة في نموذج تسجيل المحطة
             const checkboxContainer = document.getElementById('checkboxCategoriesContainer');
             if (checkboxContainer) {
                 let htmlBoxes = '';
@@ -187,7 +186,6 @@
                 checkboxContainer.innerHTML = htmlBoxes;
             }
 
-            // 2. تحديث أزرار الفلترة للمستهلك
             const filterEl = document.getElementById('consumerCategoriesFilter');
             if (filterEl) {
                 let filterHtml = `<button onclick="filterStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">الكل</button>`;
@@ -198,7 +196,6 @@
             }
         }
 
-        // إضافة فئة جديدة بواسطة الإدارة
         document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const catName = document.getElementById('newCategoryName').value.trim();
@@ -305,16 +302,15 @@
                 found = true;
                 let whatsappNum = st.phone ? st.phone.replace(/[^0-9]/g, '') : '963900000000';
                 let distText = st.distance !== undefined ? `📍 تبعد عنك حوالي: <b>${st.distance.toFixed(1)} كم</b>` : '';
-                let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : 'لا يوجد تقييم';
+                let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 
-                // عرض المواد المتوفرة حسب تفعيل المالك
                 let materialsHtml = '';
                 if (st.materialsStatus) {
                     for (let [mat, isAvailable] of Object.entries(st.materialsStatus)) {
                         let badgeBg = isAvailable ? '#D1FAE5' : '#FEE2E2';
                         let badgeColor = isAvailable ? '#059669' : '#DC2626';
                         let textStatus = isAvailable ? '✓ متوفر' : '✗ انتهت الكمية';
-                        materialsHtml += `<span style="background:${badgeBg}; color:${badgeColor}; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.75rem; margin-left:0.3rem;"><b>${mat}</b>: ${textStatus}</span>`;
+                        materialsHtml += `<span style="background:${badgeBg}; color:${badgeColor}; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.75rem; margin-left:0.3rem; display:inline-block; margin-bottom:0.2rem;"><b>${mat}</b>: ${textStatus}</span>`;
                     }
                 }
 
@@ -326,10 +322,18 @@
                         <div style="margin: 0.5rem 0;">${materialsHtml}</div>
                         <p style="font-size:0.85rem; color:#D97706; margin-bottom: 0.5rem;">⭐ التقييم العام: <b>${currentRating}</b></p>
                         
-                        <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
-                            <button onclick="rateStation('${st.id}', 5)" style="background:#F59E0B; color:white; border:none; padding:0.3rem; border-radius:6px; cursor:pointer; font-size:0.75rem; flex:1;">⭐ تقييم ممتاز</button>
-                            <button onclick="rateStation('${st.id}', 3)" style="background:#94A3B8; color:white; border:none; padding:0.3rem; border-radius:6px; cursor:pointer; font-size:0.75rem; flex:1;">⭐ تقييم متوسط</button>
+                        <!-- نظام التقييم من 1 إلى 5 نجوم -->
+                        <div style="background:#F1F5F9; padding:0.5rem; border-radius:8px; margin-bottom:0.75rem; text-align:center;">
+                            <span style="font-size:0.8rem; color:#475569; display:block; margin-bottom:0.3rem;">قيم هذه المحطة:</span>
+                            <div style="display:flex; justify-content:center; gap:0.3rem;">
+                                <button onclick="rateStation('${st.id}', 1)" style="background:#E2E8F0; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer;">⭐1</button>
+                                <button onclick="rateStation('${st.id}', 2)" style="background:#E2E8F0; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer;">⭐2</button>
+                                <button onclick="rateStation('${st.id}', 3)" style="background:#E2E8F0; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer;">⭐3</button>
+                                <button onclick="rateStation('${st.id}', 4)" style="background:#E2E8F0; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer;">⭐4</button>
+                                <button onclick="rateStation('${st.id}', 5)" style="background:#E2E8F0; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer;">⭐5</button>
+                            </div>
                         </div>
+
                         <a href="https://wa.me/${whatsappNum}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
                             💬 مراسلة المالك عبر واتساب
                         </a>
@@ -350,7 +354,7 @@
                         rating: currentTotal + score,
                         ratingCount: count + 1
                     });
-                    alert('شكراً لك! تم تسجيل تقييمك بنجاح.');
+                    alert(`شكراً لك! تم تسجيل تقييمك بـ ${score} نجوم بنجاح.`);
                     loadCloudStations();
                 }
             } catch (error) {
@@ -367,26 +371,30 @@
             }
         }
 
-        // تسجيل محطة جديدة (اختيار عدة فئات، بدون كمية أو سعر)
+        // تسجيل محطة جديدة مع التحقق من رقم الهاتف (10 خانات ويبدأ بـ 09)
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('stName').value;
             const region = document.getElementById('stRegion').value;
             const phone = document.getElementById('stPhone').value;
             
+            if (!/^09[0-9]{8}$/.test(phone)) {
+                alert('رقم الهاتف غير صحيح! يجب أن يتألف من 10 خانات ويبدأ بـ 09.');
+                return;
+            }
+
             const checkboxes = document.querySelectorAll('input[name="stationCategories"]:checked');
             let selectedCategories = [];
-            checkboxes.forEach(cb => selectedCategories.value ? null : selectedCategories.push(cb.value));
+            checkboxes.forEach(cb => selectedCategories.push(cb.value));
 
             if (selectedCategories.length === 0) {
                 alert('الرجاء اختيار فئة واحدة على الأقل.');
                 return;
             }
 
-            // تهيئة حالة المواد (افتراضياً متوفرة عند التسجيل أو حسب رغبة المالك)
             let materialsStatus = {};
             selectedCategories.forEach(cat => {
-                materialsStatus[cat] = true;
+                materialsStatus[cat] = false; // افتراضياً غير مفعلة لحين إعلان توفرها من المالك
             });
 
             try {
@@ -398,7 +406,7 @@
                     rating: 5, ratingCount: 1,
                     status: 'pending', createdAt: new Date().toISOString()
                 });
-                alert('تم إرسال طلب تسجيل محطتك بنجاح! بانتظار موافقة الإدارة لتفعيل لوحتك.');
+                alert('تم إرسال طلب تسجيل محطتك بنجاح! بانتظار موافقة الإدارة.');
                 document.getElementById('cloudStationForm').reset();
                 showSection('home');
             } catch (error) {
@@ -406,7 +414,7 @@
             }
         });
 
-        // 🎛️ جلب لوحة تحكم مالك المحطة برقم الهاتف
+        // 🎛️ لوحة تحكم مالك المحطة (ممنوع الدخول إلا إذا تمت الموافقة)
         async function loadMyStationPanel() {
             const phoneInput = document.getElementById('loginPhone').value.trim();
             const container = document.getElementById('myStationPanelContent');
@@ -415,23 +423,36 @@
                 return;
             }
 
-            container.innerHTML = '<p style="text-align:center; color:#64748B;">جاري التحقق من بيانات محطتك...</p>';
+            container.innerHTML = '<p style="text-align:center; color:#64748B;">جاري التحقق من حالة محطتك...</p>';
             try {
                 const snapshot = await db.collection("stations").where("phone", "==", phoneInput).get();
                 if (snapshot.empty) {
-                    container.innerHTML = '<p style="text-align:center; color:red;">لم يتم العثور على محطة مسجلة بهذا الرقم أو أن الطلب لم يُعتمد بعد من الإدارة.</p>';
+                    container.innerHTML = '<p style="text-align:center; color:red;">رقم الهاتف غير مسجل في النظام.</p>';
                     return;
                 }
 
                 let html = '';
+                let hasApproved = false;
+
                 snapshot.forEach(docSnap => {
                     let st = docSnap.data();
                     let id = docSnap.id;
                     
+                    // التحقق من حالة الاعتماد الصارمة
+                    if (st.status !== 'approved') {
+                        html += `
+                            <div style="background:#FEF3C7; border:1px solid #F59E0B; padding:1rem; border-radius:10px; margin-bottom:1rem; text-align:center;">
+                                <h3 style="color:#B45309; margin-top:0;">عذراً، لم تتم الموافقة بعد!</h3>
+                                <p style="color:#92400E; font-size:0.9rem;">حالة محطتك (<b>${st.name}</b>) قيد المراجعة من قِبل الإدارة. لا يمكنك الدخول للوحة التحكم حتى يتم اعتماد طلبك.</p>
+                            </div>`;
+                        return;
+                    }
+
+                    hasApproved = true;
                     html += `
                         <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1rem; border-radius:10px; margin-bottom:1rem;">
                             <h3 style="color:#1E293B; margin-top:0;">${st.name} (${st.region})</h3>
-                            <p style="font-size:0.85rem; color:#64748B;">حالة الاعتماد: <b>${st.status === 'approved' ? 'معتمدة ومفعلة ✓' : 'قيد المراجعة ⏳'}</b></p>
+                            <p style="font-size:0.85rem; color:#059669; font-weight:bold;">حالة الاعتماد: معتمدة ومفعلة ✓</p>
                             <hr style="border:0; border-top:1px solid #E2E8F0; margin:0.75rem 0;">
                             <p style="font-weight:600; font-size:0.9rem; color:#1E293B;">حدد توفر الأصناف لديك:</p>
                     `;
@@ -456,13 +477,12 @@
                     html += `</div>`;
                 });
 
-                container.innerHTML = html;
+                container.innerHTML = html || '<p style="text-align:center; color:red;">لا توجد محطات معتمدة لهذا الرقم.</p>';
             } catch (err) {
                 container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ أثناء جلب بيانات المحطة.</p>';
             }
         }
 
-        // تبديل حالة المادة (متوفر / انتهت) للمالك
         window.toggleMaterialStatus = async function(stationId, categoryName, newStatus) {
             try {
                 const docRef = db.collection("stations").doc(stationId);
@@ -474,7 +494,7 @@
 
                     await docRef.update({ materialsStatus: matsStatus });
                     alert('تم تحديث حالة المادة بنجاح!');
-                    loadMyStationPanel(); // تحديث اللوحة للمالك
+                    loadMyStationPanel();
                 }
             } catch (error) {
                 alert('خطأ أثناء التحديث.');
@@ -493,7 +513,6 @@
                     let badgeColor = st.status === 'approved' ? '#D1FAE5' : '#FEF3C7';
                     let textColor = st.status === 'approved' ? '#059669' : '#D97706';
                     let statusText = st.status === 'approved' ? 'معتمدة' : 'معلقة';
-
                     let catsList = st.categories ? st.categories.join(', ') : 'لا توجد فئات';
 
                     html += `
@@ -502,12 +521,12 @@
                                 <div>
                                     <h4 style="font-size:1rem; color: #1E293B; margin-bottom: 0.2rem;">${st.name}</h4>
                                     <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region} | الهاتف: ${st.phone}</p>
-                                    <p style="font-size:0.85rem; color:#0284C7;">الفئات المقدمة: <b>${catsList}</b></p>
+                                    <p style="font-size:0.85rem; color:#0284C7;">الفئات: <b>${catsList}</b></p>
                                     <p style="font-size:0.8rem; margin-top:0.3rem;"><span style="background:${badgeColor}; color:${textColor}; padding:0.1rem 0.4rem; border-radius:4px; font-weight:600;">${statusText}</span></p>
                                 </div>
                                 <div style="display:flex; flex-direction:column; gap:0.4rem;">
                                     ${st.status === 'pending' ? 
-                                        `<button onclick="updateSt('${id}', 'approved')" style="background:#D1FAE5; color:#059669; border:1px solid #10B981; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600;">قبول</button>` : 
+                                        `<button onclick="approveAndNotify('${id}', '${st.name}', '${st.phone}')" style="background:#D1FAE5; color:#059669; border:1px solid #10B981; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600;">قبول وإرسال واتساب</button>` : 
                                         `<button onclick="updateSt('${id}', 'pending')" style="background:#FEF3C7; color:#D97706; border:1px solid #F59E0B; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600;">تعليق</button>`
                                     }
                                     <button onclick="deleteSt('${id}')" style="background:#FEE2E2; color:#DC2626; border:1px solid #EF4444; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600;">حذف</button>
@@ -518,6 +537,24 @@
                 container.innerHTML = html || '<p style="text-align:center; color:#64748B;">لا توجد طلبات في السحابة.</p>';
             } catch (error) {
                 container.innerHTML = '<p style="text-align:center; color:red;">خطأ في تحميل بيانات الإدارة.</p>';
+            }
+        }
+
+        // موافقة الإدارة وإرسال رسالة واتساب تلقائية واحترافية للمحطة
+        window.approveAndNotify = async function(id, stationName, stationPhone) {
+            try {
+                await db.collection("stations").doc(id).update({ status: 'approved' });
+                alert('تمت الموافقة على المحطة بنجاح!');
+                loadAdminCloud();
+
+                // تنسيق رقم الهاتف للواتساب (إزالة 0 وإضافة رمز الدولة 963 إذا لم يكن موجوداً)
+                let formattedPhone = stationPhone.startsWith('0') ? '963' + stationPhone.substring(1) : stationPhone;
+                let msg = `مرحباً بك في منصة "متوفر هناا" ⛽.\nيسعدنا إعلامك بأنه تم قبول اعتماد محطتكم (${stationName}) بنجاح.\nيمكنك الآن الدخول إلى لوحة التحكم الخاصة بك عبر التطبيق وتحديث توفر المواد والأصناف مباشرة.\nشكراً لانضمامكم إلينا!`;
+                
+                let waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
+                window.open(waUrl, '_blank');
+            } catch (error) {
+                alert('حدث خطأ أثناء الموافقة.');
             }
         }
 
