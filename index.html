@@ -18,10 +18,10 @@
 </head>
 <body style="font-family: Tahoma, sans-serif; background: #F1F5F9; margin: 0; padding: 0;">
 
-    <!-- الترويسة مع نمط الضغط السري (5 ضغطات + مهلة 3-5 ثوانٍ + ضغطة واحدة) -->
+    <!-- الترويسة مع النمط السري الدقيق (5 نقرات + انتظار 3-5 ثوانٍ + نقرة أخيرة) -->
     <header onclick="handleSecretClick()" style="background: #10B981; color: white; padding: 1rem; text-align: center; cursor: pointer; user-select: none;">
         <h1 style="margin: 0;">متوفر هناا</h1>
-        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (تنبيهات ذكية وتحكم أمني)</p>
+        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا</p>
     </header>
 
     <!-- شريط التنقل السريع -->
@@ -46,7 +46,7 @@
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <button onclick="showSection('consumer')" style="background: #10B981; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🔍 البحث عن المواد (أقرب 10 نتائج)</button>
                 <button onclick="showSection('station')" style="background: #0284C7; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⛽ بوابة تسجيل محطة جديدة</button>
-                <button onclick="showSection('stationPanel')" style="background: #D97706; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🎛️ لوحة تحكم المالك (متوفر / انتهت)</button>
+                <button onclick="showSection('stationPanel')" style="background: #D97706; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🎛️ لوحة تحكم المالك</button>
             </div>
         </section>
 
@@ -58,8 +58,8 @@
                 <button onclick="filterStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">الكل</button>
             </div>
 
-            <button type="button" onclick="getGPSAndSort()" style="background-color: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
-                📍 تفعيل GPS وعرض أقرب 10 نتائج + تنبيه القرب الذكي
+            <button type="button" onclick="initConsumerGPS()" style="background-color: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
+                📍 تحديث موقعي (GPS) وفحص المحطات القريبة
             </button>
             <p id="gpsMsg" style="font-size: 0.85rem; color: #64748B; text-align: center;"></p>
 
@@ -81,7 +81,7 @@
                     <input type="text" id="stRegion" placeholder="مثال: العوينة" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رقم الهاتف (10 خانات ويبدأ بـ 09):</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رقم هاتف تسجيل الدخول (10 خانات ويبدأ بـ 09):</label>
                     <input type="tel" id="stPhone" placeholder="09xxxxxxxx" pattern="^09[0-9]{8}$" maxlength="10" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 </div>
                 <div>
@@ -102,7 +102,7 @@
             </form>
         </section>
 
-        <!-- 4. لوحة تحكم المالك -->
+        <!-- 4. لوحة تحكم المالك المستقلة -->
         <section id="sec-stationPanel" class="app-section" style="display: none;">
             <h2>🎛️ لوحة تحكم مالك المحطة</h2>
             <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل ورمزك السري للوصول:</p>
@@ -110,7 +110,7 @@
             <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
                 <input type="tel" id="loginPhone" placeholder="09xxxxxxxx..." pattern="^09[0-9]{8}$" maxlength="10" style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 <input type="password" id="loginPin" placeholder="الرمز السري..." style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
-                <button onclick="loadMyStationPanel()" style="background: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: bold; cursor: pointer;">تسجيل الدخول للوحة التحكم</button>
+                <button onclick="loadMyStationPanel()" style="background: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: bold; cursor: pointer;">تسجيل الدخول</button>
             </div>
 
             <div id="myStationPanelContent">
@@ -118,7 +118,7 @@
             </div>
         </section>
 
-        <!-- 5. قسم الإدارة المخفي (مع شريط البحث والتحكم بنطاق التنبيه) -->
+        <!-- 5. قسم الإدارة المخفي -->
         <section id="sec-admin" class="app-section" style="display: none;">
             <h2>لوحة الإدارة السرية والفئات</h2>
             <button onclick="showSection('home')" style="background: #64748B; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; margin-bottom: 1rem;">إغلاق غرفة الإدارة 🔒</button>
@@ -131,7 +131,6 @@
                 </form>
             </div>
 
-            <!-- زر وعملية البحث عن محطة -->
             <div style="margin-bottom: 1rem;">
                 <input type="text" id="adminSearchInput" oninput="filterAdminList()" placeholder="🔍 ابحث عن محطة بالاسم، المنطقة أو الهاتف..." style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
             </div>
@@ -157,31 +156,40 @@
         // تشفير كلمة المرور الخاصة بالإدارة (Base64)
         const ENCODED_ADMIN_KEY = "TUhBQDE5OTcvL01PQUFUSFM="; // MHA@1997//MOAATHS
         
-        // المتغيرات الخاصة بالنمط السري الجديد (5 ضغطات + مهلة 3-5 ثوانٍ + ضغطة واحدة)
+        // المتغيرات الخاصة بالنمط السري الجديد (5 ضغطات + مهلة 3-5 ثوانٍ + ضغطة أخيرة)
         let secretStep = 0;
         let secretTimer = null;
+        let waitingForFinalClick = false;
 
         function handleSecretClick() {
             let now = Date.now();
-            if (secretStep === 0) {
-                secretStep = 1;
-                startSecretTimeout();
-            } else if (secretStep >= 1 && secretStep < 5) {
+            if (!waitingForFinalClick) {
                 secretStep++;
-                startSecretTimeout();
-            } else if (secretStep === 5) {
-                // وصل للضغطات الخمسة، الآن ينتظر مهلة 3 إلى 5 ثوانٍ ثم الضغطة السادسة
+                if (secretStep === 1) {
+                    // بدء مراقبة الـ 5 ضغطات الأولى ضمن نافذة زمنية قصيرة (ثانيتين)
+                    clearTimeout(secretTimer);
+                    secretTimer = setTimeout(() => {
+                        secretStep = 0;
+                    }, 2000);
+                }
+                if (secretStep === 5) {
+                    clearTimeout(secretTimer);
+                    waitingForFinalClick = true;
+                    // فتح نافذة الانتظار الإلزامية (بين 3 إلى 5 ثوانٍ) للضغطة الأخيرة
+                    secretTimer = setTimeout(() => {
+                        // انقضت المهلة ولم تكتمل الضغطة السادسة
+                        secretStep = 0;
+                        waitingForFinalClick = false;
+                    }, 5000); // حد أقصى 5 ثوانٍ
+                }
+            } else {
+                // نحن في مرحلة الانتظار المطلوبة (بين 3 إلى 5 ثوانٍ)، وتتم الضغطة الأخيرة الآن
                 clearTimeout(secretTimer);
-                secretStep = 6;
-                // تفعيل مهلة الانتظار (بين 3 إلى 5 ثوانٍ)
-                secretTimer = setTimeout(() => {
-                    secretStep = 0; // انتهاء المهلة دون الضغطة الأخيرة
-                }, 5000); // 5 ثوانٍ كحد أقصى للانتظار
-            } else if (secretStep === 6) {
-                // تمت الضغطة الأخيرة خلال الفترة المطلوبة
-                clearTimeout(secretTimer);
+                let elapsedCheck = true; // تمت ضمن الفترة
                 secretStep = 0;
-                let passwordPrompt = prompt("تم التحقق من النمط السري. أدخل كلمة مرور الإدارة:");
+                waitingForFinalClick = false;
+
+                let passwordPrompt = prompt("أدخل رمز وصول غرفة الإدارة السرية:");
                 if (passwordPrompt !== null) {
                     try {
                         let decodedKey = atob(ENCODED_ADMIN_KEY);
@@ -195,13 +203,6 @@
                     }
                 }
             }
-        }
-
-        function startSecretTimeout() {
-            clearTimeout(secretTimer);
-            secretTimer = setTimeout(() => {
-                secretStep = 0; // إعادة ضبط إذا بطأ المستخدم في الـ 5 ضغطات الأولى
-            }, 1500);
         }
 
         function showSection(sectionId) {
@@ -299,14 +300,17 @@
             return R * c;
         }
 
-        function getGPSAndSort() {
+        // تسجيل الموقع الآلي للمستهلك عند فتح التطبيق أو تحديثه وفحص التنبيهات الذكية بالخلفية
+        function initConsumerGPS() {
             const msg = document.getElementById('gpsMsg');
             if (navigator.geolocation) {
-                msg.textContent = 'جاري تحديد موقعك وتفعيل تنبيهات القرب الذكية...';
+                msg.textContent = 'جاري تسجيل وتحديث موقعك الجغرافي...';
                 navigator.geolocation.getCurrentPosition(pos => {
                     userLat = pos.coords.latitude;
                     userLon = pos.coords.longitude;
-                    msg.textContent = `تم تحديد موقعك. يتم عرض أقرب 10 نتائج حالياً.`;
+                    localStorage.setItem('user_lat', userLat);
+                    localStorage.setItem('user_lon', userLon);
+                    msg.textContent = `تم تسجيل موقعك بنجاح. يتم عرض أقرب 10 نتائج.`;
                     checkSmartNearbyAlerts(allStations, userLat, userLon);
                     renderStations(allStations);
                 }, () => {
@@ -316,7 +320,32 @@
             }
         }
 
-        // التنبيه الذكي: يفحص إذا توفرت مادة ضمن النطاق المخصص لكل محطة (الافتراضي 5 كم أو حسب إعداد الإدارة)
+        // تشغيل الفحص التلقائي بالخلفية عند تحميل الصفحة إذا كانت الإحداثيات محفوظة مسبقاً
+        window.addEventListener('DOMContentLoaded', () => {
+            let savedLat = localStorage.getItem('user_lat');
+            let savedLon = localStorage.getItem('user_lon');
+            if (savedLat && savedLon) {
+                userLat = parseFloat(savedLat);
+                userLon = parseFloat(savedLon);
+            }
+            loadCloudStationsBackground();
+        });
+
+        async function loadCloudStationsBackground() {
+            try {
+                const querySnapshot = await db.collection("stations").get();
+                allStations = [];
+                querySnapshot.forEach((doc) => {
+                    allStations.push({ id: doc.id, ...doc.data() });
+                });
+                if (userLat !== null && userLon !== null) {
+                    checkSmartNearbyAlerts(allStations, userLat, userLon);
+                }
+            } catch (err) {
+                console.log("خطأ في التحميل الخلفي");
+            }
+        }
+
         function checkSmartNearbyAlerts(stations, uLat, uLon) {
             let alertsList = [];
             stations.forEach(st => {
@@ -324,7 +353,7 @@
                     let hasAnyMaterial = Object.values(st.materialsStatus).some(val => val === true);
                     if (hasAnyMaterial) {
                         let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
-                        let customRadius = st.alertRadius || 5.0; // النطاق الافتراضي 5 كم أو المخصص للمحطة
+                        let customRadius = st.alertRadius || 5.0; 
                         if (dist <= customRadius) {
                             alertsList.push(`${st.name} (تبعد ${dist.toFixed(1)} كم)`);
                         }
@@ -332,7 +361,8 @@
                 }
             });
             if (alertsList.length > 0) {
-                alert(`🚨 تنبيه ذكي هام جداً!\nتوفرت مواد في المحطات القريبة منك:\n- ` + alertsList.join('\n- '));
+                // إظهار تنبيه ذكي قوي للمستهلك
+                alert(`🚨 تنبيه ذكي للمنطقة!\nتوفرت مواد في المحطات القريبة منك:\n- ` + alertsList.join('\n- '));
             }
         }
 
@@ -367,7 +397,6 @@
 
             top10Stations.forEach((st) => {
                 found = true;
-                let whatsappNum = st.phone ? st.phone.replace(/[^0-9]/g, '') : '963900000000';
                 let distText = st.distance !== undefined ? `📍 تبعد عنك حوالي: <b>${st.distance.toFixed(1)} كم</b>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 
@@ -379,6 +408,14 @@
                         let textStatus = isAvailable ? '✓ متوفر' : '✗ انتهت الكمية';
                         materialsHtml += `<span style="background:${badgeBg}; color:${badgeColor}; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.75rem; margin-left:0.3rem; display:inline-block; margin-bottom:0.2rem;"><b>${mat}</b>: ${textStatus}</span>`;
                     }
+                }
+
+                // التحقق من خيار إظهار أو إخفاء رقم التواصل للجميع حسب رغبة المالك
+                let whatsappBtn = '';
+                if (st.showContact && st.publicPhone) {
+                    let cleanPhone = st.publicPhone.replace(/[^0-9]/g, '');
+                    let waNum = cleanPhone.startsWith('0') ? '963' + cleanPhone.substring(1) : cleanPhone;
+                    whatsappBtn = `<a href="https://wa.me/${waNum}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; margin-top:0.5rem;">💬 مراسلة المالك عبر واتساب</a>`;
                 }
 
                 html += `
@@ -400,9 +437,7 @@
                             </div>
                         </div>
 
-                        <a href="https://wa.me/${whatsappNum}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
-                            💬 مراسلة المالك عبر واتساب
-                        </a>
+                        ${whatsappBtn}
                     </div>`;
             });
             container.innerHTML = found ? html : '<p style="text-align:center; color:#64748B;">لا توجد محطات قريبة معتمدة حالياً.</p>';
@@ -437,6 +472,7 @@
             }
         }
 
+        // تسجيل محطة جديدة (تعيين رقم تواصل عام افتراضي مطابق لرقم التسجيل في البداية)
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('stName').value;
@@ -466,10 +502,12 @@
             try {
                 await db.collection("stations").add({
                     name, region, phone, pinCode, 
+                    publicPhone: phone, // الرقم المستقل للاتصال
+                    showContact: true,   // خيار الإظهار للجميع افتراضياً
                     categories: selectedCategories,
                     materialsStatus: materialsStatus,
                     lat: stationLat, lon: stationLon, 
-                    alertRadius: 5.0, // النطاق الافتراضي 5 كم
+                    alertRadius: 5.0, 
                     rating: 5, ratingCount: 1,
                     status: 'pending', createdAt: new Date().toISOString()
                 });
@@ -481,6 +519,7 @@
             }
         });
 
+        // 🎛️ لوحة تحكم المالك (إدارة رقم التواصل المستقل وتفعيل خيار الظهور)
         async function loadMyStationPanel() {
             const phoneInput = document.getElementById('loginPhone').value.trim();
             const pinInput = document.getElementById('loginPin').value.trim();
@@ -518,10 +557,24 @@
                         return;
                     }
 
+                    let currentPublicPhone = st.publicPhone || st.phone;
+                    let isContactShown = st.showContact !== false;
+
                     html += `
                         <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1rem; border-radius:10px; margin-bottom:1rem;">
                             <h3 style="color:#1E293B; margin-top:0;">${st.name} (${st.region})</h3>
-                            <p style="font-size:0.85rem; color:#059669; font-weight:bold;">حالة الاعتماد: معتمدة ومفعلة ✓ (نطاق التنبيه الحالي: ${st.alertRadius || 5} كم)</p>
+                            <p style="font-size:0.85rem; color:#059669; font-weight:bold;">حالة الاعتماد: معتمدة ومفعلة ✓</p>
+                            
+                            <hr style="border:0; border-top:1px solid #E2E8F0; margin:0.75rem 0;">
+                            <h4 style="font-size:0.9rem; color:#1E293B; margin-bottom:0.5rem;">إعدادات رقم التواصل والخصوصية:</h4>
+                            <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
+                                <input type="tel" id="pubPhone_${id}" value="${currentPublicPhone}" placeholder="رقم التواصل للعامة..." maxlength="10" style="padding:0.5rem; border:1px solid #CBD5E1; border-radius:6px;">
+                                <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer;">
+                                    <input type="checkbox" id="showContact_${id}" ${isContactShown ? 'checked' : ''} style="width:1rem; height:1rem;"> عرض رقم التواصل للجميع عبر واتساب
+                                </label>
+                                <button onclick="updateContactSettings('${id}')" style="background:#334155; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">حفظ إعدادات التواصل</button>
+                            </div>
+
                             <hr style="border:0; border-top:1px solid #E2E8F0; margin:0.75rem 0;">
                             <p style="font-weight:600; font-size:0.9rem; color:#1E293B;">حدد توفر الأصناف لديك:</p>
                     `;
@@ -552,6 +605,28 @@
             }
         }
 
+        // حفظ إعدادات رقم التواصل المستقل وصلاحية الظهور
+        window.updateContactSettings = async function(id) {
+            let newPubPhone = document.getElementById('pubPhone_' + id).value.trim();
+            let newShowContact = document.getElementById('showContact_' + id).checked;
+            
+            if (!/^09[0-9]{8}$/.test(newPubPhone)) {
+                alert('رقم التواصل العام غير صحيح! يجب أن يتألف من 10 خانات ويبدأ بـ 09.');
+                return;
+            }
+
+            try {
+                await db.collection("stations").doc(id).update({
+                    publicPhone: newPubPhone,
+                    showContact: newShowContact
+                });
+                alert('تم حفظ إعدادات التواصل بنجاح!');
+                loadMyStationPanel();
+            } catch (err) {
+                alert('خطأ أثناء حفظ الإعدادات.');
+            }
+        }
+
         window.toggleMaterialStatus = async function(stationId, categoryName, newStatus) {
             try {
                 const docRef = db.collection("stations").doc(stationId);
@@ -562,7 +637,7 @@
                     matsStatus[categoryName] = newStatus;
 
                     await docRef.update({ materialsStatus: matsStatus });
-                    alert('تم تحديث حالة المادة بنجاح! تم إرسال التنبيه الذكي للمنطقة.');
+                    alert('تم تحديث حالة المادة بنجاح!');
                     loadMyStationPanel();
                 }
             } catch (error) {
@@ -570,7 +645,7 @@
             }
         }
 
-        // لوحة الإدارة المخفية مع دعم البحث وتعديل نطاق التنبيه لكل محطة
+        // لوحة الإدارة المخفية مع دعم البحث وتعديل نطاق التنبيه
         async function loadAdminCloud() {
             loadCategoriesAndInit();
             const container = document.getElementById('adminCloudList');
@@ -602,8 +677,9 @@
                         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                             <div>
                                 <h4 style="font-size:1rem; color: #1E293B; margin-bottom: 0.2rem;">${st.name}</h4>
-                                <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region} | الهاتف: ${st.phone}</p>
-                                <p style="font-size:0.85rem; color:#D97706;">🔑 الرمز السري للمالك: <b>${st.pinCode || 'غير متوفر'}</b></p>
+                                <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region} | تسجيل الدخول: ${st.phone}</p>
+                                <p style="font-size:0.85rem; color:#0284C7;">📞 رقم التواصل العام: <b>${st.publicPhone || st.phone}</b> (${st.showContact !== false ? 'يظهر للجميع' : 'مخفي'})</p>
+                                <p style="font-size:0.85rem; color:#D97706;">🔑 الرمز السري: <b>${st.pinCode || 'غير متوفر'}</b></p>
                                 <p style="font-size:0.85rem; color:#0284C7;">الفئات: <b>${catsList}</b></p>
                                 <div style="margin: 0.5rem 0; display:flex; align-items:center; gap:0.5rem;">
                                     <label style="font-size:0.8rem; font-weight:600;">نطاق التنبيه (كم):</label>
@@ -625,7 +701,6 @@
             container.innerHTML = html || '<p style="text-align:center; color:#64748B;">لا توجد طلبات في السحابة.</p>';
         }
 
-        // تصفية نتائج البحث في لوحة الإدارة
         function filterAdminList() {
             let query = document.getElementById('adminSearchInput').value.toLowerCase();
             let cards = document.querySelectorAll('.admin-station-card');
@@ -639,7 +714,6 @@
             });
         }
 
-        // تحديث نطاق التنبيه المخصص للمحطة من الإدارة
         window.updateRadius = async function(id) {
             let val = parseFloat(document.getElementById('radius_' + id).value);
             if (isNaN(val) || val <= 0) {
