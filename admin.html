@@ -20,7 +20,7 @@
             <div class="logo-icon">⚙️</div>
             <div class="logo-text">
                 <h1>متوفر هناا</h1>
-                <p>لوحة الإدارة العامة والتحكم</p>
+                <p>لوحة الإدارة والتحكم الشامل</p>
             </div>
         </div>
     </header>
@@ -28,14 +28,14 @@
     <main>
         <div class="admin-container">
             <a href="index.html" class="back-link">← العودة للرئيسية</a>
-            <h2>إدارة الصلاحيات والمحطات الحقيقية</h2>
-            <p>مرحباً بك، من هنا يتم اعتماد أو رفض المحطات والموزعين المتقدمين للنظام.</p>
+            <h2>إدارة وصلاحيات المحطات</h2>
+            <p>التحكم الكامل بقبول المحطات أو سحب الصلاحيات منها.</p>
 
             <h3 style="font-size: 1.1rem; margin: 1.5rem 0 1rem 0; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem;">طلبات الاعتماد المعلقة:</h3>
+            <div id="pendingStationsList"></div>
 
-            <div id="pendingStationsList">
-                <!-- سيتم تعبئة الطلبات ديناميكياً هنا -->
-            </div>
+            <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem 0; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.5rem;">المحطات المعتمدة حالياً (إدارة الصلاحيات):</h3>
+            <div id="approvedStationsAdminList"></div>
         </div>
     </main>
 
@@ -44,52 +44,68 @@
     </footer>
 
     <script>
-        // تحميل الطلبات عند فتح الصفحة
-        function loadPendingStations() {
-            const container = document.getElementById('pendingStationsList');
+        function loadAdminData() {
+            const pendingContainer = document.getElementById('pendingStationsList');
+            const approvedContainer = document.getElementById('approvedStationsAdminList');
             let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
 
-            if (stations.length === 0) {
-                container.innerHTML = '<p style="color: #64748B; text-align: center; padding: 1rem;">لا توجد طلبات اعتماد معلقة حالياً.</p>';
-                return;
+            // الطلبات المعلقة
+            const pending = stations.filter(s => s.status === 'pending');
+            if (pending.length === 0) {
+                pendingContainer.innerHTML = '<p style="color: #64748B; font-size: 0.85rem;">لا توجد طلبات معلقة.</p>';
+            } else {
+                pendingContainer.innerHTML = '';
+                stations.forEach((station, index) => {
+                    if (station.status === 'pending') {
+                        pendingContainer.innerHTML += `
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div>
+                                    <h4 style="font-size: 0.95rem;">${station.name}</h4>
+                                    <p style="font-size: 0.8rem; color: #64748B;">${station.region}</p>
+                                </div>
+                                <button onclick="changeStatus(${index}, 'approved')" style="background-color: #D1FAE5; color: #059669; border: 1px solid #10B981; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600; cursor: pointer;">قبول</button>
+                            </div>
+                        `;
+                    }
+                });
             }
 
-            container.innerHTML = '';
-            stations.forEach((station, index) => {
-                if (station.status === 'pending') {
-                    container.innerHTML += `
-                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <div>
-                                <h4 style="font-size: 1rem; color: #1E293B;">${station.name}</h4>
-                                <p style="font-size: 0.85rem; color: #64748B;">المنطقة: ${station.region} | النوع: ${station.type}</p>
+            // المحطات المعتمدة (مع إمكانية سحب الصلاحية)
+            const approved = stations.filter(s => s.status === 'approved');
+            if (approved.length === 0) {
+                approvedContainer.innerHTML = '<p style="color: #64748B; font-size: 0.85rem;">لا توجد محطات معتمدة حالياً.</p>';
+            } else {
+                approvedContainer.innerHTML = '';
+                stations.forEach((station, index) => {
+                    if (station.status === 'approved') {
+                        approvedContainer.innerHTML += `
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <div>
+                                    <h4 style="font-size: 0.95rem;">${station.name}</h4>
+                                    <p style="font-size: 0.8rem; color: #059669;">معتمدة حالياً</p>
+                                </div>
+                                <button onclick="changeStatus(${index}, 'revoked')" style="background-color: #FEE2E2; color: #DC2626; border: 1px solid #EF4444; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600; cursor: pointer;">سحب الصلاحية وإيقاف</button>
                             </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button onclick="approveStation(${index})" style="background-color: #D1FAE5; color: #059669; border: 1px solid #10B981; padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 600; cursor: pointer;">قبول واعتماد</button>
-                                <button onclick="rejectStation(${index})" style="background-color: #FEE2E2; color: #DC2626; border: 1px solid #EF4444; padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 600; cursor: pointer;">رفض</button>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
+                        `;
+                    }
+                });
+            }
         }
 
-        function approveStation(index) {
+        function changeStatus(index, newStatus) {
             let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
-            stations[index].status = 'approved';
+            if (newStatus === 'revoked') {
+                stations.splice(index, 1); // إزالة المحطة أو إلغاء اعتمادها
+                alert('تم سحب الصلاحية وإزالة المحطة من النظام بنجاح!');
+            } else {
+                stations[index].status = newStatus;
+                alert('تمت الموافقة واعتماد المحطة!');
+            }
             localStorage.setItem('stationsRequests', JSON.stringify(stations));
-            alert('تم اعتماد المحطة بنجاح وأصبحت مفعلة في النظام!');
-            loadPendingStations();
+            loadAdminData();
         }
 
-        function rejectStation(index) {
-            let stations = JSON.parse(localStorage.getItem('stationsRequests')) || [];
-            stations.splice(index, 1);
-            localStorage.setItem('stationsRequests', JSON.stringify(stations));
-            alert('تم رفض وحذف الطلب.');
-            loadPendingStations();
-        }
-
-        window.onload = loadPendingStations;
+        window.onload = loadAdminData;
     </script>
 </body>
 </html>
