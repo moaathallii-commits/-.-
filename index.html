@@ -152,6 +152,24 @@
             z-index: 5;
         }
         
+                /* VIP+ Ultra Luxurious Card Styles */
+        .vip-plus-card {
+            border: 3px solid #C084FC !important;
+            box-shadow: 0 0 25px rgba(192, 132, 252, 0.4) !important;
+            background: linear-gradient(135deg, #1E1B4B 0%, #311005 100%) !important;
+        }
+        .vip-plus-badge {
+            background: linear-gradient(135deg, #C084FC 0%, #9333EA 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(147,51,234,0.5);
+        }
+
         /* VIP Card & Broadcast Styles */
         .vip-card {
             border: 2px solid #FBBF24 !important;
@@ -428,25 +446,25 @@
 
                         <!-- VIP Packages Control Section -->
             <div style="background: #0F172A; border: 1px solid #EC4899; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
-                <h3 style="font-size: 0.95rem; color: #F472B6; margin-top: 0;">👑 التحكم في عروض وباقات VIP & VIP+</h3>
+                <h3 style="font-size: 0.95rem; color: #F472B6; margin-top: 0;">👑 التحكم في عروض وباقات VIP & VIP+ (مدى الحياة)</h3>
                 
                 <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                    <h4 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:0.85rem;">⭐ إعدادات باقة VIP الأساسية:</h4>
+                    <h4 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:0.85rem;">⭐ إعدادات باقة VIP الأساسية (مدى الحياة):</h4>
                     <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; font-size:0.8rem;">
-                        <div><label>السعر ($):</label><input type="number" id="vip1_price" placeholder="25" style="margin:0;"></div>
-                        <div><label>التنبيه (كم):</label><input type="number" id="vip1_alert" placeholder="15" style="margin:0;"></div>
-                        <div><label>البحث (كم):</label><input type="number" id="vip1_search" placeholder="15" style="margin:0;"></div>
+                        <div><label>السعر ($ مدى الحياة):</label><input type="number" id="vip1_price" placeholder="25" style="margin:0;"></div>
+                        <div><label>نطاق التنبيه (كم):</label><input type="number" id="vip1_alert" placeholder="15" style="margin:0;"></div>
+                        <div><label>نطاق البحث (كم):</label><input type="number" id="vip1_search" placeholder="15" style="margin:0;"></div>
                         <div><label>عدد البث اليومي:</label><input type="number" id="vip1_bc" placeholder="3" style="margin:0;"></div>
                     </div>
                     <input type="text" id="vip1_desc" placeholder="الوصف المختصر للباقة..." style="margin:0.5rem 0 0 0; font-size:0.8rem;">
                 </div>
 
                 <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
-                    <h4 style="color:#F472B6; margin:0 0 0.4rem 0; font-size:0.85rem;">💎 إعدادات باقة VIP+ الممتازة:</h4>
+                    <h4 style="color:#F472B6; margin:0 0 0.4rem 0; font-size:0.85rem;">👑 إعدادات باقة VIP+ الفاخرة (مدى الحياة):</h4>
                     <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem; font-size:0.8rem;">
-                        <div><label>السعر ($):</label><input type="number" id="vip2_price" placeholder="50" style="margin:0;"></div>
-                        <div><label>التنبيه (كم):</label><input type="number" id="vip2_alert" placeholder="30" style="margin:0;"></div>
-                        <div><label>البحث (كم):</label><input type="number" id="vip2_search" placeholder="30" style="margin:0;"></div>
+                        <div><label>السعر ($ مدى الحياة):</label><input type="number" id="vip2_price" placeholder="50" style="margin:0;"></div>
+                        <div><label>نطاق التنبيه (كم):</label><input type="number" id="vip2_alert" placeholder="30" style="margin:0;"></div>
+                        <div><label>نطاق البحث (كم):</label><input type="number" id="vip2_search" placeholder="30" style="margin:0;"></div>
                         <div><label>عدد البث اليومي:</label><input type="number" id="vip2_bc" placeholder="10" style="margin:0;"></div>
                     </div>
                     <input type="text" id="vip2_desc" placeholder="الوصف المختصر للباقة..." style="margin:0.5rem 0 0 0; font-size:0.8rem;">
@@ -927,17 +945,25 @@
 
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
+                
+                // Check independent search range (نطاق البحث)
+                let defaultSearchRadius = st.isVip ? 15 : 5;
+                let maxSearchRange = st.searchRadius || defaultSearchRadius;
+                if (st.distance !== undefined && st.distance > maxSearchRange) {
+                    return false;
+                }
+
                 if (currentCategoryFilter !== 'all') {
                     return st.materialsStatus && st.materialsStatus[currentCategoryFilter] === true;
                 }
                 return true;
             });
 
-            // Sort: VIP within 15km (or when GPS off) gets priority, then by distance
+            // Sort: VIP gets priority, then by distance
             filtered.sort((a, b) => {
-                let aVipNear = a.isVip && (a.distance === undefined || a.distance <= 15);
-                let bVipNear = b.isVip && (b.distance === undefined || b.distance <= 15);
-                if (aVipNear !== bVipNear) return bVipNear ? 1 : -1;
+                let aVip = a.isVip ? 1 : 0;
+                let bVip = b.isVip ? 1 : 0;
+                if (aVip !== bVip) return bVip - aVip;
                 return (a.distance || 999) - (b.distance || 999);
             });
 
@@ -954,8 +980,9 @@
             topResults.forEach((st, idx) => {
                 activityBatch.impressions[st.id] = (activityBatch.impressions[st.id] || 0) + 1;
                 let isVip = st.isVip === true;
-                let cardClass = isVip ? 'vip-card' : '';
-                let vipBadge = isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '';
+                let isVipPlus = st.isVipPlus === true || (st.isVip && st.vipType === 'VIP+');
+                let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
+                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع معتمد VIP+ فاخر جداً</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
                 let distText = st.distance !== undefined ? `<p style="font-size:0.8rem; color:#38BDF8; margin: 0.25rem 0; font-weight:bold;">📍 المسافة: ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</p>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 let ratingCount = st.ratingCount || 1;
@@ -1829,11 +1856,15 @@
                                 <div style="margin: 0.4rem 0; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
                                     <div style="display:flex; align-items:center; gap:0.3rem;">
                                         <label style="font-size:0.75rem;">نطاق التنبيه(كم):</label>
-                                        <input type="number" id="radius_${id}" value="${currentRadius}" style="width:55px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                        <input type="number" id="radius_${id}" value="${currentRadius}" style="width:50px; padding:0.2rem; margin:0; font-size:0.8rem;">
                                     </div>
                                     <div style="display:flex; align-items:center; gap:0.3rem;">
-                                        <label style="font-size:0.75rem;">حد VIP اليومي:</label>
-                                        <input type="number" id="viplimit_${id}" value="${st.vipDailyLimit !== undefined ? st.vipDailyLimit : 3}" style="width:50px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                        <label style="font-size:0.75rem;">نطاق البحث(كم):</label>
+                                        <input type="number" id="searchradius_${id}" value="${st.searchRadius || (st.isVip ? 15 : 5)}" style="width:50px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:0.3rem;">
+                                        <label style="font-size:0.75rem;">حد البث:</label>
+                                        <input type="number" id="viplimit_${id}" value="${st.vipDailyLimit !== undefined ? st.vipDailyLimit : 3}" style="width:45px; padding:0.2rem; margin:0; font-size:0.8rem;">
                                     </div>
                                     <button onclick="updateStationLimits('${id}')" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حفظ الإعدادات</button>
                                 </div>
@@ -1982,15 +2013,18 @@
 
         window.updateStationLimits = async function(id) {
             let radiusVal = parseFloat(document.getElementById('radius_' + id).value);
+            let searchRadiusVal = parseFloat(document.getElementById('searchradius_' + id).value);
             let limitVal = parseInt(document.getElementById('viplimit_' + id).value);
-            if (isNaN(radiusVal) || radiusVal <= 0) return showToast("قيمة النطاق غير صحيحة");
-            if (isNaN(limitVal) || limitVal < 0) return showToast("حد البرودكاست اليومي غير صحيح");
+            if (isNaN(radiusVal) || radiusVal <= 0) return showToast("قيمة نطاق التنبيه غير صحيحة");
+            if (isNaN(searchRadiusVal) || searchRadiusVal <= 0) return showToast("قيمة نطاق البحث غير صحيحة");
+            if (isNaN(limitVal) || limitVal < 0) return showToast("حد البث اليومي غير صحيح");
             try {
                 await db.collection("stations").doc(id).update({
                     alertRadius: radiusVal,
+                    searchRadius: searchRadiusVal,
                     vipDailyLimit: limitVal
                 });
-                showToast("تم حفظ إعدادات النطاق والحد اليومي بنجاح!");
+                showToast("تم حفظ إعدادات نطاق التنبيه والبحث والحد اليومي بنجاح!");
                 loadAdminPanel();
             } catch(e) {
                 showToast("خطأ أثناء الحفظ");
@@ -2043,34 +2077,34 @@
             let stName = stationNameInput ? stationNameInput.textContent : 'محطتي';
 
             container.innerHTML = `
-                <div style="background:linear-gradient(135deg, #1E293B 0%, #111827 100%); border:2px solid #FBBF24; padding:1.25rem; border-radius:14px; text-align:right;">
+                <div style="background:linear-gradient(135deg, #1E293B 0%, #111827 100%); border:2px solid #FBBF24; padding:1.25rem; border-radius:14px; text-align:right; box-shadow:0 0 15px rgba(251,191,36,0.15);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                        <h4 style="color:#FBBF24; margin:0; font-size:1.1rem;">⭐ باقة VIP الرسمية</h4>
-                        <span style="background:#FBBF24; color:#0F172A; padding:0.25rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.9rem;">${vipPkg1.price} $ / شهرياً</span>
+                        <h4 style="color:#FBBF24; margin:0; font-size:1.15rem;">⭐ باقة VIP المميزة (مدى الحياة)</h4>
+                        <span style="background:#FBBF24; color:#0F172A; padding:0.25rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.9rem;">${vipPkg1.price} $ (مدى الحياة)</span>
                     </div>
                     <p style="color:#94A3B8; font-size:0.8rem; margin:0.3rem 0 0.75rem 0;">${vipPkg1.desc}</p>
                     <ul style="color:#E2E8F0; font-size:0.82rem; padding-right:1.2rem; margin:0 0 1rem 0; line-height:1.6;">
                         <li>📡 نطاق التنبيه الفوري: <b>${vipPkg1.alertRange} كم</b></li>
                         <li>🔍 نطاق البحث وظهور الرادار: <b>${vipPkg1.searchRange} كم</b></li>
-                        <li>📢 عدد الرسائل الفورية (البث): <b>${vipPkg1.broadcastCount} رسائل يومياً</b></li>
+                        <li>📢 عدد رسائل البث الفوري: <b>${vipPkg1.broadcastCount} رسائل يومياً</b></li>
                         <li>✨ إطار وشارة ذهبية لامعة في نتائج المستهلك</li>
                     </ul>
-                    <button onclick="activateVipPackage('VIP', '${vipPkg1.price}', '${stName}')" class="btn-primary" style="background:#D97706; margin-bottom:0; font-weight:900;">💬 تفعيل باقة VIP الآن عبر واتساب الإدارة</button>
+                    <button onclick="activateVipPackage('VIP', '${vipPkg1.price}', '${stName}')" class="btn-primary" style="background:#D97706; margin-bottom:0; font-weight:900;">💬 تفعيل باقة VIP (مدى الحياة) عبر واتساب الإدارة</button>
                 </div>
 
-                <div style="background:linear-gradient(135deg, #311005 0%, #172033 100%); border:2px solid #EC4899; padding:1.25rem; border-radius:14px; text-align:right;">
+                <div style="background:linear-gradient(135deg, #3B0764 0%, #1E1B4B 100%); border:3px solid #C084FC; padding:1.4rem; border-radius:16px; text-align:right; box-shadow:0 0 25px rgba(192,132,252,0.35);">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                        <h4 style="color:#F472B6; margin:0; font-size:1.1rem;">💎 باقة VIP+ الممتازة</h4>
-                        <span style="background:#EC4899; color:white; padding:0.25rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.9rem;">${vipPkg2.price} $ / شهرياً</span>
+                        <h4 style="color:#F3E8FF; margin:0; font-size:1.25rem;">👑 باقة VIP+ الفاخرة جداً (مدى الحياة)</h4>
+                        <span style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; padding:0.3rem 0.7rem; border-radius:6px; font-weight:900; font-size:0.95rem; box-shadow:0 0 10px rgba(147,51,234,0.5);">${vipPkg2.price} $ (مدى الحياة)</span>
                     </div>
-                    <p style="color:#94A3B8; font-size:0.8rem; margin:0.3rem 0 0.75rem 0;">${vipPkg2.desc}</p>
-                    <ul style="color:#E2E8F0; font-size:0.82rem; padding-right:1.2rem; margin:0 0 1rem 0; line-height:1.6;">
+                    <p style="color:#E9D5FF; font-size:0.85rem; margin:0.3rem 0 0.75rem 0; font-weight:bold;">${vipPkg2.desc}</p>
+                    <ul style="color:#F3E8FF; font-size:0.85rem; padding-right:1.2rem; margin:0 0 1rem 0; line-height:1.6;">
                         <li>📡 نطاق التنبيه الفوري: <b>${vipPkg2.alertRange} كم</b></li>
                         <li>🔍 نطاق البحث وظهور الرادار: <b>${vipPkg2.searchRange} كم</b></li>
-                        <li>📢 عدد الرسائل الفورية (البث): <b>${vipPkg2.broadcastCount} رسائل يومياً</b></li>
-                        <li>👑 أولوية مطلقة وتصدر كامل لقائمة النتائج</li>
+                        <li>📢 عدد رسائل البث الفوري: <b>${vipPkg2.broadcastCount} رسائل يومياً</b></li>
+                        <li>💎 شكل مميز جداً وإضاءة ملكية متوهجة وتصدر كامل لقائمة النتائج</li>
                     </ul>
-                    <button onclick="activateVipPackage('VIP+', '${vipPkg2.price}', '${stName}')" class="btn-primary" style="background:#BE185D; margin-bottom:0; font-weight:900;">💬 تفعيل باقة VIP+ الآن عبر واتساب الإدارة</button>
+                    <button onclick="activateVipPackage('VIP+', '${vipPkg2.price}', '${stName}')" class="btn-primary" style="background:linear-gradient(135deg, #9333EA 0%, #7E22CE 100%); margin-bottom:0; font-weight:900; box-shadow:0 4px 15px rgba(147,51,234,0.6);">💬 تفعيل باقة VIP+ (مدى الحياة) عبر واتساب الإدارة</button>
                 </div>
             `;
 
