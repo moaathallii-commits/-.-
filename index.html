@@ -323,6 +323,16 @@
                 <button onclick="testRingtone()" style="background:#334155; color:white; border:none; border-radius:8px; padding:0 1rem; cursor:pointer; font-weight:bold;">تجربة</button>
             </div>
 
+            <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-top:1rem; margin-bottom:0.3rem;">نطاق البحث الأقصى لإيجاد المحطات:</label>
+            <select id="consumerSearchRadius" onchange="saveConsumerPrefs()">
+                <option value="5">5 كيلومتر</option>
+                <option value="10">10 كيلومتر</option>
+                <option value="15" selected>15 كيلومتر (افتراضي)</option>
+                <option value="25">25 كيلومتر</option>
+                <option value="50">50 كيلومتر</option>
+                <option value="999">بدون حد (كل المحطات)</option>
+            </select>
+
             <p style="font-size: 0.85rem; font-weight: 600; color: #F8FAFC; margin-top: 1rem; border-top:1px solid #334155; padding-top:1rem;">تفضيلات المواد للبحث والتنبيه:</p>
             <div id="consumerAlertPreferences" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;"></div>
 
@@ -793,6 +803,10 @@
             let modeEl = document.getElementById('alertTriggerMode');
             if (mode && modeEl) modeEl.value = mode;
 
+            let searchRad = localStorage.getItem('consumer_search_radius');
+            let radEl = document.getElementById('consumerSearchRadius');
+            if (searchRad && radEl) radEl.value = searchRad;
+
             let tone = localStorage.getItem('user_ringtone');
             let toneEl = document.getElementById('userRingtoneSelect');
             if (tone && toneEl) {
@@ -831,7 +845,9 @@
             if (modeEl) localStorage.setItem('alert_trigger_mode', modeEl.value);
             let toneEl = document.getElementById('userRingtoneSelect');
             if (toneEl) localStorage.setItem('user_ringtone', toneEl.value);
-            showToast("تم حفظ الإعدادات");
+            let radEl = document.getElementById('consumerSearchRadius');
+            if (radEl) localStorage.setItem('consumer_search_radius', radEl.value);
+            showToast("تم حفظ إعدادات البحث والتنبيه");
         };
 
         window.activateRadar = async function() {
@@ -885,8 +901,11 @@
                 }
             });
 
+            let maxSearchDist = parseFloat(localStorage.getItem('consumer_search_radius') || '15');
+
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
+                if (st.distance !== undefined && st.distance > maxSearchDist) return false;
                 if (currentCategoryFilter !== 'all') {
                     return st.materialsStatus && st.materialsStatus[currentCategoryFilter] === true;
                 }
