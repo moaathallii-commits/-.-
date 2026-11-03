@@ -295,6 +295,11 @@
         <section id="sec-consumerSettings" class="app-section">
             <h2 style="margin-top:0; color:#FBBF24;">⚙️ إعدادات الرادار والتنبيه</h2>
             
+            <div id="notifPermissionBox" style="background:#451A03; border:1px solid #D97706; padding:0.85rem; border-radius:10px; margin-bottom:1rem; text-align:center;">
+                <p style="color:#FDE68A; font-size:0.85rem; margin:0 0 0.5rem 0; font-weight:bold;">⚠️ لتلقي إشعارات VIP الفورية وصافرات الإنذار في خلفية الهاتف:</p>
+                <button onclick="requestSystemNotificationPermission()" style="background:#D97706; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:bold; cursor:pointer; font-size:0.85rem;">🔑 منح إذن الإشعارات والصوت الآن</button>
+            </div>
+            
             <div style="background:#0F172A; padding:0.85rem; border-radius:10px; border:1px solid #334155; margin-bottom:1rem;">
                 <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; font-weight: bold; color: #34D399; cursor:pointer;">
                     <input type="checkbox" id="bgAlarmToggle" onchange="toggleBackgroundAlarm()" style="width: 1.2rem; height: 1.2rem; margin:0;"> 🔔 تفعيل التنبيه الصاخب بالخلفية (كل 60 ثانية)
@@ -1622,14 +1627,45 @@
 
         window.sendVIPBroadcast = async function(id) {
             let msg = document.getElementById(`bcMsg_${id}`).value.trim();
+            if (!db) return;
             try {
-                await db.collection("stations").doc(id).update({
-                    broadcastMsg: msg,
-                    broadcastId: Date.now().toString(),
-                    lastUpdate: new Date().toISOString()
-                });
-                showToast(msg ? "🚨 تم إطلاق البث الصاخب الفوري لجميع المستهلكين في نطاقك!" : "تم إيقاف ومسح الإشعار الفوري.");
-            } catch (e) { showToast("خطأ في النشر"); }
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (!doc.exists) return;
+                let d = doc.data();
+
+                if (msg) {
+                    let todayStr = new Date().toISOString().split('T')[0];
+                    let lastDate = d.lastBroadcastDate || '';
+                    let countToday = d.broadcastCountToday || 0;
+                    let maxLimit = d.vipDailyLimit !== undefined ? d.vipDailyLimit : 3; // Default 3 per day
+
+                    if (lastDate === todayStr && countToday >= maxLimit) {
+                        showToast(`❌ عذراً، لقد استنفدت الحد الأقصى لبث رسائل VIP اليوم (${maxLimit} رسائل). يرجى الانتظار للغد أو مراجعة الإدارة لزيادة الحد.`);
+                        return;
+                    }
+
+                    let newCount = (lastDate === todayStr) ? (countToday + 1) : 1;
+
+                    await ref.update({
+                        broadcastMsg: msg,
+                        broadcastId: Date.now().toString(),
+                        lastUpdate: new Date().toISOString(),
+                        lastBroadcastDate: todayStr,
+                        broadcastCountToday: newCount
+                    });
+                    showToast(`🚨 تم إطلاق البث الفوري بنجاح! (تم استخدام ${newCount} من أصل ${maxLimit} رسائل اليوم)`);
+                } else {
+                    // Clearing broadcast
+                    await ref.update({
+                        broadcastMsg: "",
+                        lastUpdate: new Date().toISOString()
+                    });
+                    showToast("تم إيقاف ومسح الإشعار الفوري.");
+                }
+            } catch (e) {
+                showToast("خطأ في نشر البث.");
+            }
         };
 
         // --- Admin Room Full Management ---
@@ -1727,12 +1763,18 @@
                                         <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold;">🗺️ فتح الموقع على خرائط Google</a>
                                     ` : `<span style="color:#EF4444;">غير مسجل</span>`}
                                 </div>
-                                <div style="margin: 0.4rem 0; display:flex; align-items:center; gap:0.4rem;">
-                                    <label style="font-size:0.75rem;">نطاق التنبيه (كم):</label>
-                                    <input type="number" id="radius_${id}" value="${currentRadius}" style="width:60px; padding:0.2rem; margin:0; font-size:0.8rem;">
-                                    <button onclick="updateRadius('${id}')" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حفظ</button>
+                                <div style="margin: 0.4rem 0; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                                    <div style="display:flex; align-items:center; gap:0.3rem;">
+                                        <label style="font-size:0.75rem;">نطاق التنبيه(كم):</label>
+                                        <input type="number" id="radius_${id}" value="${currentRadius}" style="width:55px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:0.3rem;">
+                                        <label style="font-size:0.75rem;">حد VIP اليومي:</label>
+                                        <input type="number" id="viplimit_${id}" value="${st.vipDailyLimit !== undefined ? st.vipDailyLimit : 3}" style="width:50px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                    </div>
+                                    <button onclick="updateStationLimits('${id}')" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حفظ الإعدادات</button>
                                 </div>
-                                <span style="background:${badgeBg}; color:${badgeCol}; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">${statusText}</span>
+                                <span style="background:${badgeBg}; color:${badgeCol}; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">${statusText} (مستخدم اليوم: ${st.broadcastCountToday || 0})</span>
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:85px;">
                                 ${st.status !== 'approved' ?
@@ -1844,6 +1886,44 @@
             await db.collection("stations").doc(id).update({ alertRadius: val });
             showToast("تم تحديث النطاق!");
             loadAdminPanel();
+        };
+
+        window.updateStationLimits = async function(id) {
+            let radiusVal = parseFloat(document.getElementById('radius_' + id).value);
+            let limitVal = parseInt(document.getElementById('viplimit_' + id).value);
+            if (isNaN(radiusVal) || radiusVal <= 0) return showToast("قيمة النطاق غير صحيحة");
+            if (isNaN(limitVal) || limitVal < 0) return showToast("حد البرودكاست اليومي غير صحيح");
+            try {
+                await db.collection("stations").doc(id).update({
+                    alertRadius: radiusVal,
+                    vipDailyLimit: limitVal
+                });
+                showToast("تم حفظ إعدادات النطاق والحد اليومي بنجاح!");
+                loadAdminPanel();
+            } catch(e) {
+                showToast("خطأ أثناء الحفظ");
+            }
+        };
+
+        window.requestSystemNotificationPermission = function() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        showToast("✅ تم تفعيل إذن الإشعارات بنجاح!");
+                        let box = document.getElementById('notifPermissionBox');
+                        if (box) box.style.display = 'none';
+                        // Test audio context unlock
+                        try {
+                            let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                            ctx.resume();
+                        } catch(e){}
+                    } else {
+                        showToast("❌ تم رفض إذن الإشعارات. يرجى تفعيله من إعدادات المتصفح.");
+                    }
+                });
+            } else {
+                showToast("متصفحك لا يدعم نظام الإشعارات.");
+            }
         };
 
         window.approveAndNotify = async function(id, stName, stPhone) {
