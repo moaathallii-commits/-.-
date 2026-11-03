@@ -20,7 +20,7 @@
 
     <header style="background: #10B981; color: white; padding: 1rem; text-align: center;">
         <h1 style="margin: 0;">متوفر هناا</h1>
-        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا</p>
+        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (الإحصائيات الذكية)</p>
     </header>
 
     <!-- شريط التنقل السريع -->
@@ -53,12 +53,17 @@
         <section id="sec-consumer" class="app-section" style="display: none;">
             <h2>أقرب 10 محطات معتمدة لموقعك</h2>
             
-            <!-- خيار التنبيه الصاخب والمستمر في الخلفية -->
             <div style="background: #FEF3C7; border: 1px solid #F59E0B; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: bold; color: #B45309; cursor: pointer;">
-                    <input type="checkbox" id="bgAlarmToggle" onchange="toggleBackgroundAlarm()" style="width: 1.2rem; height: 1.2rem;"> 🔔 تفعيل التنبيه الصاخب والمستمر في الخلفية
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: bold; color: #B45309; cursor: pointer; margin-bottom: 0.5rem;">
+                    <input type="checkbox" id="bgAlarmToggle" onchange="toggleBackgroundAlarm()" style="width: 1.2rem; height: 1.2rem;"> 🔔 التنبيه الصاخب (توفر أو نفاذ المواد)
                 </label>
-                <p style="font-size: 0.75rem; color: #92400E; margin: 0.3rem 0 0 0;">سيتم فحص وتنبيهك صوتياً عند توفر المواد قريباً حتى إن لم تفتح التطبيق.</p>
+                <div style="display: flex; gap: 0.5rem; align-items: center; font-size: 0.8rem; color: #92400E;">
+                    <span>اختر نغمة التنبيه:</span>
+                    <select id="userRingtoneSelect" onchange="saveUserRingtone()" style="padding: 0.3rem; border: 1px solid #F59E0B; border-radius: 4px; background: white;">
+                        <option value="alarm1">نغمة الإنذار السريع</option>
+                        <option value="alarm2">نغمة التنبيه المتقطع</option>
+                    </select>
+                </div>
             </div>
 
             <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
@@ -84,7 +89,7 @@
         <section id="sec-station" class="app-section" style="display: none;">
             <h2>تسجيل محطة أو موزع جديد</h2>
             <div id="registrationFeeNotice" style="background: #E0F2FE; border: 1px solid #0284C7; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; color: #0369A1; font-weight: bold;">
-                تكلفة تسجيل المحطة الحالية: جاري التحميل...
+                تكلفة تسجيل المحطة: جاري التحميل...
             </div>
             <form id="cloudStationForm" style="display: flex; flex-direction: column; gap: 1rem;">
                 <div>
@@ -115,7 +120,7 @@
             </form>
         </section>
 
-        <!-- 4. لوحة تحكم المالك (من خلالها يتم الدخول للإدارة السرية برقم الهاتف وكلمة المرور المحددة) -->
+        <!-- 4. لوحة تحكم المالك (مع إحصائيات الاستخدام والتنبيهات) -->
         <section id="sec-stationPanel" class="app-section" style="display: none;">
             <h2>🎛️ لوحة تحكم مالك المحطة</h2>
             <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل ورمزك السري للوصول:</p>
@@ -131,17 +136,32 @@
             </div>
         </section>
 
-        <!-- 5. قسم الإدارة (السرية) -->
+        <!-- 5. قسم الإدارة (مع إحصائيات المستخدمين الفعليين) -->
         <section id="sec-admin" class="app-section" style="display: none;">
-            <h2>لوحة الإدارة والفئات وتكلفة التسجيل</h2>
+            <h2>لوحة الإدارة والإحصائيات والشام كاش</h2>
             <button onclick="showSection('home')" style="background: #64748B; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; margin-bottom: 1rem;">إغلاق لوحة الإدارة 🔒</button>
             
-            <!-- إعداد تكلفة تسجيل المحطة بالدولار -->
-            <div style="background: #EFF6FF; border: 1px solid #3B82F6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <h3 style="font-size: 1rem; color: #1E3A8A; margin-top: 0;">💵 تحديد تكلفة تسجيل المحطة</h3>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="number" id="settingFeeInput" placeholder="التكلفة بالدولار ($)..." style="flex: 1; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px;">
-                    <button onclick="saveRegistrationFee()" style="background: #2563EB; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">حفظ التكلفة</button>
+            <!-- إحصائيات الإدارة الشاملة -->
+            <div style="background: #ECFDF5; border: 1px solid #10B981; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center;">
+                <h3 style="font-size: 1.1rem; color: #065F46; margin-top: 0;">📊 إحصائيات النظام العامة</h3>
+                <p style="font-size: 1rem; color: #047857; margin: 0;">إجمالي عدد المستخدمين الفعليين المسجلين: <b id="adminTotalUsersCount" style="font-size: 1.2rem;">...</b></p>
+            </div>
+
+            <div style="background: #EFF6FF; border: 1px solid #3B82F6; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <h3 style="font-size: 1rem; color: #1E3A8A; margin-top: 0;">💳 إعدادات الدفع المالي والشام كاش</h3>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.3rem;">معرف شام كاش (Sham Cash ID):</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="settingShamCashInput" placeholder="معرف التحويل المالي..." style="flex: 1; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px;">
+                        <button onclick="saveShamCashID()" style="background: #2563EB; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">حفظ المعرف</button>
+                    </div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.3rem;">تكلفة تسجيل المحطة ($):</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" id="settingFeeInput" placeholder="التكلفة بالدولار ($)..." style="flex: 1; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px;">
+                        <button onclick="saveRegistrationFee()" style="background: #2563EB; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">حفظ التكلفة</button>
+                    </div>
                 </div>
             </div>
 
@@ -188,13 +208,36 @@
             if (sectionId === 'consumer' || sectionId === 'station') {
                 loadCategoriesAndInit();
                 loadRegistrationFee();
+                registerUserActivity(); // تسجيل المستخدم الفعلي
             }
             if (sectionId === 'admin') {
                 loadCategoriesAndInit();
                 loadAdminCloud();
-                loadRegistrationFeeAdmin();
+                loadAdminSettings();
+                loadAdminStats();
             }
             window.scrollTo(0, 0);
+        }
+
+        // تسجيل المستخدم الفعلي في قاعدة البيانات عند التفاعل
+        async function registerUserActivity() {
+            try {
+                let userId = localStorage.getItem('app_user_id');
+                if (!userId) {
+                    userId = 'user_' + Math.random().toString(36.2).substring(2, 11);
+                    localStorage.setItem('app_user_id', userId);
+                    await db.collection("users").add({ userId: userId, joinedAt: new Date().toISOString() });
+                }
+            } catch(e) {}
+        }
+
+        async function loadAdminStats() {
+            try {
+                let snap = await db.collection("users").get();
+                let count = snap.size;
+                let countEl = document.getElementById('adminTotalUsersCount');
+                if (countEl) countEl.textContent = count;
+            } catch(e) {}
         }
 
         async function loadCategoriesAndInit() {
@@ -230,17 +273,19 @@
                 let notice = document.getElementById('registrationFeeNotice');
                 if (doc.exists && notice) {
                     let fee = doc.data().regFee || "0";
-                    notice.textContent = `تكلفة تسجيل المحطة: ${fee} دولار ($)`;
+                    let sham = doc.data().shamCash || "غير محدد";
+                    notice.textContent = `تكلفة تسجيل المحطة: ${fee} دولار ($) | معرف شام كاش للتحويل: ${sham}`;
                 }
             } catch(e) {}
         }
 
-        async function loadRegistrationFeeAdmin() {
+        async function loadAdminSettings() {
             try {
                 let doc = await db.collection("settings").doc("config").get();
-                let input = document.getElementById('settingFeeInput');
-                if (doc.exists && input) {
-                    input.value = doc.data().regFee || "";
+                if (doc.exists) {
+                    let data = doc.data();
+                    document.getElementById('settingFeeInput').value = data.regFee || "";
+                    document.getElementById('settingShamCashInput').value = data.shamCash || "";
                 }
             } catch(e) {}
         }
@@ -250,6 +295,16 @@
             try {
                 await db.collection("settings").doc("config").set({ regFee: val }, { merge: true });
                 alert("تم حفظ تكلفة التسجيل بنجاح!");
+            } catch(e) {
+                alert("خطأ أثناء الحفظ.");
+            }
+        }
+
+        async function saveShamCashID() {
+            let val = document.getElementById('settingShamCashInput').value;
+            try {
+                await db.collection("settings").doc("config").set({ shamCash: val }, { merge: true });
+                alert("تم حفظ معرف شام كاش بنجاح!");
             } catch(e) {
                 alert("خطأ أثناء الحفظ.");
             }
@@ -353,6 +408,12 @@
             localStorage.setItem('alert_prefs', JSON.stringify(prefs));
         }
 
+        window.saveUserRingtone = function() {
+            let val = document.getElementById('userRingtoneSelect').value;
+            localStorage.setItem('user_ringtone', val);
+            alert("تم حفظ نغمة الرنين الخاصة بك.");
+        }
+
         function getStationGPS() {
             const status = document.getElementById('stationGpsStatus');
             if (navigator.geolocation) {
@@ -405,17 +466,16 @@
                 userLat = parseFloat(savedLat);
                 userLon = parseFloat(savedLon);
             }
-            // استرجاع حالة التنبيه الصاخب بالخلفية
             let isBgAlarmOn = localStorage.getItem('bg_alarm_active') === 'true';
             let toggleEl = document.getElementById('bgAlarmToggle');
             if (toggleEl) {
                 toggleEl.checked = isBgAlarmOn;
                 if (isBgAlarmOn) startBackgroundAlarmLoop();
             }
+            registerUserActivity();
             loadCloudStationsBackground();
         });
 
-        // تشغيل وإيقاف التنبيه الصاخب والمستمر في الخلفية
         window.toggleBackgroundAlarm = function() {
             let isChecked = document.getElementById('bgAlarmToggle').checked;
             localStorage.setItem('bg_alarm_active', isChecked);
@@ -434,12 +494,12 @@
                 try {
                     let snap = await db.collection("stations").get();
                     let stList = [];
-                    snap.forEach(d => stList.push(d.data()));
+                    snap.forEach(d => stList.push({ id: d.id, ...d.data() }));
                     if (userLat !== null && userLon !== null) {
-                        checkSmartNearbyAlerts(stList, userLat, userLon, true); // true تعني فحص خلفي صاخب
+                        checkSmartNearbyAlerts(stList, userLat, userLon, true);
                     }
                 } catch(e){}
-            }, 30000); // الفحص كل 30 ثانية في الخلفية
+            }, 30000); 
         }
 
         function stopBackgroundAlarmLoop() {
@@ -459,37 +519,41 @@
             } catch (err) {}
         }
 
-        // التنبيه الذكي البارز مع صوت وتحديد نوع المادة وصخب مستمر
-        function checkSmartNearbyAlerts(stations, uLat, uLon, isBackground = false) {
+        // فحص التنبيهات وزيادة عداد المستلمين للتنبيه في قاعدة البيانات
+        async function checkSmartNearbyAlerts(stations, uLat, uLon, isBackground = false) {
             let savedPrefs = JSON.parse(localStorage.getItem('alert_prefs') || '[]');
             let alertsList = [];
             
-            stations.forEach(st => {
+            for (let st of stations) {
                 if (st.status === 'approved' && st.lat && st.lon && st.materialsStatus) {
                     for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
-                        if (isAvail === true) {
-                            if (savedPrefs.length === 0 || savedPrefs.includes(mat)) {
-                                let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
-                                let customRadius = st.alertRadius || 5.0; 
-                                if (dist <= customRadius) {
-                                    alertsList.push(`محطة (${st.name}) في ${st.region} أعلنت توفر مادة [${mat}] - تبعد عنك ${dist.toFixed(1)} كم بسعر ${st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] + ' ل.س' : 'غير محدد'}`);
-                                }
+                        if (savedPrefs.length === 0 || savedPrefs.includes(mat)) {
+                            let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
+                            let customRadius = st.alertRadius || 5.0; 
+                            if (dist <= customRadius) {
+                                let statusMsg = isAvail ? "متوفرة الآن ✓" : "نفدت كميتها ✗";
+                                alertsList.push(`محطة (${st.name}) في ${st.region}: مادة [${mat}] أصبحت (${statusMsg}) - تبعد عنك ${dist.toFixed(1)} كم`);
+                                
+                                // تسجيل وتحديث عداد من استلموا التنبيه لهذه المحطة سحابياً
+                                try {
+                                    let ref = db.collection("stations").doc(st.id);
+                                    let currentAlertsCount = st.alertsReceivedCount || 0;
+                                    await ref.update({ alertsReceivedCount: currentAlertsCount + 1 });
+                                } catch(e){}
                             }
                         }
                     }
                 }
-            });
+            }
 
             if (alertsList.length > 0) {
                 playLoudAlarmSound();
-                if (isBackground) {
-                    console.log("تنبيه خلفي نشط:", alertsList);
+                if (!isBackground) {
+                    alert(`🚨 تنبيه صاخب ومستمر للمنطقة (توفر / نفاذ):\n\n` + alertsList.join('\n\n'));
                 }
-                alert(`🚨 تنبيه صاخب ومستمر للمنطقة!\n\n` + alertsList.join('\n\n'));
             }
         }
 
-        // دالة توليد صوت تنبيه صاخب وقوي
         function playLoudAlarmSound() {
             try {
                 let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -498,7 +562,7 @@
                         let osc = audioCtx.createOscillator();
                         let gain = audioCtx.createGain();
                         osc.type = 'sawtooth';
-                        osc.frequency.setValueAtTime(600 + (i * 200), audioCtx.currentTime);
+                        osc.frequency.setValueAtTime(700 + (i * 150), audioCtx.currentTime);
                         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
                         osc.connect(gain);
                         gain.connect(audioCtx.destination);
@@ -558,7 +622,8 @@
                 if (st.showContact && st.publicPhone) {
                     let cleanPhone = st.publicPhone.replace(/[^0-9]/g, '');
                     let waNum = cleanPhone.startsWith('0') ? '963' + cleanPhone.substring(1) : cleanPhone;
-                    whatsappBtn = `<a href="https://wa.me/${waNum}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; margin-top:0.5rem;">💬 مراسلة المالك عبر واتساب</a>`;
+                    // عند النقر لزيادة عداد الأشخاص الذين استخدموا التطبيق للوصول للمحطة
+                    whatsappBtn = `<a href="https://wa.me/${waNum}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackStationAccess('${st.id}')" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem; margin-top:0.5rem;">💬 مراسلة المالك عبر واتساب</a>`;
                 }
 
                 html += `
@@ -584,6 +649,18 @@
                     </div>`;
             });
             container.innerHTML = found ? html : '<p style="text-align:center; color:#64748B;">لا توجد محطات قريبة معتمدة حالياً.</p>';
+        }
+
+        // تسجيل عداد الوصول واستخدام التطبيق للمحطة
+        window.trackStationAccess = async function(stationId) {
+            try {
+                let ref = db.collection("stations").doc(stationId);
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let currentAccess = doc.data().accessCount || 0;
+                    await ref.update({ accessCount: currentAccess + 1 });
+                }
+            } catch(e){}
         }
 
         window.rateStation = async function(id, score) {
@@ -654,6 +731,8 @@
                     lat: stationLat, lon: stationLon, 
                     alertRadius: 5.0, 
                     rating: 5, ratingCount: 1,
+                    alertsReceivedCount: 0,
+                    accessCount: 0,
                     status: 'pending', createdAt: new Date().toISOString()
                 });
                 alert('تم إرسال طلب تسجيل محطتك بنجاح! بانتظار موافقة الإدارة.');
@@ -664,7 +743,7 @@
             }
         });
 
-        // 🎛️ لوحة تحكم المالك (وعند كتابة بيانات الإدارة السرية يتم فتح لوحة الإدارة تلقائياً)
+        // 🎛️ لوحة تحكم المالك مع عرض إحصائيات التنبيهات والوصول
         async function loadMyStationPanel() {
             const phoneInput = document.getElementById('loginPhone').value.trim();
             const pinInput = document.getElementById('loginPin').value.trim();
@@ -675,8 +754,8 @@
                 return;
             }
 
-            // التحقق إذا كان المستخدم هو المدير السري
-            if (phoneInput === "0965461205" && pinInput === "MHA@1997//MOAATHS") {
+            // الدخول للإدارة السرية برقم 0965461504
+            if (phoneInput === "0965461504" && pinInput === "MHA@1997//MOAATHS") {
                 showSection('admin');
                 return;
             }
@@ -710,12 +789,21 @@
 
                     let currentPublicPhone = st.publicPhone || st.phone;
                     let isContactShown = st.showContact !== false;
+                    let alertsCount = st.alertsReceivedCount || 0;
+                    let accessCount = st.accessCount || 0;
 
                     html += `
                         <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1rem; border-radius:10px; margin-bottom:1rem;">
                             <h3 style="color:#1E293B; margin-top:0;">${st.name} (${st.region})</h3>
                             <p style="font-size:0.85rem; color:#059669; font-weight:bold;">حالة الاعتماد: معتمدة ومفعلة ✓</p>
                             
+                            <!-- قسم إحصائيات المالك الخاصة -->
+                            <div style="background:#EFF6FF; border:1px solid #3B82F6; padding:0.75rem; border-radius:8px; margin:0.75rem 0;">
+                                <h4 style="font-size:0.9rem; color:#1E3A8A; margin-top:0; margin-bottom:0.4rem;">📊 إحصائيات أداء المحطة:</h4>
+                                <p style="font-size:0.85rem; color:#1E40AF; margin:0.2rem 0;">👥 عدد الأشخاص الذين استلموا التنبيه القريب: <b>${alertsCount}</b></p>
+                                <p style="font-size:0.85rem; color:#1E40AF; margin:0.2rem 0;">🔗 عدد الأشخاص الذين استخدموا التطبيق للوصول لمحطتك: <b>${accessCount}</b></p>
+                            </div>
+
                             <hr style="border:0; border-top:1px solid #E2E8F0; margin:0.75rem 0;">
                             <h4 style="font-size:0.9rem; color:#1E293B; margin-bottom:0.5rem;">إعدادات رقم التواصل والخصوصية:</h4>
                             <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
@@ -823,6 +911,8 @@
 
         async function loadAdminCloud() {
             loadCategoriesAndInit();
+            loadAdminSettings();
+            loadAdminStats();
             const container = document.getElementById('adminCloudList');
             try {
                 const querySnapshot = await db.collection("stations").get();
