@@ -326,8 +326,11 @@
         <!-- 5. Station Register -->
         <section id="sec-stationRegister" class="app-section">
             <h2 style="margin-top:0; color:#FBBF24;">طلب تسجيل محطة / موزع</h2>
-            <div id="registrationFeeNotice" style="background: #0F172A; border: 1px solid #0284C7; padding: 0.75rem; border-radius: 10px; margin-bottom: 1rem; text-align: center; color: #38BDF8; font-size: 0.85rem; font-weight:bold;">
+            <div id="registrationFeeNotice" style="background: #0F172A; border: 1px solid #0284C7; padding: 0.75rem; border-radius: 10px; margin-bottom: 0.75rem; text-align: center; color: #38BDF8; font-size: 0.85rem; font-weight:bold;">
                 تكلفة تسجيل المحطة: جاري التحميل...
+            </div>
+            <div id="adminCustomNoteBox" style="background: linear-gradient(135deg, #451A03 0%, #1E293B 100%); border: 2px solid #FBBF24; padding: 0.9rem; border-radius: 10px; margin-bottom: 1rem; text-align: center; color: #FDE68A; font-size: 0.95rem; font-weight: 900; line-height: 1.6; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);">
+                📌 ملاحظة هامة: يرجى إتمام إرسال رسالة الواتساب التلقائية للإدارة فور الضغط على زر التسجيل لتأكيد طلبك وتسريع تفعيله.
             </div>
             
             <form id="cloudStationForm">
@@ -346,8 +349,8 @@
                 <label style="font-size:0.85rem; margin-bottom:0.3rem; display:block;">اختر الفئات المتوفرة لديك:</label>
                 <div id="checkboxCategoriesContainer" style="background:#0F172A; border:1px solid #475569; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;"></div>
 
-                <button type="button" onclick="getStationGPS()" class="btn-secondary" style="background:#334155; padding:0.75rem;">📍 التقاط إحداثيات موقع المحطة (GPS)</button>
-                <p id="stationGpsStatus" style="font-size: 0.75rem; color: #34D399; margin: 0 0 1rem 0; text-align:center;"></p>
+                <button type="button" id="captureGpsBtn" onclick="getStationGPS()" class="btn-secondary" style="background:#DC2626; border:2px dashed #FCA5A5; padding:0.85rem;">📍 التقاط الموقع الدقيق للمحطة (إجباري *)</button>
+                <p id="stationGpsStatus" style="font-size: 0.8rem; color: #FCA5A5; margin: 0 0 1rem 0; text-align:center; font-weight:bold;">⚠️ يجب التقاط الموقع الجغرافي الدقيق لتفعيل إرسال الطلب</p>
 
                 <button type="submit" class="btn-primary">إرسال طلب الاعتماد للإدارة</button>
                 <button type="button" onclick="showSection('stationPortal')" class="btn-secondary" style="background:transparent; color:#94A3B8; border:1px solid #475569; margin-bottom:0;">رجوع لبوابة الدخول</button>
@@ -358,8 +361,13 @@
         <section id="sec-stationPending" class="app-section" style="text-align:center;">
             <div style="font-size: 3rem; margin-bottom: 0.5rem;">🔒</div>
             <h2 style="margin-top:0; color:#FBBF24;">طلبك قيد مراجعة الإدارة</h2>
-            <p style="color: #94A3B8; font-size: 0.9rem; margin-bottom:1.5rem; line-height:1.6;">تم إرسال بيانات محطتك بنجاح. بعد موافقة الإدارة، يمكنك تسجيل الدخول برقم هاتفك ورمزك السري لإدارة الأسعار والتوفر.</p>
+            <p style="color: #94A3B8; font-size: 0.9rem; margin-bottom:1rem; line-height:1.6;">تم إرسال بيانات محطتك بنجاح. بعد موافقة الإدارة، يمكنك تسجيل الدخول برقم هاتفك ورمزك السري لإدارة الأسعار والتوفر.</p>
             
+            <div id="pendingCustomNoteBox" style="background: linear-gradient(135deg, #451A03 0%, #1E293B 100%); border: 2px solid #FBBF24; padding: 0.9rem; border-radius: 10px; margin-bottom: 1rem; text-align: center; color: #FDE68A; font-size: 0.95rem; font-weight: 900; line-height: 1.6;">
+                📌 ملاحظة هامة: يرجى التأكد من إرسال رسالة الواتساب للإدارة لتسريع تفعيل حسابك.
+            </div>
+
+            <button id="resendAdminWaBtn" onclick="triggerAdminWhatsAppForPending()" class="btn-primary" style="background:#25D366; color:white;">💬 إرسال رسالة التأكيد للإدارة عبر واتساب</button>
             <button onclick="cancelStationRequest()" class="btn-danger" style="background:transparent; border:1px solid #DC2626; color:#FCA5A5;">⚠️ ضغطت بالخطأ؟ إلغاء الطلب والتحول لمستهلك عادي</button>
             <button onclick="showSection('stationPortal')" class="btn-secondary" style="background:#334155; margin-bottom:0;">العودة لشاشة تسجيل الدخول</button>
         </section>
@@ -399,13 +407,30 @@
                     <button onclick="saveRegistrationFee()" style="background:#2563EB; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
                 </div>
                 <label style="font-size:0.8rem;">النغمة الافتراضية للمنصة:</label>
-                <div style="display:flex; gap:0.5rem;">
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
                     <select id="adminDefaultRingtone" style="margin:0; flex:1;">
                         <option value="alarm1">نغمة الإنذار السريع</option>
                         <option value="alarm2">نغمة التنبيه المتقطع</option>
                         <option value="chime">نغمة جرس هادئ</option>
                     </select>
                     <button onclick="saveAdminDefaultRingtone()" style="background:#2563EB; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">تعيين</button>
+                </div>
+                <hr style="border:0; border-top:1px solid #334155; margin:0.75rem 0;">
+                <h4 style="font-size:0.9rem; color:#FBBF24; margin:0 0 0.5rem 0;">💬 إعدادات رسالة واتساب والملاحظة البارزة (عند تسجيل محطة):</h4>
+                <label style="font-size:0.8rem;">رقم واتساب الإدارة المستلم للطلبات:</label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                    <input type="tel" id="settingAdminWaPhoneInput" placeholder="مثال: 0965461504" style="margin:0;">
+                    <button onclick="saveAdminWaSettings()" style="background:#059669; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
+                </div>
+                <label style="font-size:0.8rem;">نص الملاحظة البارزة لأصحاب المحطات (متغيرة):</label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                    <input type="text" id="settingRegNoteInput" placeholder="اكتب الملاحظة البارزة هنا..." style="margin:0;">
+                    <button onclick="saveAdminWaSettings()" style="background:#059669; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
+                </div>
+                <label style="font-size:0.8rem;">نص الرسالة التلقائية المرسلة للإدارة عبر واتساب:</label>
+                <div style="display:flex; gap:0.5rem;">
+                    <input type="text" id="settingAdminWaMsgInput" placeholder="مثال: مرحباً، قمت بتسجيل محطتي وأرجو تفعيل الحساب..." style="margin:0;">
+                    <button onclick="saveAdminWaSettings()" style="background:#059669; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
                 </div>
             </div>
 
@@ -446,8 +471,9 @@
         let categoryDocs = {};
         let userLat = null;
         let userLon = null;
-        let stationLat = 35.5;
-        let stationLon = 36.3;
+        let stationLat = null;
+        let stationLon = null;
+        let isStationGpsCaptured = false;
         let backgroundAlarmInterval = null;
         let currentStationIdForPending = localStorage.getItem('pending_station_id') || null;
         let currentCategoryFilter = 'all';
@@ -563,7 +589,7 @@
             if (id === 'admin') {
                 loadAdminPanel();
             }
-            if (id === 'stationRegister') {
+            if (id === 'stationRegister' || id === 'stationPending') {
                 loadRegistrationFee();
                 loadCategoriesAndInit();
             }
@@ -1100,30 +1126,88 @@
             cont.innerHTML = html;
         }
 
+        let globalAdminWaPhone = "0965461504";
+        let globalAdminWaMsg = "مرحباً إدارة منصة متوفر هناا، قمت بإرسال طلب تسجيل محطة جديدة وأرجو مراجعة الطلب وتفعيل الحساب.";
+        let globalProminentNote = "📌 ملاحظة هامة: يرجى إتمام إرسال رسالة الواتساب التلقائية للإدارة فور الضغط على زر التسجيل لتأكيد طلبك وتسريع تفعيله.";
+
         async function loadRegistrationFee() {
             if (!db) return;
             try {
                 let doc = await db.collection("settings").doc("config").get();
                 let notice = document.getElementById('registrationFeeNotice');
-                if (doc.exists && notice) {
-                    let fee = doc.data().regFee || "0";
-                    let sham = doc.data().shamCash || "غير محدد";
-                    notice.textContent = `تكلفة تسجيل المحطة: ${fee} دولار ($) | شام كاش: ${sham}`;
+                if (doc.exists) {
+                    let data = doc.data();
+                    let fee = data.regFee || "0";
+                    let sham = data.shamCash || "غير محدد";
+                    if (notice) {
+                        notice.textContent = `تكلفة تسجيل المحطة: ${fee} دولار ($) | شام كاش: ${sham}`;
+                    }
+                    if (data.adminWaPhone) globalAdminWaPhone = data.adminWaPhone;
+                    if (data.adminWaMsg) globalAdminWaMsg = data.adminWaMsg;
+                    if (data.prominentRegNote) globalProminentNote = data.prominentRegNote;
+
+                    let noteBox1 = document.getElementById('adminCustomNoteBox');
+                    let noteBox2 = document.getElementById('pendingCustomNoteBox');
+                    if (noteBox1) noteBox1.textContent = globalProminentNote;
+                    if (noteBox2) noteBox2.textContent = globalProminentNote;
                 }
             } catch (e) {}
         }
 
+        window.openAdminWhatsAppRedirect = function(stName, stRegion, stPhone, categoriesList, latVal, lonVal) {
+            let cleanPhone = (globalAdminWaPhone || "0965461504").replace(/[^0-9]/g, '');
+            let waNum = cleanPhone.startsWith('0') ? '963' + cleanPhone.substring(1) : cleanPhone;
+            let coordsStr = (latVal && lonVal) ? `${Number(latVal).toFixed(6)}, ${Number(lonVal).toFixed(6)}` : 'غير محدد';
+            let mapsLink = (latVal && lonVal) ? `https://maps.google.com/?q=${latVal},${lonVal}` : '';
+            let fullMsg = `${globalAdminWaMsg}\n\n⛽ اسم المحطة: ${stName}\n📍 المنطقة: ${stRegion}\n📞 رقم الهاتف: ${stPhone}\n📦 الفئات: ${categoriesList}\n🌐 الإحداثيات الدقيقة: ${coordsStr}${mapsLink ? '\n🗺️ رابط الخريطة: ' + mapsLink : ''}`;
+            let waUrl = `https://wa.me/${waNum}?text=${encodeURIComponent(fullMsg)}`;
+            window.open(waUrl, '_blank');
+        };
+
+        window.triggerAdminWhatsAppForPending = async function() {
+            await loadRegistrationFee();
+            if (currentStationIdForPending && db) {
+                try {
+                    let doc = await db.collection("stations").doc(currentStationIdForPending).get();
+                    if (doc.exists) {
+                        let d = doc.data();
+                        openAdminWhatsAppRedirect(d.name || '', d.region || '', d.phone || '', (d.categories || []).join('، '), d.lat, d.lon);
+                        return;
+                    }
+                } catch (e) {}
+            }
+            openAdminWhatsAppRedirect('محطتي', '', '', '', stationLat, stationLon);
+        };
+
         window.getStationGPS = function() {
             let st = document.getElementById('stationGpsStatus');
+            let btn = document.getElementById('captureGpsBtn');
             if (navigator.geolocation) {
-                st.textContent = "جاري التقاط الإحداثيات...";
+                st.style.color = '#FBBF24';
+                st.textContent = "⏳ جاري الاتصال بالأقمار الصناعية لتحديد الموقع الدقيق...";
                 navigator.geolocation.getCurrentPosition(pos => {
                     stationLat = pos.coords.latitude;
                     stationLon = pos.coords.longitude;
-                    st.textContent = `تم التقاط الموقع بنجاح (${stationLat.toFixed(4)}, ${stationLon.toFixed(4)}) ✓`;
-                }, () => {
-                    st.textContent = "تعذر الحصول على الموقع، سيتم استخدام الافتراضي.";
-                });
+                    isStationGpsCaptured = true;
+                    st.style.color = '#34D399';
+                    st.textContent = `✅ تم تثبيت الإحداثيات الدقيقة بنجاح: (${stationLat.toFixed(6)}, ${stationLon.toFixed(6)})`;
+                    if (btn) {
+                        btn.style.background = '#064E3B';
+                        btn.style.border = '1px solid #10B981';
+                        btn.textContent = '📍 تم تسجيل الموقع الدقيق بنجاح ✓ (اضغط للتحديث)';
+                    }
+                    showToast("تم التقاط الموقع الجغرافي الدقيق بنجاح!");
+                }, (err) => {
+                    isStationGpsCaptured = false;
+                    stationLat = null;
+                    stationLon = null;
+                    st.style.color = '#EF4444';
+                    st.textContent = "❌ تعذر التقاط الموقع! يرجى تفعيل الـ GPS في هاتفك والموافقة على الصلاحية لأن الموقع إجباري.";
+                    showToast("يجب تفعيل الـ GPS لالتقاط موقع المحطة الدقيق!");
+                }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+            } else {
+                st.style.color = '#EF4444';
+                st.textContent = "متصفحك لا يدعم تحديد الموقع الجغرافي.";
             }
         };
 
@@ -1136,13 +1220,25 @@
             let cbs = Array.from(document.querySelectorAll('input[name="stCats"]:checked')).map(cb => cb.value);
             if (cbs.length === 0) return showToast("يرجى اختيار فئة واحدة على الأقل");
 
+            if (!isStationGpsCaptured || stationLat === null || stationLon === null) {
+                showToast("⚠️ عذراً، يجب التقاط الموقع الدقيق للمحطة (GPS) أولاً قبل إرسال الطلب!");
+                let gpsBtn = document.getElementById('captureGpsBtn');
+                if (gpsBtn) gpsBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
             let mStat = {}, mPrc = {};
             cbs.forEach(c => { mStat[c] = false; mPrc[c] = ""; });
 
+            let capturedLat = Number(stationLat);
+            let capturedLon = Number(stationLon);
+
             try {
+                let submittedName = document.getElementById('stName').value.trim();
+                let submittedRegion = document.getElementById('stRegion').value.trim();
                 let ref = await db.collection("stations").add({
-                    name: document.getElementById('stName').value.trim(),
-                    region: document.getElementById('stRegion').value.trim(),
+                    name: submittedName,
+                    region: submittedRegion,
                     phone: p,
                     pinCode: document.getElementById('stPin').value.trim(),
                     publicPhone: p,
@@ -1150,8 +1246,10 @@
                     categories: cbs,
                     materialsStatus: mStat,
                     materialsPrices: mPrc,
-                    lat: stationLat,
-                    lon: stationLon,
+                    lat: capturedLat,
+                    lon: capturedLon,
+                    locationFormatted: `${capturedLat.toFixed(6)}, ${capturedLon.toFixed(6)}`,
+                    googleMapsUrl: `https://maps.google.com/?q=${capturedLat},${capturedLon}`,
                     alertRadius: 5.0,
                     rating: 5,
                     ratingCount: 1,
@@ -1165,8 +1263,10 @@
                 currentStationIdForPending = ref.id;
                 localStorage.setItem('pending_station_id', ref.id);
                 document.getElementById('cloudStationForm').reset();
-                showToast("تم إرسال طلب التسجيل للإدارة بنجاح!");
+                isStationGpsCaptured = false;
+                showToast("تم إرسال الطلب وتسجيل الموقع الدقيق! جاري تحويلك لواتساب...");
                 showSection('stationPending');
+                openAdminWhatsAppRedirect(submittedName, submittedRegion, p, cbs.join('، '), capturedLat, capturedLon);
             } catch (err) {
                 showToast("حدث خطأ أثناء إرسال الطلب.");
             }
@@ -1394,11 +1494,19 @@
                 // Settings
                 let cfg = await db.collection("settings").doc("config").get();
                 if (cfg.exists) {
-                    document.getElementById('settingFeeInput').value = cfg.data().regFee || "";
-                    document.getElementById('settingShamCashInput').value = cfg.data().shamCash || "";
-                    if (cfg.data().defaultRingtone) {
-                        document.getElementById('adminDefaultRingtone').value = cfg.data().defaultRingtone;
+                    let cData = cfg.data();
+                    document.getElementById('settingFeeInput').value = cData.regFee || "";
+                    document.getElementById('settingShamCashInput').value = cData.shamCash || "";
+                    if (cData.defaultRingtone) {
+                        document.getElementById('adminDefaultRingtone').value = cData.defaultRingtone;
                     }
+                    document.getElementById('settingAdminWaPhoneInput').value = cData.adminWaPhone || "0965461504";
+                    document.getElementById('settingRegNoteInput').value = cData.prominentRegNote || globalProminentNote;
+                    document.getElementById('settingAdminWaMsgInput').value = cData.adminWaMsg || globalAdminWaMsg;
+                } else {
+                    document.getElementById('settingAdminWaPhoneInput').value = "0965461504";
+                    document.getElementById('settingRegNoteInput').value = globalProminentNote;
+                    document.getElementById('settingAdminWaMsgInput').value = globalAdminWaMsg;
                 }
 
                 // Users Stats
@@ -1463,6 +1571,13 @@
                                 <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${st.region} | الدخول: <b>${st.phone}</b></p>
                                 <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
                                 <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
+                                <div style="background:#1E293B; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
+                                    <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
+                                    ${(st.lat && st.lon) ? `
+                                        <div style="color:#F8FAFC; direction:ltr; text-align:right; font-family:monospace; margin-bottom:0.25rem;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
+                                        <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold;">🗺️ فتح الموقع على خرائط Google</a>
+                                    ` : `<span style="color:#EF4444;">غير مسجل</span>`}
+                                </div>
                                 <div style="margin: 0.4rem 0; display:flex; align-items:center; gap:0.4rem;">
                                     <label style="font-size:0.75rem;">نطاق التنبيه (كم):</label>
                                     <input type="number" id="radius_${id}" value="${currentRadius}" style="width:60px; padding:0.2rem; margin:0; font-size:0.8rem;">
@@ -1503,6 +1618,24 @@
         window.saveAdminDefaultRingtone = async function() {
             let val = document.getElementById('adminDefaultRingtone').value;
             try { await db.collection("settings").doc("config").set({ defaultRingtone: val }, { merge: true }); showToast("تم تعيين النغمة الافتراضية!"); } catch (e) {}
+        };
+        window.saveAdminWaSettings = async function() {
+            let waPhone = document.getElementById('settingAdminWaPhoneInput').value.trim() || "0965461504";
+            let regNote = document.getElementById('settingRegNoteInput').value.trim();
+            let waMsg = document.getElementById('settingAdminWaMsgInput').value.trim();
+            try {
+                await db.collection("settings").doc("config").set({
+                    adminWaPhone: waPhone,
+                    prominentRegNote: regNote,
+                    adminWaMsg: waMsg
+                }, { merge: true });
+                globalAdminWaPhone = waPhone;
+                if (regNote) globalProminentNote = regNote;
+                if (waMsg) globalAdminWaMsg = waMsg;
+                showToast("تم حفظ إعدادات الواتساب والملاحظة البارزة بنجاح!");
+            } catch (e) {
+                showToast("حدث خطأ أثناء الحفظ");
+            }
         };
 
         function updateAdminCategoriesList() {
