@@ -20,15 +20,16 @@
 
     <header style="background: #10B981; color: white; padding: 1rem; text-align: center;">
         <h1>متوفر هناا</h1>
-        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (سحابي متقدم)</p>
+        <p style="font-size: 0.85rem; margin: 0;">منصة المحروقات والغاز في سوريا (إدارة المحطات والفئات)</p>
     </header>
 
     <!-- شريط التنقل السريع بين الأقسام -->
-    <nav style="display: flex; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); justify-content: center; padding: 0.5rem; gap: 0.5rem; position: sticky; top: 0; z-index: 1000;">
-        <button onclick="showSection('home')" style="background: #334155; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">🏠 الرئيسية</button>
-        <button onclick="showSection('consumer')" style="background: #10B981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">🔍 المستهلك</button>
-        <button onclick="showSection('station')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">⛽ المحطات</button>
-        <button onclick="showSection('admin')" style="background: #475569; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">⚙️ الإدارة</button>
+    <nav style="display: flex; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); justify-content: center; padding: 0.5rem; gap: 0.5rem; position: sticky; top: 0; z-index: 1000; overflow-x: auto;">
+        <button onclick="showSection('home')" style="background: #334155; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">🏠 الرئيسية</button>
+        <button onclick="showSection('consumer')" style="background: #10B981; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">🔍 المستهلك</button>
+        <button onclick="showSection('station')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">⛽ تسجيل محطة</button>
+        <button onclick="showSection('stationPanel')" style="background: #D97706; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">🎛️ لوحة المالك</button>
+        <button onclick="showSection('admin')" style="background: #475569; color: white; border: none; padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; white-space: nowrap;">⚙️ الإدارة</button>
     </nav>
 
     <main style="padding: 1.5rem; max-width: 600px; margin: auto;">
@@ -36,7 +37,7 @@
         <!-- 1. قسم الرئيسية -->
         <section id="sec-home" class="app-section" style="text-align: center;">
             <h2 style="color: #1E293B; margin-bottom: 1rem;">أهلاً بك في منصة متوفر هناا</h2>
-            <p style="color: #64748B; margin-bottom: 2rem;">اختر القسم المناسب لمتابعة التوفر أو إدارة المحطات:</p>
+            <p style="color: #64748B; margin-bottom: 2rem;">اختر القسم المناسب لمتابعة التوفر أو إدارة محطتك:</p>
 
             <button id="installBtn" style="display: none; background: #8B5CF6; color: white; padding: 1rem; border-radius: 12px; border: none; width: 100%; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                 📲 تثبيت التطبيق على الشاشة الرئيسية
@@ -44,8 +45,9 @@
 
             <div style="display: flex; flex-direction: column; gap: 1rem;">
                 <button onclick="showSection('consumer')" style="background: #10B981; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🔍 البحث عن المواد (أقرب 10 نتائج)</button>
-                <button onclick="showSection('station')" style="background: #0284C7; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⛽ بوابة المحطات والموزعين (تسجيل)</button>
-                <button onclick="showSection('admin')" style="background: #334155; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⚙️ لوحة الإدارة العامة (الاعتمادات)</button>
+                <button onclick="showSection('station')" style="background: #0284C7; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⛽ بوابة تسجيل محطة جديدة</button>
+                <button onclick="showSection('stationPanel')" style="background: #D97706; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">🎛️ لوحة تحكم المالك (متوفر / انتهت)</button>
+                <button onclick="showSection('admin')" style="background: #334155; color: white; padding: 1rem; border-radius: 12px; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer;">⚙️ لوحة الإدارة العامة والفئات</button>
             </div>
         </section>
 
@@ -53,11 +55,8 @@
         <section id="sec-consumer" class="app-section" style="display: none;">
             <h2>أقرب 10 محطات معتمدة لموقعك</h2>
             
-            <div style="display: flex; gap: 0.5rem; margin: 1rem 0; overflow-x: auto; padding-bottom: 0.5rem;">
-                <button onclick="filterStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">الكل</button>
-                <button onclick="filterStations('بنزين')" style="background: #E2E8F0; color: #1E293B; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">بنزين</button>
-                <button onclick="filterStations('مازوت')" style="background: #E2E8F0; color: #1E293B; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">مازوت</button>
-                <button onclick="filterStations('غاز منزلي')" style="background: #E2E8F0; color: #1E293B; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">غاز</button>
+            <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 1rem 0; overflow-x: auto; padding-bottom: 0.5rem;">
+                <button onclick="filterStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">الكل</button>
             </div>
 
             <button type="button" onclick="getGPSAndSort()" style="background-color: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
@@ -70,9 +69,9 @@
             </div>
         </section>
 
-        <!-- 3. قسم بوابة المحطات -->
+        <!-- 3. قسم تسجيل المحطة (بدون كمية أو سعر، مع اختيار عدة فئات) -->
         <section id="sec-station" class="app-section" style="display: none;">
-            <h2>تسجيل محطة أو تحديث بياناتها</h2>
+            <h2>تسجيل محطة أو موزع جديد</h2>
             <form id="cloudStationForm" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
                 <div>
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اسم المحطة أو الموزع:</label>
@@ -83,36 +82,52 @@
                     <input type="text" id="stRegion" placeholder="مثال: العوينة" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رقم واتساب المالك:</label>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">رقم واتساب المالك (سيعمل كمعرف للوحة تحكمك):</label>
                     <input type="tel" id="stPhone" placeholder="مثال: 9639xxxxxxxxx" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">نوع المادة المتوفرة:</label>
-                    <select id="stMaterial" style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; background: white;">
-                        <option value="بنزين">بنزين</option>
-                        <option value="مازوت">مازوت</option>
-                        <option value="غاز منزلي">غاز منزلي</option>
-                    </select>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">اختر الفئات التي تقدمها (يمكنك اختيار أكثر من فئة):</label>
+                    <div id="checkboxCategoriesContainer" style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 0.75rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- يتم تعبئتها ديناميكياً -->
+                    </div>
                 </div>
-                <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">الكمية المتوفرة:</label>
-                    <input type="text" id="stQty" placeholder="مثال: 500 ليتر / 20 جرة" required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
-                </div>
-                <div>
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">السعر:</label>
-                    <input type="text" id="stPrice" placeholder="السعر الحالي..." required style="width: 100%; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px; box-sizing: border-box;">
-                </div>
+
                 <button type="button" onclick="getStationGPS()" style="background: #334155; color: white; border: none; padding: 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">📍 التقاط إحداثيات موقع المحطة الحالي (GPS)</button>
                 <p id="stationGpsStatus" style="font-size: 0.8rem; color: #059669; margin: 0;"></p>
 
-                <button type="submit" style="background: #10B981; color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">إرسال الطلب للإدارة سحابياً</button>
+                <button type="submit" style="background: #10B981; color: white; border: none; padding: 0.75rem; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">إرسال طلب التسجيل للإدارة</button>
             </form>
         </section>
 
-        <!-- 4. قسم الإدارة -->
+        <!-- 4. لوحة تحكم المالك الخاصة بالمحطة -->
+        <section id="sec-stationPanel" class="app-section" style="display: none;">
+            <h2>🎛️ لوحة تحكم مالك المحطة</h2>
+            <p style="color: #64748B; font-size: 0.9rem;">أدخل رقم هاتفك المسجل لعرض محطتك وتحديث توفر المواد بضغطة زر:</p>
+            
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <input type="tel" id="loginPhone" placeholder="رقم هاتفك المسجل..." style="flex: 1; padding: 0.75rem; border: 1px solid #CBD5E1; border-radius: 8px;">
+                <button onclick="loadMyStationPanel()" style="background: #0284C7; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: bold; cursor: pointer;">دخول</button>
+            </div>
+
+            <div id="myStationPanelContent">
+                <p style="text-align: center; color: #64748B;">الرجاء إدخال رقم الهاتف لعرض لوحة التحكم الخاصة بك.</p>
+            </div>
+        </section>
+
+        <!-- 5. قسم الإدارة -->
         <section id="sec-admin" class="app-section" style="display: none;">
-            <h2>إدارة طلبات ومحطات السحابة</h2>
-            <div id="adminCloudList" style="margin-top: 1.5rem;">
+            <h2>لوحة الإدارة وإضافة الفئات الجديدة</h2>
+            
+            <div style="background: #F8FAFC; border: 1px solid #CBD5E1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1rem; color: #1E293B; margin-top: 0;">➕ إضافة فئة/مادة جديدة للنظام</h3>
+                <form id="addCategoryForm" style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="newCategoryName" placeholder="مثال: بنزين ممتاز، مازوت حر..." required style="flex: 1; padding: 0.5rem; border: 1px solid #CBD5E1; border-radius: 6px;">
+                    <button type="submit" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">إضافة</button>
+                </form>
+            </div>
+
+            <h3>إدارة طلبات ومحطات السحابة</h3>
+            <div id="adminCloudList" style="margin-top: 1rem;">
                 <p style="text-align: center; color: #64748B;">جاري جلب الطلبات من السحابة...</p>
             </div>
         </section>
@@ -123,6 +138,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         let allStations = [];
+        let availableCategories = ["بنزين", "مازوت", "غاز منزلي"];
         let userLat = null;
         let userLon = null;
         let stationLat = 35.5; 
@@ -131,10 +147,74 @@
         function showSection(sectionId) {
             document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
             document.getElementById('sec-' + sectionId).style.display = 'block';
-            if (sectionId === 'consumer') loadCloudStations();
-            if (sectionId === 'admin') loadAdminCloud();
+            if (sectionId === 'consumer' || sectionId === 'station') {
+                loadCategoriesAndInit();
+            }
+            if (sectionId === 'admin') {
+                loadCategoriesAndInit();
+                loadAdminCloud();
+            }
             window.scrollTo(0, 0);
         }
+
+        async function loadCategoriesAndInit() {
+            try {
+                const snapshot = await db.collection("categories").get();
+                if (!snapshot.empty) {
+                    availableCategories = [];
+                    snapshot.forEach(doc => {
+                        availableCategories.push(doc.data().name);
+                    });
+                } else {
+                    for (let cat of availableCategories) {
+                        await db.collection("categories").add({ name: cat });
+                    }
+                }
+            } catch (err) {
+                console.log("استخدام الفئات الافتراضية محلياً");
+            }
+            updateCategoryUI();
+        }
+
+        function updateCategoryUI() {
+            // 1. تحديث حقول اختيار الفئات المتعددة في نموذج تسجيل المحطة
+            const checkboxContainer = document.getElementById('checkboxCategoriesContainer');
+            if (checkboxContainer) {
+                let htmlBoxes = '';
+                availableCategories.forEach(cat => {
+                    htmlBoxes += `<label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;"><input type="checkbox" name="stationCategories" value="${cat}" style="width: 1.1rem; height: 1.1rem;"> ${cat}</label>`;
+                });
+                checkboxContainer.innerHTML = htmlBoxes;
+            }
+
+            // 2. تحديث أزرار الفلترة للمستهلك
+            const filterEl = document.getElementById('consumerCategoriesFilter');
+            if (filterEl) {
+                let filterHtml = `<button onclick="filterStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">الكل</button>`;
+                availableCategories.forEach(cat => {
+                    filterHtml += `<button onclick="filterStations('${cat}')" style="background: #E2E8F0; color: #1E293B; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">${cat}</button>`;
+                });
+                filterEl.innerHTML = filterHtml;
+            }
+        }
+
+        // إضافة فئة جديدة بواسطة الإدارة
+        document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const catName = document.getElementById('newCategoryName').value.trim();
+            if (catName && !availableCategories.includes(catName)) {
+                try {
+                    await db.collection("categories").add({ name: catName });
+                    alert('تمت إضافة الفئة الجديدة بنجاح إلى السحابة!');
+                    document.getElementById('newCategoryName').value = '';
+                    loadCategoriesAndInit();
+                } catch (error) {
+                    alert('خطأ أثناء إضافة الفئة.');
+                }
+            } else {
+                alert('هذه الفئة موجودة مسبقاً أو الاسم فارغ.');
+            }
+        });
 
         function getStationGPS() {
             const status = document.getElementById('stationGpsStatus');
@@ -170,10 +250,7 @@
                     userLat = pos.coords.latitude;
                     userLon = pos.coords.longitude;
                     msg.textContent = `تم تحديد موقعك. يتم عرض أقرب 10 نتائج حالياً.`;
-                    
-                    // التحقق من وجود محطة قريبة جداً (أقل من 3 كيلومترات) وإطلاق إشعار قوي
                     checkNearbyAlerts(allStations, userLat, userLon);
-
                     renderStations(allStations);
                 }, () => {
                     msg.textContent = 'تعذر الحصول على موقعك الحالي.';
@@ -182,19 +259,16 @@
             }
         }
 
-        // إشعار قوي عند توفر المادة في مكان قريب (أقل من 3 كم)
         function checkNearbyAlerts(stations, uLat, uLon) {
             let nearbyFound = false;
             stations.forEach(st => {
                 if (st.status === 'approved' && st.lat && st.lon) {
                     let dist = calculateDistance(uLat, uLon, st.lat, st.lon);
-                    if (dist <= 3.0) {
-                        nearbyFound = true;
-                    }
+                    if (dist <= 3.0) nearbyFound = true;
                 }
             });
             if (nearbyFound) {
-                alert('🚨 تنبيه هام جداً: توفرت مواد (محروقات/غاز) في محطة قريبة جداً من موقعك الحالي (أقل من 3 كم)! سارع بالتفقد.');
+                alert('🚨 تنبيه هام جداً: توفرت مواد في محطة قريبة جداً من موقعك الحالي (أقل من 3 كم)! سارع بالتفقد.');
             }
         }
 
@@ -222,7 +296,6 @@
                 stations.sort((a, b) => a.distance - b.distance);
             }
 
-            // تصفية وعرض أقرب 10 نتائج فقط
             const top10Stations = stations.filter(st => st.status === 'approved').slice(0, 10);
 
             let html = '';
@@ -233,29 +306,38 @@
                 let whatsappNum = st.phone ? st.phone.replace(/[^0-9]/g, '') : '963900000000';
                 let distText = st.distance !== undefined ? `📍 تبعد عنك حوالي: <b>${st.distance.toFixed(1)} كم</b>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : 'لا يوجد تقييم';
+                
+                // عرض المواد المتوفرة حسب تفعيل المالك
+                let materialsHtml = '';
+                if (st.materialsStatus) {
+                    for (let [mat, isAvailable] of Object.entries(st.materialsStatus)) {
+                        let badgeBg = isAvailable ? '#D1FAE5' : '#FEE2E2';
+                        let badgeColor = isAvailable ? '#059669' : '#DC2626';
+                        let textStatus = isAvailable ? '✓ متوفر' : '✗ انتهت الكمية';
+                        materialsHtml += `<span style="background:${badgeBg}; color:${badgeColor}; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.75rem; margin-left:0.3rem;"><b>${mat}</b>: ${textStatus}</span>`;
+                    }
+                }
 
                 html += `
                     <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1.25rem; border-radius:12px; margin-bottom:1rem;">
                         <h4 style="color:#1E293B; font-size:1.1rem; margin-bottom: 0.25rem;">${st.name}</h4>
-                        <p style="font-size:0.85rem; color:#64748B; margin-bottom: 0.25rem;">المنطقة: ${st.region} | المادة: ${st.material}</p>
+                        <p style="font-size:0.85rem; color:#64748B; margin-bottom: 0.25rem;">المنطقة: ${st.region}</p>
                         ${distText ? `<p style="font-size:0.85rem; color:#0284C7; margin-bottom: 0.25rem;">${distText}</p>` : ''}
+                        <div style="margin: 0.5rem 0;">${materialsHtml}</div>
                         <p style="font-size:0.85rem; color:#D97706; margin-bottom: 0.5rem;">⭐ التقييم العام: <b>${currentRating}</b></p>
-                        <div style="background:#E2E8F0; padding:0.5rem; border-radius:6px; font-size:0.85rem; margin-bottom: 0.75rem; color: #1E293B;">
-                            📦 الكمية: <b>${st.quantity}</b> | السعر: <b>${st.price}</b>
+                        
+                        <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+                            <button onclick="rateStation('${st.id}', 5)" style="background:#F59E0B; color:white; border:none; padding:0.3rem; border-radius:6px; cursor:pointer; font-size:0.75rem; flex:1;">⭐ تقييم ممتاز</button>
+                            <button onclick="rateStation('${st.id}', 3)" style="background:#94A3B8; color:white; border:none; padding:0.3rem; border-radius:6px; cursor:pointer; font-size:0.75rem; flex:1;">⭐ تقييم متوسط</button>
                         </div>
-                        <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-                            <button onclick="rateStation('${st.id}', 5)" style="background:#F59E0B; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.8rem; flex:1;">⭐ تقييم ممتاز</button>
-                            <button onclick="rateStation('${st.id}', 3)" style="background:#94A3B8; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.8rem; flex:1;">⭐ تقييم متوسط</button>
-                        </div>
-                        <a href="https://wa.me/${whatsappNum}?text=${encodeURIComponent('مرحباً، أود طلب مواد من ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
-                            💬 طلب عبر واتساب المالك
+                        <a href="https://wa.me/${whatsappNum}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" style="display:block; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.85rem;">
+                            💬 مراسلة المالك عبر واتساب
                         </a>
                     </div>`;
             });
             container.innerHTML = found ? html : '<p style="text-align:center; color:#64748B;">لا توجد محطات قريبة معتمدة حالياً.</p>';
         }
 
-        // دالة حفظ التقييم في سحابة فايربيس
         window.rateStation = async function(id, score) {
             try {
                 const docRef = db.collection("stations").doc(id);
@@ -280,36 +362,127 @@
             if (materialType === 'all') {
                 renderStations(allStations);
             } else {
-                const filtered = allStations.filter(st => st.material === materialType);
+                const filtered = allStations.filter(st => st.materialsStatus && st.materialsStatus[materialType] === true);
                 renderStations(filtered);
             }
         }
 
+        // تسجيل محطة جديدة (اختيار عدة فئات، بدون كمية أو سعر)
         document.getElementById('cloudStationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('stName').value;
             const region = document.getElementById('stRegion').value;
             const phone = document.getElementById('stPhone').value;
-            const material = document.getElementById('stMaterial').value;
-            const quantity = document.getElementById('stQty').value;
-            const price = document.getElementById('stPrice').value;
+            
+            const checkboxes = document.querySelectorAll('input[name="stationCategories"]:checked');
+            let selectedCategories = [];
+            checkboxes.forEach(cb => selectedCategories.value ? null : selectedCategories.push(cb.value));
+
+            if (selectedCategories.length === 0) {
+                alert('الرجاء اختيار فئة واحدة على الأقل.');
+                return;
+            }
+
+            // تهيئة حالة المواد (افتراضياً متوفرة عند التسجيل أو حسب رغبة المالك)
+            let materialsStatus = {};
+            selectedCategories.forEach(cat => {
+                materialsStatus[cat] = true;
+            });
 
             try {
                 await db.collection("stations").add({
-                    name, region, phone, material, quantity, price, 
+                    name, region, phone, 
+                    categories: selectedCategories,
+                    materialsStatus: materialsStatus,
                     lat: stationLat, lon: stationLon, 
                     rating: 5, ratingCount: 1,
                     status: 'pending', createdAt: new Date().toISOString()
                 });
-                alert('تم إرسال طلبك بنجاح! بانتظار موافقة الإدارة.');
+                alert('تم إرسال طلب تسجيل محطتك بنجاح! بانتظار موافقة الإدارة لتفعيل لوحتك.');
                 document.getElementById('cloudStationForm').reset();
                 showSection('home');
             } catch (error) {
-                alert('خطأ أثناء الإرسال: ' + error.message);
+                alert('خطأ أثناء التسجيل: ' + error.message);
             }
         });
 
+        // 🎛️ جلب لوحة تحكم مالك المحطة برقم الهاتف
+        async function loadMyStationPanel() {
+            const phoneInput = document.getElementById('loginPhone').value.trim();
+            const container = document.getElementById('myStationPanelContent');
+            if (!phoneInput) {
+                alert('الرجاء إدخال رقم الهاتف المسجل.');
+                return;
+            }
+
+            container.innerHTML = '<p style="text-align:center; color:#64748B;">جاري التحقق من بيانات محطتك...</p>';
+            try {
+                const snapshot = await db.collection("stations").where("phone", "==", phoneInput).get();
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align:center; color:red;">لم يتم العثور على محطة مسجلة بهذا الرقم أو أن الطلب لم يُعتمد بعد من الإدارة.</p>';
+                    return;
+                }
+
+                let html = '';
+                snapshot.forEach(docSnap => {
+                    let st = docSnap.data();
+                    let id = docSnap.id;
+                    
+                    html += `
+                        <div style="background:#F8FAFC; border:1px solid #CBD5E1; padding:1rem; border-radius:10px; margin-bottom:1rem;">
+                            <h3 style="color:#1E293B; margin-top:0;">${st.name} (${st.region})</h3>
+                            <p style="font-size:0.85rem; color:#64748B;">حالة الاعتماد: <b>${st.status === 'approved' ? 'معتمدة ومفعلة ✓' : 'قيد المراجعة ⏳'}</b></p>
+                            <hr style="border:0; border-top:1px solid #E2E8F0; margin:0.75rem 0;">
+                            <p style="font-weight:600; font-size:0.9rem; color:#1E293B;">حدد توفر الأصناف لديك:</p>
+                    `;
+
+                    if (st.categories && st.categories.length > 0) {
+                        st.categories.forEach(cat => {
+                            let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                            let btnBg = isAvail ? '#EF4444' : '#10B981';
+                            let btnText = isAvail ? '🔴 إعلان انتهاء الكمية' : '🟢 إعلان متوفر الآن';
+                            let statusBadge = isAvail ? '<span style="color:#059669; font-weight:bold;">متوفر</span>' : '<span style="color:#DC2626; font-weight:bold;">انتهت الكمية</span>';
+
+                            html += `
+                                <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:0.6rem; border-radius:6px; margin-bottom:0.5rem; border:1px solid #E2E8F0;">
+                                    <span><b>${cat}</b>: ${statusBadge}</span>
+                                    <button onclick="toggleMaterialStatus('${id}', '${cat}', ${!isAvail})" style="background:${btnBg}; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">${btnText}</button>
+                                </div>`;
+                        });
+                    } else {
+                        html += '<p style="color:#64748B;">لم يتم تحديد فئات لهذه المحطة.</p>';
+                    }
+
+                    html += `</div>`;
+                });
+
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ أثناء جلب بيانات المحطة.</p>';
+            }
+        }
+
+        // تبديل حالة المادة (متوفر / انتهت) للمالك
+        window.toggleMaterialStatus = async function(stationId, categoryName, newStatus) {
+            try {
+                const docRef = db.collection("stations").doc(stationId);
+                const docSnap = await docRef.get();
+                if (docSnap.exists) {
+                    let data = docSnap.data();
+                    let matsStatus = data.materialsStatus || {};
+                    matsStatus[categoryName] = newStatus;
+
+                    await docRef.update({ materialsStatus: matsStatus });
+                    alert('تم تحديث حالة المادة بنجاح!');
+                    loadMyStationPanel(); // تحديث اللوحة للمالك
+                }
+            } catch (error) {
+                alert('خطأ أثناء التحديث.');
+            }
+        }
+
         async function loadAdminCloud() {
+            loadCategoriesAndInit();
             const container = document.getElementById('adminCloudList');
             try {
                 const querySnapshot = await db.collection("stations").get();
@@ -321,13 +494,15 @@
                     let textColor = st.status === 'approved' ? '#059669' : '#D97706';
                     let statusText = st.status === 'approved' ? 'معتمدة' : 'معلقة';
 
+                    let catsList = st.categories ? st.categories.join(', ') : 'لا توجد فئات';
+
                     html += `
                         <div style="background:#F8FAFC; border:1px solid #E2E8F0; padding:1rem; border-radius:12px; margin-bottom:0.75rem;">
                             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                 <div>
                                     <h4 style="font-size:1rem; color: #1E293B; margin-bottom: 0.2rem;">${st.name}</h4>
                                     <p style="font-size:0.85rem; color:#64748B;">المنطقة: ${st.region} | الهاتف: ${st.phone}</p>
-                                    <p style="font-size:0.85rem; color:#64748B;">المادة: ${st.material} | الكمية: ${st.quantity}</p>
+                                    <p style="font-size:0.85rem; color:#0284C7;">الفئات المقدمة: <b>${catsList}</b></p>
                                     <p style="font-size:0.8rem; margin-top:0.3rem;"><span style="background:${badgeColor}; color:${textColor}; padding:0.1rem 0.4rem; border-radius:4px; font-weight:600;">${statusText}</span></p>
                                 </div>
                                 <div style="display:flex; flex-direction:column; gap:0.4rem;">
