@@ -1998,19 +1998,20 @@
                     </div>
                     <p style="color:#34D399; font-size:0.78rem; font-weight:bold; margin:0 0 1rem 0;">حالة الاعتماد: معتمدة ✓ | النطاق: ${sRadius} كم</p>
 
-                    <!-- TAB NAVIGATION BUTTONS -->
-                    <div style="display:flex; gap:0.3rem; margin-bottom:1.25rem; background:#1E293B; padding:0.3rem; border-radius:10px;">
-                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="flex:1; background:#0284C7; color:white; border:none; padding:0.6rem 0.3rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">📦 المواد</button>
-                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.6rem 0.3rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">📢 البث</button>
-                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.6rem 0.3rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">📊 النشاط</button>
-                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.6rem 0.3rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">⚙️ الإعدادات</button>
+                    <!-- TAB NAVIGATION BUTTONS (5 Clean Tabs) -->
+                    <div style="display:flex; gap:0.2rem; margin-bottom:1.25rem; background:#1E293B; padding:0.3rem; border-radius:10px; overflow-x:auto;">
+                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="flex:1; background:#0284C7; color:white; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📦 المواد</button>
+                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">➕ إضافة</button>
+                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📢 البث</button>
+                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📊 النشاط</button>
+                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">⚙️ التواصل</button>
                     </div>
 
                     <!-- TAB 1: MATERIALS (Clean One-Tap Toggles & Emergency Buttons) -->
                     <div id="ownerTabContent_materials" class="owner-tab-pane">
                         <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-                            <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.82rem; flex:1; cursor:pointer;">🚨 إغلاق الكل (نفد)</button>
-                            <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.82rem; flex:1; cursor:pointer;">🟢 فتح الكل (متوفر)</button>
+                            <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.4);">🚨 إغلاق طارئ (نفد الكل)</button>
+                            <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.4);">🟢 فتح الكل (متوفر)</button>
                         </div>
             `;
 
@@ -2020,93 +2021,104 @@
                     let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
                     let cardBg = isAvail ? '#064E3B' : '#7F1D1D';
                     let cardBorder = isAvail ? '#10B981' : '#EF4444';
-                    let statusText = isAvail ? '🟢 متوفر ✓ (انقر للإيقاف)' : '🔴 نفد ✗ (انقر للتفعيل)';
+                    let statusText = isAvail ? '🟢 متوفر حالياً (انقر للإيقاف)' : '🔴 نفدت الكمية (انقر للتفعيل)';
                     
                     html += `
-                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.8rem; border-radius:10px; margin-bottom:0.75rem;">
-                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.4rem;">
-                                <span style="font-size:1rem; font-weight:bold; color:#FFFFFF;">📦 ${cat}</span>
-                                <span style="background:rgba(0,0,0,0.3); padding:0.3rem 0.6rem; border-radius:6px; font-size:0.8rem; font-weight:bold; color:#FFFFFF;">${statusText}</span>
+                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; transition:all 0.2s;">
+                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.5rem;">
+                                <span style="font-size:1.05rem; font-weight:bold; color:#FFFFFF;">📦 ${cat}</span>
+                                <span style="background:rgba(0,0,0,0.3); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.85rem; font-weight:900; color:#FFFFFF;">${statusText}</span>
                             </div>
-                            <div style="display:flex; gap:0.4rem; align-items:center;">
-                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر (ل.س)..." style="margin:0; padding:0.5rem; font-size:0.85rem; background:#0F172A; font-weight:bold;">
-                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.8rem; font-weight:bold; cursor:pointer; white-space:nowrap;">حفظ</button>
+                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية..." style="margin:0; padding:0.6rem; font-size:0.9rem; background:#0F172A; font-weight:bold;">
+                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:bold; cursor:pointer; white-space:nowrap;">حفظ السعر</button>
                             </div>
                         </div>`;
                 });
-            }
-
-            let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
-            if (missing.length > 0) {
-                let opts = missing.map(c => `<option value="${c}">${c}</option>`).join('');
-                html += `
-                    <div style="margin-top:0.75rem; background:#1E293B; padding:0.75rem; border-radius:8px; border:1px dashed #475569;">
-                        <label style="font-size:0.8rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">➕ إضافة صنف جديد لمحطتك:</label>
-                        <div style="display:flex; gap:0.4rem;">
-                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.5rem; font-size:0.85rem;">${opts}</select>
-                            <button onclick="addMat('${st.id}')" style="background:#0284C7; color:white; border:none; border-radius:6px; padding:0 1rem; font-weight:bold; cursor:pointer; font-size:0.8rem;">إضافة</button>
-                        </div>
-                    </div>`;
+            } else {
+                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لم تقم بإضافة أي فئات بعد. انتقل لتبويب (إضافة).</p>`;
             }
 
             html += `</div>`; // End of materials tab
 
-            // TAB 2: BROADCAST & UPGRADE
+            // TAB 2: ADD CATEGORIES
+            let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
+            html += `
+                <div id="ownerTabContent_addcat" class="owner-tab-pane" style="display:none;">
+                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">➕ إضافة مواد وأصناف جديدة لمحطتك:</h4>
+            `;
+            if (missing.length > 0) {
+                let opts = missing.map(c => `<option value="${c}">${c}</option>`).join('');
+                html += `
+                    <div style="background:#1E293B; padding:1rem; border-radius:12px; border:1px solid #475569;">
+                        <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.4rem;">اختر من الفئات المعتمدة من الإدارة:</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.6rem; font-size:0.9rem;">${opts}</select>
+                            <button onclick="addMat('${st.id}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0 1.2rem; font-weight:bold; cursor:pointer;">إضافة</button>
+                        </div>
+                    </div>`;
+            } else {
+                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لقد أضفت كافة الفئات المتاحة في النظام.</p>`;
+            }
+            html += `</div>`;
+
+            // TAB 3: BROADCAST & UPGRADE
             html += `
                 <div id="ownerTabContent_broadcast" class="owner-tab-pane" style="display:none;">
                     ${isVip ? `
-                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1rem;">
-                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.9rem;">📢 بث عاجل للمستهلكين (يختفي بعد 3 ساعات):</h4>
+                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1.25rem;">
+                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (يظهر كإشعار منسدل ويختفي تلقائياً بعد 3 ساعات):</h4>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
-                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.85rem;">
-                            <button onclick="sendVIPBroadcast('${st.id}')" style="background:#D97706; color:white; border:none; border-radius:8px; padding:0.7rem; font-weight:bold; font-size:0.9rem; cursor:pointer;">🚀 إطلاق البث الفوري</button>
+                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
+                            <button onclick="sendVIPBroadcast('${st.id}')" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.95rem; cursor:pointer;">🚀 إطلاق البث الصاخب الفوري الآن</button>
                         </div>
                     </div>` : `
-                    <div style="background:#1E293B; padding:1rem; border-radius:10px; text-align:center; margin-bottom:1rem; border:1px solid #334155;">
-                        <p style="font-size:0.85rem; color:#94A3B8; margin:0 0 0.75rem 0;">ميزة البث العاجل متاحة حصرياً للمشتركين في باقات VIP.</p>
+                    <div style="background:#1E293B; padding:1.25rem; border-radius:12px; text-align:center; margin-bottom:1.25rem; border:1px solid #334155;">
+                        <p style="font-size:0.9rem; color:#94A3B8; margin:0 0 0.75rem 0; line-height:1.6;">ميزة الإعلان والبث الفوري (الذي يظهر في قائمة الهواتف المنسدلة للمستهلكين) متاحة حصرياً لمشتركي باقات VIP.</p>
                     </div>`}
 
                     <!-- UPGRADE BANNER -->
-                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:0.85rem; border-radius:10px; text-align:center;">
-                        <div style="color:#E9D5FF; font-weight:bold; font-size:0.85rem; margin-bottom:0.5rem;">👑 ترقية الباقة وتوسيع نطاق الرادار حتى 30 كم+</div>
-                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.6rem 1rem; border-radius:8px; font-weight:bold; font-size:0.85rem; cursor:pointer;">🚀 استعراض الباقات والأسعار</button>
+                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:1rem; border-radius:12px; text-align:center;">
+                        <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.5rem;">👑 ترقية الباقة وتوسيع نطاق الرادار حتى 30 كم+</div>
+                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.7rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.9rem; cursor:pointer; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض الباقات والأسعار عبر واتساب</button>
                     </div>
                 </div>
             `;
 
-            // TAB 3: STATS
+            // TAB 4: STATS
             html += `
                 <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none;">
-                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:12px; text-align:center;">
-                        <h4 style="color:#60A5FA; margin:0 0 0.75rem 0; font-size:0.9rem;">📊 ملخص نشاط محطتك:</h4>
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1.25rem; border-radius:12px; text-align:center;">
+                        <h4 style="color:#60A5FA; margin:0 0 0.75rem 0; font-size:0.95rem;">📊 ملخص نشاط محطتك:</h4>
                         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem;">
-                            <div style="background:#0F172A; padding:0.6rem; border-radius:8px;">
-                                <div style="font-size:1.2rem; color:#38BDF8; font-weight:bold;">${st.impressionsCount || 0}</div>
-                                <div style="font-size:0.7rem; color:#94A3B8;">ظهور بالرادار</div>
+                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
+                                <div style="font-size:1.25rem; color:#38BDF8; font-weight:bold;">${st.impressionsCount || 0}</div>
+                                <div style="font-size:0.75rem; color:#94A3B8;">ظهور بالرادار</div>
                             </div>
-                            <div style="background:#0F172A; padding:0.6rem; border-radius:8px;">
-                                <div style="font-size:1.2rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
-                                <div style="font-size:0.7rem; color:#94A3B8;">تنبيهات صوتية</div>
+                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
+                                <div style="font-size:1.25rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
+                                <div style="font-size:0.75rem; color:#94A3B8;">تنبيهات صوتية</div>
                             </div>
-                            <div style="background:#0F172A; padding:0.6rem; border-radius:8px;">
-                                <div style="font-size:1.2rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
-                                <div style="font-size:0.7rem; color:#94A3B8;">نقرات واتساب</div>
+                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
+                                <div style="font-size:1.25rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
+                                <div style="font-size:0.75rem; color:#94A3B8;">نقرات واتساب</div>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
 
-            // TAB 4: SETTINGS
+            // TAB 5: SETTINGS
             html += `
                 <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none;">
-                    <label style="font-size:0.82rem; color:#94A3B8;">رقم واتساب العام للجمهور:</label>
-                    <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10">
-                    <label style="display:flex; align-items:center; gap:0.5rem; color:#F8FAFC; font-size:0.85rem; margin-bottom:1rem; cursor:pointer; background:#1E293B; padding:0.65rem; border-radius:8px;">
-                        <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.1rem; height:1.1rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
+                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">⚙️ إعدادات التواصل والخصوصية:</h4>
+                    <label style="font-size:0.85rem; color:#94A3B8;">رقم واتساب العام للجمهور:</label>
+                    <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.75rem; font-size:0.95rem;">
+                    <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.9rem; margin-bottom:1rem; cursor:pointer; background:#1E293B; padding:0.75rem; border-radius:8px;">
+                        <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.2rem; height:1.2rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
                     </label>
-                    <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.8rem; font-size:0.9rem;">حفظ إعدادات التواصل</button>
-                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin-top:1.5rem; margin-bottom:0; padding:0.8rem; font-size:0.9rem;">تسجيل الخروج من الحساب</button>
+                    <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.9rem; font-size:1rem;">حفظ إعدادات التواصل</button>
+                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin-top:1.5rem; margin-bottom:0; padding:0.9rem; font-size:1rem;">تسجيل الخروج من الحساب</button>
                 </div>
             `;
 
@@ -2118,7 +2130,7 @@
         }
 
         window.switchOwnerTab = function(tabName) {
-            ['materials', 'broadcast', 'stats', 'settings'].forEach(t => {
+            ['materials', 'addcat', 'broadcast', 'stats', 'settings'].forEach(t => {
                 let pane = document.getElementById(`ownerTabContent_${t}`);
                 let btn = document.getElementById(`ownerTabBtn_${t}`);
                 if (pane) pane.style.display = (t === tabName) ? 'block' : 'none';
