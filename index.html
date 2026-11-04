@@ -2078,7 +2078,10 @@
             window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
-                        function loadMyStationDashboard(st) {
+                        let currentOwnerActiveTab = 'materials';
+
+        function loadMyStationDashboard(st, activeTab = currentOwnerActiveTab) {
+            currentOwnerActiveTab = activeTab || 'materials';
             startStationOwnerSurveyChecker(st);
             let avgRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
             let tierLevel = getStationTierLevel(st);
@@ -2087,34 +2090,62 @@
             let sRadius = getStationDefaultSearchRadius(st);
             let aRadius = getStationDefaultAlertRadius(st);
             let borderColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#334155');
-            let badgeHtml = isVipPlus ? '<span class="vip-plus-badge" style="margin:0;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0; font-size:0.85rem; padding:0.3rem 0.7rem;">⭐ VIP</span>' : '<span style="background:#334155; color:#94A3B8; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">الباقة المجانية</span>');
+            let badgeHtml = isVipPlus
+                ? '<span class="vip-plus-badge" style="margin:0;">👑 باقة VIP+ الملكية</span>'
+                : (isVip
+                    ? '<span class="vip-badge" style="margin:0; font-size:0.8rem; padding:0.25rem 0.65rem;">⭐ باقة VIP</span>'
+                    : '<span style="background:#334155; color:#CBD5E1; padding:0.25rem 0.65rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">الباقة المجانية</span>');
+
+            let catsCount = (st.categories && st.categories.length) ? st.categories.length : 0;
+            let availCount = 0;
+            if (st.categories && st.materialsStatus) {
+                st.categories.forEach(c => { if (st.materialsStatus[c] === true) availCount++; });
+            }
 
             let html = `
-                <div style="background:#0F172A; padding:1.25rem; border-radius:16px; border:2px solid ${borderColor};">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                        <h3 style="color:#FBBF24; margin:0; font-size:1.2rem;">${st.name} (${st.region})</h3>
-                        ${badgeHtml}
-                    </div>
-                    <p style="color:#34D399; font-size:0.78rem; font-weight:bold; margin:0 0 0.5rem 0;">حالة الاعتماد: معتمدة ✓ | النطاق: ${sRadius} كم</p>
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; margin-bottom:1rem; flex-wrap:wrap;">
-                        <div id="ownerMandatoryTimerBadge" style="background:#064E3B; border:1px solid #10B981; color:#34D399; padding:0.35rem 0.65rem; border-radius:8px; font-size:0.75rem; flex:1;">⏳ التحديث الإجباري: كل 3 ساعات</div>
-                        <button onclick="quickRefreshStationTimestamp('${st.id}')" style="background:#0284C7; color:white; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap;">🔄 تأكيد الحالة (الآن)</button>
+                <div style="background:#0F172A; padding:1.15rem; border-radius:18px; border:2px solid ${borderColor}; box-shadow:0 10px 25px rgba(0,0,0,0.4);">
+                    
+                    <!-- 1. EXECUTIVE STATION HEADER -->
+                    <div style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1px solid #334155; padding:0.9rem; border-radius:14px; margin-bottom:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
+                            <div>
+                                <h3 style="color:#FBBF24; margin:0 0 0.2rem 0; font-size:1.2rem;">⛽ ${st.name}</h3>
+                                <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${st.region}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
+                            </div>
+                            ${badgeHtml}
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; background:#0F172A; padding:0.5rem; border-radius:10px; border:1px solid #1E293B; text-align:center; font-size:0.74rem; margin-bottom:0.65rem;">
+                            <div><span style="color:#94A3B8; display:block;">المواد المتوفرة</span><b style="color:#34D399; font-size:0.9rem;">${availCount} / ${catsCount}</b></div>
+                            <div style="border-right:1px solid #1E293B; border-left:1px solid #1E293B;"><span style="color:#94A3B8; display:block;">نطاق البحث</span><b style="color:#38BDF8; font-size:0.9rem;">${sRadius} كم</b></div>
+                            <div><span style="color:#94A3B8; display:block;">نطاق التنبيه</span><b style="color:#FBBF24; font-size:0.9rem;">${aRadius} كم</b></div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                            <div id="ownerMandatoryTimerBadge" style="background:#064E3B; border:1px solid #10B981; color:#34D399; padding:0.4rem 0.65rem; border-radius:8px; font-size:0.75rem; flex:1; font-weight:bold;">⏳ التحديث الإجباري: كل 3 ساعات</div>
+                            <button onclick="quickRefreshStationTimestamp('${st.id}')" style="background:#0284C7; color:white; border:none; padding:0.45rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:900; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(2,132,199,0.35);">🔄 تأكيد التوفر (الآن)</button>
+                        </div>
                     </div>
 
-                    <!-- TAB NAVIGATION BUTTONS (5 Clean Tabs) -->
-                    <div style="display:flex; gap:0.2rem; margin-bottom:1.25rem; background:#1E293B; padding:0.3rem; border-radius:10px; overflow-x:auto;">
-                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="flex:1; background:#0284C7; color:white; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📦 المواد</button>
-                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">➕ إضافة</button>
-                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📢 البث</button>
-                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📊 النشاط</button>
-                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">⚙️ التواصل</button>
+                    <!-- 2. PROFESSIONAL GRID NAVIGATION TABS -->
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; margin-bottom:0.4rem;">
+                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="background:#0284C7; color:white; border:1px solid #38BDF8; padding:0.65rem 0.25rem; border-radius:10px; font-weight:900; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📦 توفر المواد</button>
+                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.76rem; cursor:pointer; transition:all 0.2s;">➕🗑️ إضافة أو حذف</button>
+                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📢 البث والترقية</button>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.4rem; margin-bottom:1.2rem;">
+                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📊 الإحصائيات والنشاط</button>
+                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">⚙️ التواصل والحساب</button>
                     </div>
 
-                    <!-- TAB 1: MATERIALS (Clean One-Tap Toggles & Emergency Buttons) -->
+                    <!-- TAB 1: MATERIALS (One-Tap Toggles, Prices & Emergency Buttons) -->
                     <div id="ownerTabContent_materials" class="owner-tab-pane">
-                        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-                            <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.4);">🚨 إغلاق طارئ (نفد الكل)</button>
-                            <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.4);">🟢 فتح الكل (متوفر)</button>
+                        <div style="background:#1E293B; padding:0.65rem; border-radius:12px; border:1px solid #334155; margin-bottom:1rem;">
+                            <div style="font-size:0.75rem; color:#94A3B8; margin-bottom:0.4rem; text-align:center; font-weight:bold;">⚡ أزرار التحكم السريع بجميع المواد دفعة واحدة:</div>
+                            <div style="display:flex; gap:0.5rem;">
+                                <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.3);">🟢 توفر الكل (فتح المحطة)</button>
+                                <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.3);">🚨 نفاذ الكل (إغلاق طارئ)</button>
+                            </div>
                         </div>
             `;
 
@@ -2122,64 +2153,99 @@
                 st.categories.forEach(cat => {
                     let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
                     let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
-                    let cardBg = isAvail ? '#064E3B' : '#7F1D1D';
+                    let cardBg = isAvail ? 'linear-gradient(135deg, #064E3B 0%, #022C22 100%)' : 'linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)';
                     let cardBorder = isAvail ? '#10B981' : '#EF4444';
-                    let statusText = isAvail ? '🟢 متوفر حالياً (انقر للإيقاف)' : '🔴 نفدت الكمية (انقر للتفعيل)';
+                    let statusBadge = isAvail ? '🟢 متوفر الآن ✓ (انقر للإيقاف)' : '🔴 نفدت الكمية ✗ (انقر للتفعيل)';
                     
                     html += `
-                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; transition:all 0.2s;">
-                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.5rem;">
-                                <span style="font-size:1.05rem; font-weight:bold; color:#FFFFFF;">📦 ${cat}</span>
-                                <span style="background:rgba(0,0,0,0.3); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.85rem; font-weight:900; color:#FFFFFF;">${statusText}</span>
+                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.9rem; border-radius:14px; margin-bottom:0.8rem; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.6rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.6rem;">
+                                <span style="font-size:1.1rem; font-weight:900; color:#FFFFFF;">📦 ${cat}</span>
+                                <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.25); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.82rem; font-weight:900; color:#FFFFFF;">${statusBadge}</span>
                             </div>
                             <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية..." style="margin:0; padding:0.6rem; font-size:0.9rem; background:#0F172A; font-weight:bold;">
-                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:bold; cursor:pointer; white-space:nowrap;">حفظ السعر</button>
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية (اختياري)..." style="margin:0; padding:0.6rem 0.75rem; font-size:0.9rem; background:#0F172A; font-weight:bold; border:1px solid #475569; flex:1;">
+                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1rem; font-size:0.82rem; font-weight:900; cursor:pointer; white-space:nowrap;">💾 حفظ السعر</button>
                             </div>
                         </div>`;
                 });
             } else {
-                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لم تقم بإضافة أي فئات بعد. انتقل لتبويب (إضافة).</p>`;
+                html += `
+                    <div style="background:#1E293B; border:1px dashed #475569; padding:1.5rem 1rem; border-radius:12px; text-align:center;">
+                        <p style="color:#94A3B8; font-size:0.9rem; margin:0 0 0.75rem 0;">لا توجد مواد مضافة في محطتك حالياً.</p>
+                        <button onclick="switchOwnerTab('addcat')" style="background:#0284C7; color:white; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-weight:bold; cursor:pointer;">➕ انتقل لإضافة أو حذف صنف</button>
+                    </div>`;
             }
 
-            html += `</div>`; // End of materials tab
+            html += `</div>`; // End of TAB 1
 
-            // TAB 2: ADD CATEGORIES
+            // TAB 2: ADD OR DELETE CATEGORIES (إضافة أو حذف مواد أو صنف)
             let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
             html += `
                 <div id="ownerTabContent_addcat" class="owner-tab-pane" style="display:none;">
-                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">➕ إضافة مواد وأصناف جديدة لمحطتك:</h4>
+                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #38BDF8; margin-bottom:1rem;">
+                        <h4 style="color:#38BDF8; margin:0 0 0.5rem 0; font-size:0.95rem;">➕ إضافة مادة أو صنف جديد لمحطتك:</h4>
             `;
             if (missing.length > 0) {
                 let opts = missing.map(c => `<option value="${c}">${c}</option>`).join('');
                 html += `
-                    <div style="background:#1E293B; padding:1rem; border-radius:12px; border:1px solid #475569;">
-                        <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.4rem;">اختر من الفئات المعتمدة من الإدارة:</label>
+                        <label style="font-size:0.8rem; color:#CBD5E1; display:block; margin-bottom:0.4rem;">اختر الصنف من القائمة المعتمدة في المنصة:</label>
                         <div style="display:flex; gap:0.5rem;">
-                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.6rem; font-size:0.9rem;">${opts}</select>
-                            <button onclick="addMat('${st.id}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0 1.2rem; font-weight:bold; cursor:pointer;">إضافة</button>
-                        </div>
-                    </div>`;
+                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.65rem; font-size:0.9rem; font-weight:bold;">${opts}</select>
+                            <button onclick="addMat('${st.id}')" style="background:#059669; color:white; border:none; border-radius:8px; padding:0 1.25rem; font-weight:900; font-size:0.85rem; cursor:pointer; white-space:nowrap;">➕ إضافة الصنف</button>
+                        </div>`;
             } else {
-                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لقد أضفت كافة الفئات المتاحة في النظام.</p>`;
+                html += `<p style="color:#34D399; font-size:0.85rem; margin:0; font-weight:bold;">✓ جميع الأصناف المعتمدة في المنصة مضافة لديك بالفعل.</p>`;
             }
             html += `</div>`;
+
+            // Section for Deleting / Removing existing categories from station
+            html += `
+                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #EF4444;">
+                        <h4 style="color:#FCA5A5; margin:0 0 0.5rem 0; font-size:0.95rem;">🗑️ حذف مادة أو صنف مسجل في محطتك:</h4>
+                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.75rem 0;">إذا لم تعد تتعامل بأحد الأصناف التالية أو أضفته بالخطأ، يمكنك حذفه من محطتك:</p>
+            `;
+            if (st.categories && st.categories.length > 0) {
+                st.categories.forEach(cat => {
+                    let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#0F172A; border:1px solid #334155; padding:0.65rem 0.85rem; border-radius:10px; margin-bottom:0.5rem;">
+                            <div>
+                                <span style="font-weight:900; color:#F8FAFC; font-size:0.92rem;">📦 ${cat}</span>
+                                <span style="font-size:0.75rem; color:${isAvail?'#34D399':'#FCA5A5'}; margin-right:0.4rem;">(${isAvail?'متوفر':'نفد'})</span>
+                            </div>
+                            <button onclick="removeMatFromStation('${st.id}', '${cat}')" style="background:#DC2626; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🗑️ حذف الصنف</button>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<p style="color:#94A3B8; font-size:0.85rem; margin:0; text-align:center;">لا توجد أصناف مسجلة حالياً لحذفها.</p>`;
+            }
+            html += `
+                    </div>
+                </div>
+            `; // End of TAB 2
 
             // TAB 3: BROADCAST & UPGRADE
             html += `
                 <div id="ownerTabContent_broadcast" class="owner-tab-pane" style="display:none;">
-                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1.25rem;">
-                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (يظهر كإشعار منسدل ويختفي تلقائياً بعد 3 ساعات):</h4>
+                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 الإعلان الصاخب (بث عاجل في هواتف المستهلكين):</h4>
+                        <p style="font-size:0.78rem; color:#FEF3C7; margin:0 0 0.65rem 0; line-height:1.5;">تظهر رسالتك كإشعار منسدل بصوت صافرة إنذار لجميع المستهلكين في نطاقك وتختفي تلقائياً بعد 3 ساعات:</p>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
-                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة مازوت الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
-                            <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.95rem; cursor:pointer;">🚀 إطلاق البث الصاخب الفوري الآن</button>
+                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة غاز منزلي الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
+                            <div style="display:flex; gap:0.5rem;">
+                                <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.9rem; cursor:pointer; flex:2;">🚀 إطلاق البث الصاخب الآن</button>
+                                ${st.broadcastMsg ? `<button onclick="document.getElementById('bcMsg_${st.id}').value=''; sendVIPBroadcast('${st.id}');" style="background:#475569; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:bold; font-size:0.8rem; cursor:pointer; flex:1;">إيقاف البث</button>` : ''}
+                            </div>
                         </div>
                     </div>
 
                     <!-- UPGRADE BANNER -->
-                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:1rem; border-radius:12px; text-align:center;">
-                        <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.5rem;">👑 ترقية الباقة وتوسيع نطاق الرادار حتى 30 كم+</div>
-                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.7rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.9rem; cursor:pointer; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض الباقات والأسعار عبر واتساب</button>
+                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:2px solid #C084FC; padding:1rem; border-radius:14px; text-align:center;">
+                        <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.35rem;">👑 ضاعف مبيعاتك ووسّع نطاق الرادار حتى 30 كم+</div>
+                        <p style="color:#CBD5E1; font-size:0.78rem; margin:0 0 0.75rem 0;">تصدّر قائمة البحث لدى المستهلكين واحصل على ميزة الإعلانات المنسدلة الفورية:</p>
+                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.75rem 1.2rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; width:100%; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض باقات (VIP / VIP+) والأسعار</button>
                     </div>
                 </div>
             `;
@@ -2187,37 +2253,50 @@
             // TAB 4: STATS
             html += `
                 <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none;">
-                    <div style="background:#1E293B; border:1px solid #334155; padding:1.25rem; border-radius:12px; text-align:center;">
-                        <h4 style="color:#60A5FA; margin:0 0 0.75rem 0; font-size:0.95rem;">📊 ملخص نشاط محطتك:</h4>
-                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem;">
-                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
-                                <div style="font-size:1.25rem; color:#38BDF8; font-weight:bold;">${st.impressionsCount || 0}</div>
-                                <div style="font-size:0.75rem; color:#94A3B8;">ظهور بالرادار</div>
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1.1rem; border-radius:14px; text-align:center;">
+                        <h4 style="color:#60A5FA; margin:0 0 0.85rem 0; font-size:0.95rem;">📊 إحصائيات تفاعل المستهلكين مع محطتك:</h4>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.6rem;">
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#38BDF8; font-weight:900;">${st.impressionsCount || 0}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔍 مرات الظهور بالرادار</div>
                             </div>
-                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
-                                <div style="font-size:1.25rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
-                                <div style="font-size:0.75rem; color:#94A3B8;">تنبيهات صوتية</div>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#34D399; font-weight:900;">${st.alertsReceivedCount || 0}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔔 تنبيهات صوتية وصلت للزبائن</div>
                             </div>
-                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
-                                <div style="font-size:1.25rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
-                                <div style="font-size:0.75rem; color:#94A3B8;">نقرات واتساب</div>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#C4B5FD; font-weight:900;">${st.accessCount || 0}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">💬 نقرات التواصل عبر واتساب</div>
+                            </div>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#FBBF24; font-weight:900;">⭐ ${avgRating}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">تقييم الزبائن (${st.ratingCount || 1} تقييم)</div>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
 
-            // TAB 5: SETTINGS
+            // TAB 5: SETTINGS & GPS UPDATE
             html += `
                 <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none;">
-                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">⚙️ إعدادات التواصل والخصوصية:</h4>
-                    <label style="font-size:0.85rem; color:#94A3B8;">رقم واتساب العام للجمهور:</label>
-                    <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.75rem; font-size:0.95rem;">
-                    <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.9rem; margin-bottom:1rem; cursor:pointer; background:#1E293B; padding:0.75rem; border-radius:8px;">
-                        <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.2rem; height:1.2rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
-                    </label>
-                    <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.9rem; font-size:1rem;">حفظ إعدادات التواصل</button>
-                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin-top:1.5rem; margin-bottom:0; padding:0.9rem; font-size:1rem;">تسجيل الخروج من الحساب</button>
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#F8FAFC; margin:0 0 0.75rem 0; font-size:0.95rem;">📞 إعدادات التواصل مع الزبائن:</h4>
+                        <label style="font-size:0.82rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">رقم واتساب العام للجمهور:</label>
+                        <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.7rem; font-size:0.95rem;">
+                        <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.86rem; margin-bottom:0.85rem; cursor:pointer; background:#0F172A; padding:0.7rem; border-radius:8px; border:1px solid #334155;">
+                            <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.15rem; height:1.15rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
+                        </label>
+                        <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.8rem; font-size:0.92rem; margin-bottom:0;">💾 حفظ إعدادات التواصل</button>
+                    </div>
+
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#34D399; margin:0 0 0.4rem 0; font-size:0.92rem;">📍 تحديث الموقع الجغرافي للمحطة (GPS):</h4>
+                        <p style="font-size:0.76rem; color:#94A3B8; margin:0 0 0.65rem 0;">إذا قمت بتسجيل المحطة سابقاً من موقع غير دقيق، اضغط أدناه وأنت داخل المحطة لتحديث إحداثياتها:</p>
+                        <button onclick="updateOwnerStationGPS('${st.id}')" style="background:#064E3B; border:1px solid #10B981; color:#FFFFFF; width:100%; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.85rem; cursor:pointer;">📍 تحديث موقع المحطة الدقيق الآن</button>
+                    </div>
+
+                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin:0; padding:0.85rem; font-size:0.95rem;">🚪 تسجيل الخروج من الحساب</button>
                 </div>
             `;
 
@@ -2226,9 +2305,11 @@
             let dash = document.getElementById('sec-stationDashboard');
             dash.innerHTML = html;
             showSection('stationDashboard');
+            switchOwnerTab(currentOwnerActiveTab);
         }
 
         window.switchOwnerTab = function(tabName) {
+            currentOwnerActiveTab = tabName;
             ['materials', 'addcat', 'broadcast', 'stats', 'settings'].forEach(t => {
                 let pane = document.getElementById(`ownerTabContent_${t}`);
                 let btn = document.getElementById(`ownerTabBtn_${t}`);
@@ -2237,14 +2318,36 @@
                     if (t === tabName) {
                         btn.style.background = '#0284C7';
                         btn.style.color = '#FFFFFF';
+                        btn.style.borderColor = '#38BDF8';
                     } else {
-                        btn.style.background = 'transparent';
+                        btn.style.background = '#1E293B';
                         btn.style.color = '#94A3B8';
+                        btn.style.borderColor = '#334155';
                     }
                 }
             });
         };
 
+        window.emergencyPanicAll = async function(id, statusVal) {
+            if (!db) return;
+            try {
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let d = doc.data();
+                    let mStatus = {};
+                    if (d.categories) {
+                        d.categories.forEach(c => { mStatus[c] = statusVal; });
+                    }
+                    await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
+                    showToast(statusVal ? "🟢 تم فتح وتفعيل جميع المواد بنجاح!" : "🚨 تم إغلاق جميع المواد (نفدت) طارئاً!");
+                    let updated = await ref.get();
+                    loadMyStationDashboard({ id, ...updated.data() }, 'materials');
+                }
+            } catch (e) {
+                showToast("حدث خطأ أثناء التحديث الطارئ");
+            }
+        };
 
         window.toggleMat = async function(id, cat, stat) {
             try {
@@ -2254,9 +2357,9 @@
                     let mStatus = doc.data().materialsStatus || {};
                     mStatus[cat] = stat;
                     await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
-                    showToast("تم تحديث حالة المادة!");
+                    showToast(stat ? `🟢 تم تفعيل توفر (${cat})` : `🔴 تم تحويل (${cat}) إلى نفدت الكمية`);
                     let updated = await ref.get();
-                    loadMyStationDashboard({ id, ...updated.data() });
+                    loadMyStationDashboard({ id, ...updated.data() }, 'materials');
                 }
             } catch (e) { showToast("خطأ في التحديث"); }
         };
@@ -2270,13 +2373,14 @@
                     let mPrices = doc.data().materialsPrices || {};
                     mPrices[cat] = val;
                     await ref.update({ materialsPrices: mPrices, lastUpdate: new Date().toISOString() });
-                    showToast("تم حفظ السعر بنجاح!");
+                    showToast(`💾 تم حفظ سعر (${cat}) بنجاح!`);
                 }
             } catch (e) { showToast("خطأ في حفظ السعر"); }
         };
 
         window.addMat = async function(id) {
-            let cat = document.getElementById(`newMat_${id}`).value;
+            let sel = document.getElementById(`newMat_${id}`);
+            let cat = sel ? sel.value : '';
             if (!cat) return;
             try {
                 let ref = db.collection("stations").doc(id);
@@ -2287,12 +2391,69 @@
                     if (!cArr.includes(cat)) cArr.push(cat);
                     let mStat = d.materialsStatus || {}; mStat[cat] = false;
                     let mPrc = d.materialsPrices || {}; mPrc[cat] = "";
-                    await ref.update({ categories: cArr, materialsStatus: mStat, materialsPrices: mPrc });
-                    showToast("تمت إضافة المادة لمحطتك!");
+                    await ref.update({
+                        categories: cArr,
+                        materialsStatus: mStat,
+                        materialsPrices: mPrc,
+                        lastUpdate: new Date().toISOString()
+                    });
+                    showToast(`➕ تمت إضافة صنف (${cat}) لمحطتك بنجاح!`);
                     let updated = await ref.get();
-                    loadMyStationDashboard({ id, ...updated.data() });
+                    loadMyStationDashboard({ id, ...updated.data() }, 'addcat');
                 }
             } catch (e) { showToast("خطأ أثناء الإضافة"); }
+        };
+
+        window.removeMatFromStation = async function(id, cat) {
+            if (!db) return;
+            if (!confirm(`هل أنت متأكد من حذف صنف (${cat}) من محطتك؟`)) return;
+            try {
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let d = doc.data();
+                    let cArr = (d.categories || []).filter(c => c !== cat);
+                    let mStat = d.materialsStatus || {};
+                    let mPrc = d.materialsPrices || {};
+                    delete mStat[cat];
+                    delete mPrc[cat];
+                    await ref.update({
+                        categories: cArr,
+                        materialsStatus: mStat,
+                        materialsPrices: mPrc,
+                        lastUpdate: new Date().toISOString()
+                    });
+                    showToast(`🗑️ تم حذف صنف (${cat}) من محطتك بنجاح`);
+                    let updated = await ref.get();
+                    loadMyStationDashboard({ id, ...updated.data() }, 'addcat');
+                }
+            } catch (e) {
+                showToast("حدث خطأ أثناء حذف الصنف");
+            }
+        };
+
+        window.updateOwnerStationGPS = function(id) {
+            if (!navigator.geolocation) {
+                return showToast("متصفحك لا يدعم تحديد الموقع الجغرافي");
+            }
+            showToast("⏳ جاري التقاط الإحداثيات الدقيقة للمحطة...");
+            navigator.geolocation.getCurrentPosition(async pos => {
+                let newLat = Number(pos.coords.latitude);
+                let newLon = Number(pos.coords.longitude);
+                try {
+                    await db.collection("stations").doc(id).update({
+                        lat: newLat,
+                        lon: newLon,
+                        locationFormatted: `${newLat.toFixed(6)}, ${newLon.toFixed(6)}`,
+                        googleMapsUrl: `https://maps.google.com/?q=${newLat},${newLon}`
+                    });
+                    showToast("✅ تم تحديث الموقع الجغرافي الدقيق لمحطتك بنجاح!");
+                } catch (e) {
+                    showToast("حدث خطأ أثناء حفظ الموقع الجديد");
+                }
+            }, () => {
+                showToast("❌ تعذر التقاط الموقع! يرجى تفعيل الـ GPS في هاتفك والمحاولة مجدداً.");
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
         };
 
         window.saveStSet = async function(id) {
@@ -2301,7 +2462,7 @@
             if (!/^09[0-9]{8}$/.test(ph)) return showToast("رقم التواصل غير صحيح");
             try {
                 await db.collection("stations").doc(id).update({ publicPhone: ph, showContact: sh });
-                showToast("تم حفظ إعدادات التواصل!");
+                showToast("✅ تم حفظ إعدادات التواصل!");
             } catch (e) { showToast("خطأ أثناء الحفظ"); }
         };
 
