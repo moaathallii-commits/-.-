@@ -3083,7 +3083,7 @@
             } catch(e) {}
         };
 
-        // --- 3. Mandatory 3-Hour Station Status Update Enforcement (Non-Dismissible Lock) ---
+        // --- 3. Mandatory Daily 1:00 PM Station Status Update Enforcement (Non-Dismissible Lock) ---
         let stationSurveyInterval = null;
         let activeStationDocForSurvey = null;
         let lastOwnerReminderNotifTime = 0;
@@ -3093,7 +3093,7 @@
             if (stationSurveyInterval) clearInterval(stationSurveyInterval);
 
             // 1. Check immediately upon opening/loading the dashboard
-            triggerStationQuickSurveyIfNeeded(stationDoc);
+            triggerStationDailySurveyIfNeeded(stationDoc);
 
             // 2. Check every 60 seconds while app is open or in background
             stationSurveyInterval = setInterval(async () => {
@@ -3106,7 +3106,7 @@
                         }
                     } catch (e) {}
                 }
-                triggerStationQuickSurveyIfNeeded(activeStationDocForSurvey);
+                triggerStationDailySurveyIfNeeded(activeStationDocForSurvey);
             }, 60000);
         }
 
@@ -3115,56 +3115,63 @@
             if (document.visibilityState === 'visible' && activeStationDocForSurvey) {
                 let dashEl = document.getElementById('sec-stationDashboard');
                 if (dashEl && dashEl.style.display === 'block') {
-                    triggerStationQuickSurveyIfNeeded(activeStationDocForSurvey);
+                    triggerStationDailySurveyIfNeeded(activeStationDocForSurvey);
                 }
             }
         });
 
-        window.triggerStationQuickSurveyIfNeeded = function(st) {
+        function getToday1pmTimestamp() {
+            let now = new Date();
+            let d1pm = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0, 0);
+            return d1pm.getTime();
+        }
+
+        window.triggerStationDailySurveyIfNeeded = function(st) {
             if (!st || !st.id) return;
-            // Use the cloud `lastUpdate` timestamp (or fallback to `createdAt`) so owner cannot bypass by clearing local cache
             let lastUpdateRaw = st.lastUpdate || st.createdAt || 0;
             let lastUpdateMs = lastUpdateRaw ? new Date(lastUpdateRaw).getTime() : 0;
             if (isNaN(lastUpdateMs)) lastUpdateMs = 0;
 
             let now = Date.now();
-            const THREE_HOURS_MS = 3 * 60 * 60 * 1000; // 10,800,000 ms
+            let today1pm = getToday1pmTimestamp();
 
-            // Update countdown indicator on dashboard if present
+            // Determine the mandatory deadline:
+            // If current time is past 1:00 PM today, the deadline is today at 1:00 PM.
+            // If current time is before 1:00 PM today, the deadline is yesterday at 1:00 PM.
+            let deadlineMs = (now >= today1pm) ? today1pm : (today1pm - 24 * 60 * 60 * 1000);
+
+            // Update status indicator badge on dashboard if present
             let timerBadge = document.getElementById('ownerMandatoryTimerBadge');
-            let remainingMs = THREE_HOURS_MS - (now - lastUpdateMs);
             if (timerBadge) {
-                if (remainingMs > 0) {
-                    let remMinsTotal = Math.ceil(remainingMs / 60000);
-                    let hrs = Math.floor(remMinsTotal / 60);
-                    let mins = remMinsTotal % 60;
+                if (lastUpdateMs >= deadlineMs) {
                     timerBadge.style.background = '#064E3B';
                     timerBadge.style.color = '#34D399';
                     timerBadge.style.borderColor = '#10B981';
-                    timerBadge.innerHTML = `⏳ التحديث الإجباري القادم بعد: <b>${hrs} س و ${mins} د</b>`;
+                    timerBadge.innerHTML = `✅ بيانات محطتك محدثة لليوم (موعد التحديث القادم: غداً 1:00 ظهراً)`;
                 } else {
                     timerBadge.style.background = '#7F1D1D';
                     timerBadge.style.color = '#FCA5A5';
                     timerBadge.style.borderColor = '#EF4444';
-                    timerBadge.innerHTML = `🚨 انتهت مهلة الـ 3 ساعات! يجب تحديث الحالة الآن`;
+                    timerBadge.innerHTML = `🚨 مطلوب تحديث الحالة الإجباري (موعد اليوم 1:00 ظهراً)`;
                 }
             }
 
-            if (now - lastUpdateMs >= THREE_HOURS_MS) {
+            // Trigger mandatory modal lock if last update was before the 1:00 PM deadline AND modal is not already open
+            if (lastUpdateMs < deadlineMs) {
                 showStationSurveyModal(st);
 
-                // Fire loud alert & dropdown system notification (throttled to once every 10 minutes if ignored in background)
+                // Fire loud alert & system notification (throttled to once every 10 minutes)
                 if (now - lastOwnerReminderNotifTime > 600000) {
                     lastOwnerReminderNotifTime = now;
                     playTone('alarm1');
                     if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 600]);
                     if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
                         navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification("⏰ تحديث إجباري لحالة المحطة - متوفر هناا", {
-                                body: `مضى أكثر من 3 ساعات على آخر تحديث لمحطة (${st.name}). يرجى تأكيد توفر المواد الآن لبقاء محطتك نشطة في الرادار.`,
+                            reg.showNotification("⏰ موعد التحديث اليومي الإجباري - متوفر هناا", {
+                                body: `لقد حان موعد التحديث اليومي (1:00 ظهراً) لمحطة (${st.name}). يرجى تأكيد توفر المواد الآن لتبقى محطتك نشطة وموثوقة للزبائن.`,
                                 icon: "icon-192.png",
                                 badge: "icon-192.png",
-                                tag: "mandatory-owner-update",
+                                tag: "mandatory-daily-1pm-update",
                                 renotify: true,
                                 requireInteraction: true,
                                 vibrate: [400, 150, 400, 150, 600]
@@ -3194,7 +3201,6 @@
         };
 
         window.showStationSurveyModal = function(st) {
-            // If modal is already open on screen, don't recreate it so we don't wipe what the owner is typing
             if (document.getElementById('stationSurveyModal')) return;
 
             let matsCheckHtml = '';
@@ -3222,13 +3228,13 @@
             let modalHtml = `
                 <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(6px);">
                     <div class="modal-content" style="border:3px solid #EF4444; max-width:440px; text-align:right; max-height:90vh; overflow-y:auto; box-shadow:0 0 35px rgba(239, 68, 68, 0.5);">
-                        <div style="background:#DC2626; color:#FFFFFF; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">🔒 تحديث إجباري مطلوب (كل 3 ساعات)</div>
+                        <div style="background:#DC2626; color:#FFFFFF; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">🔒 موعد التحديث اليومي الإجباري (1:00 ظهراً)</div>
                         <h3 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.15rem;">تأكيد حالة محطة: ${st.name}</h3>
                         <p style="font-size:0.82rem; color:#FCA5A5; margin-bottom:1rem; line-height:1.5; font-weight:bold;">
-                            ⚠️ مضى أكثر من 3 ساعات على آخر تحديث. تم قفل لوحة التحكم مؤقتاً؛ يرجى تأكيد حالة المواد الحالية والضغط على حفظ للمتابعة والظهور كـ (محدث الآن) للمستهلكين:
+                            ⚠️ بلغنا موعد التحديث اليومي الإجباري (الساعة 1:00 ظهراً). تم قفل لوحة التحكم مؤقتاً؛ يرجى تأكيد حالة المواد والأسعار الحالية والضغط على حفظ للمتابعة والظهور كـ (محدث اليوم) للمستهلكين:
                         </p>
                         ${matsCheckHtml}
-                        <button id="submitMandatorySurveyBtn" onclick="submitStationSurvey('${st.id}')" class="btn-primary" style="background:#059669; padding:0.95rem; font-size:1rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; box-shadow:0 4px 12px rgba(5, 150, 105, 0.4);">✅ تأكيد وحفظ الحالة الآن (فتح اللوحة)</button>
+                        <button id="submitMandatorySurveyBtn" onclick="submitStationSurvey('${st.id}')" class="btn-primary" style="background:#059669; padding:0.95rem; font-size:1rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; box-shadow:0 4px 12px rgba(5, 150, 105, 0.4);">✅ تأكيد وحفظ الحالة اليومية (فتح اللوحة)</button>
                     </div>
                 </div>
             `;
@@ -3243,7 +3249,7 @@
             let btn = document.getElementById('submitMandatorySurveyBtn');
             if (btn) {
                 btn.disabled = true;
-                btn.textContent = "⏳ جاري حفظ وتأكيد الحالة...";
+                btn.textContent = "⏳ جاري حفظ وتأكيد الحالة اليومية...";
             }
             try {
                 let ref = db.collection("stations").doc(id);
@@ -3280,14 +3286,14 @@
                 let m = document.getElementById('stationSurveyModal');
                 if (m) m.remove();
 
-                showToast("✅ تم تأكيد وتحديث حالة المحطة لمدة 3 ساعات قادمة!");
+                showToast("✅ تم تأكيد وتحديث الحالة اليومية بنجاح!");
                 
                 let updated = await ref.get();
                 loadMyStationDashboard({ id, ...updated.data() });
             } catch (e) {
                 if (btn) {
                     btn.disabled = false;
-                    btn.textContent = "✅ تأكيد وحفظ الحالة الآن (فتح اللوحة)";
+                    btn.textContent = "✅ تأكيد وحفظ الحالة اليومية (فتح اللوحة)";
                 }
                 showToast("حدث خطأ أثناء حفظ التحديث، يرجى المحاولة مرة أخرى.");
             }
@@ -3299,7 +3305,7 @@
                 let nowIso = new Date().toISOString();
                 await db.collection("stations").doc(id).update({ lastUpdate: nowIso });
                 localStorage.setItem(`last_survey_${id}`, Date.now().toString());
-                showToast("✅ تم تجديد وقت التوفر إلى (الآن) وتمديد المهلة 3 ساعات!");
+                showToast("✅ تم تجديد وقت التوفر إلى (الآن) واعتماد تحديث اليوم!");
                 let updated = await db.collection("stations").doc(id).get();
                 if (updated.exists) {
                     loadMyStationDashboard({ id, ...updated.data() });
