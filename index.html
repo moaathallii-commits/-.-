@@ -308,6 +308,35 @@
         </div>
     </div>
 
+        <!-- Admin VIP Assignment Modal -->
+    <div id="vipAssignModalOverlay" class="modal-overlay">
+        <div class="modal-content" style="border-color:#38BDF8; max-width:400px; text-align:right;">
+            <h3 style="color:#38BDF8; margin-top:0; margin-bottom:0.5rem; font-size:1.15rem;">👑 ترقية اشتراك المحطة</h3>
+            <p style="font-size:0.85rem; color:#94A3B8; margin-bottom:1rem;">تحديد باقة VIP لمحطة: <b id="vipAssignStName" style="color:#F8FAFC;"></b></p>
+            
+            <label style="font-size:0.8rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">الباقة المراد تفعيلها:</label>
+            <select id="vipAssignTier" style="font-size:0.9rem; font-weight:bold;">
+                <option value="vip">⭐ باقة VIP الأساسية</option>
+                <option value="vip_plus">👑 باقة VIP+ الملكية الفاخرة</option>
+                <option value="free">❌ إلغاء الـ VIP (باقة مجانية)</option>
+            </select>
+            
+            <div id="vipDurationBlock">
+                <label style="font-size:0.8rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">فترة الاشتراك (الصلاحية):</label>
+                <select id="vipAssignDuration" style="font-size:0.9rem; font-weight:bold;">
+                    <option value="1">شهر واحد (1 Month)</option>
+                    <option value="6">ستة أشهر (6 Months)</option>
+                    <option value="12">سنة كاملة (1 Year)</option>
+                    <option value="999">طوال الحياة (Lifetime)</option>
+                </select>
+            </div>
+            
+            <input type="hidden" id="vipAssignStId">
+            <button onclick="confirmVipAssignment()" class="btn-primary" style="background:#0284C7; padding:0.8rem; margin-bottom:0.5rem; margin-top:0.5rem;">حفظ الترقية</button>
+            <button onclick="closeVipAssignModal()" class="btn-secondary" style="background:transparent; border:1px solid #475569; color:#94A3B8; padding:0.6rem;">إلغاء</button>
+        </div>
+    </div>
+
     <!-- Station Upgrade Packages Modal (VIP & VIP+) -->
     <div id="upgradeModalOverlay" class="modal-overlay">
         <div class="modal-content" style="max-width: 440px; border-color: #C084FC; text-align: right; max-height: 90vh; overflow-y: auto;">
@@ -389,6 +418,15 @@
             
             <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 0.75rem 0; overflow-x: auto; padding-bottom: 0.4rem;">
                 <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
+            </div>
+            
+            <div style="display:flex; gap:1rem; margin-bottom:0.75rem; justify-content:center; flex-wrap:wrap; background:#1E293B; padding:0.5rem; border-radius:8px; border:1px solid #334155;">
+                <label style="color:#34D399; font-size:0.82rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.4rem;">
+                    <input type="checkbox" id="filterAvailableOnly" onchange="renderConsumerStations(allStations)" style="margin:0; width:1.1rem; height:1.1rem;"> 🟢 إخفاء المنتهية (المتوفر فقط)
+                </label>
+                <label style="color:#FBBF24; font-size:0.82rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:0.4rem;">
+                    <input type="checkbox" id="filterFavoritesOnly" onchange="renderConsumerStations(allStations)" style="margin:0; width:1.1rem; height:1.1rem;"> ⭐ المفضلة فقط
+                </label>
             </div>
 
             <div style="margin: 0.5rem 0;">
@@ -1399,7 +1437,97 @@
             return 5.0;
         }
 
+        
+        // --- UX Features: Favorites & Queue ---
+        window.toggleFavorite = function(id) {
+            let favs = JSON.parse(localStorage.getItem('fav_stations') || '[]');
+            if (favs.includes(id)) {
+                favs = favs.filter(x => x !== id);
+                showToast("🗑️ تم الإزالة من المفضلة");
+            } else {
+                favs.push(id);
+                showToast("⭐ تمت الإضافة إلى المفضلة");
+            }
+            localStorage.setItem('fav_stations', JSON.stringify(favs));
+            renderConsumerStations(allStations);
+        };
+
+        window.reportQueue = async function(id, statusStr) {
+            if (!db) return;
+            try {
+                await db.collection("stations").doc(id).update({
+                    queueStatus: statusStr,
+                    queueUpdateTime: new Date().toISOString()
+                });
+                showToast(`✅ تم الإبلاغ عن حالة الازدحام: ${statusStr}`);
+                let updated = await loadCloudStationsData();
+                renderConsumerStations(updated);
+            } catch (e) {
+                showToast("حدث خطأ أثناء الإبلاغ");
+            }
+        };
+
+        // --- Admin VIP Expiry Logic ---
+        window.openVipAssignModal = function(id, name) {
+            document.getElementById('vipAssignStId').value = id;
+            document.getElementById('vipAssignStName').textContent = name;
+            let tierSel = document.getElementById('vipAssignTier');
+            let durBlock = document.getElementById('vipDurationBlock');
+            
+            tierSel.onchange = () => { durBlock.style.display = tierSel.value === 'free' ? 'none' : 'block'; };
+            tierSel.value = 'vip';
+            tierSel.dispatchEvent(new Event('change'));
+            
+            document.getElementById('vipAssignModalOverlay').style.display = 'flex';
+        };
+
+        window.closeVipAssignModal = function() {
+            document.getElementById('vipAssignModalOverlay').style.display = 'none';
+        };
+
+        window.confirmVipAssignment = async function() {
+            let id = document.getElementById('vipAssignStId').value;
+            let tier = document.getElementById('vipAssignTier').value;
+            let durationMonths = parseInt(document.getElementById('vipAssignDuration').value);
+            
+            if (!db || !id) return;
+            try {
+                let ref = db.collection("stations").doc(id);
+                if (tier === 'free') {
+                    await ref.update({
+                        isVip: false, isVipPlus: false, vipTier: 'free',
+                        searchRadius: 5.0, alertRadius: 5.0, vipDailyLimit: 0, vipExpiryDate: null
+                    });
+                    showToast("تم إلغاء باقة VIP بنجاح.");
+                } else {
+                    let expiryDate = new Date();
+                    if (durationMonths === 999) {
+                        expiryDate.setFullYear(expiryDate.getFullYear() + 100);
+                    } else {
+                        expiryDate.setMonth(expiryDate.getMonth() + durationMonths);
+                    }
+                    let isPlus = (tier === 'vip_plus');
+                    await ref.update({
+                        isVip: true, isVipPlus: isPlus, vipTier: tier,
+                        searchRadius: isPlus ? 30.0 : 15.0,
+                        alertRadius: isPlus ? 25.0 : 15.0,
+                        vipDailyLimit: isPlus ? 6 : 3,
+                        vipExpiryDate: expiryDate.toISOString()
+                    });
+                    showToast(`تم تفعيل الترقية لغاية ${expiryDate.toLocaleDateString('ar-EG')}`);
+                }
+                closeVipAssignModal();
+                loadAdminPanel();
+            } catch (e) {
+                showToast("خطأ أثناء الترقية.");
+            }
+        };
+
         function getStationTierLevel(st) {
+            if (st.vipExpiryDate) {
+                let exp = new Date(st.vipExpiryDate).getTime();
+                if (Date.now() > exp) return 0; // Expired VIP
+            }
             if (st.isVipPlus || st.vipTier === 'vip_plus') return 2;
             if (st.isVip || st.vipTier === 'vip') return 1;
             return 0;
@@ -1419,8 +1547,22 @@
             });
 
             // Filter by status, category, text search query, AND independent Search Range (نطاق البحث)
+            let favs = JSON.parse(localStorage.getItem('fav_stations') || '[]');
+            let favsOnly = document.getElementById('filterFavoritesOnly') && document.getElementById('filterFavoritesOnly').checked;
+            let availOnly = document.getElementById('filterAvailableOnly') && document.getElementById('filterAvailableOnly').checked;
+
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
+                if (favsOnly && !favs.includes(st.id)) return false;
+                
+                if (availOnly) {
+                    let hasAvail = false;
+                    if (st.materialsStatus) {
+                        for (let k in st.materialsStatus) { if (st.materialsStatus[k] === true) hasAvail = true; }
+                    }
+                    if (!hasAvail) return false;
+                }
+
                 if (currentCategoryFilter !== 'all') {
                     if (!st.materialsStatus || st.materialsStatus[currentCategoryFilter] !== true) return false;
                 }
@@ -1453,7 +1595,9 @@
                 return;
             }
 
+            let favsArr = JSON.parse(localStorage.getItem('fav_stations') || '[]');
             topResults.forEach((st, idx) => {
+                let isFav = favsArr.includes(st.id);
                 activityBatch.impressions[st.id] = (activityBatch.impressions[st.id] || 0) + 1;
                 let tierLevel = getStationTierLevel(st);
                 let isVipPlus = (tierLevel === 2);
@@ -1507,7 +1651,10 @@
                     <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.3rem;">
-                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0;">${st.name}</h4>
+                            <div style="display:flex; align-items:center; gap:0.4rem;">
+                                <button onclick="toggleFavorite('${st.id}')" style="background:transparent; border:none; color:${isFav ? '#FBBF24' : '#64748B'}; font-size:1.4rem; padding:0; cursor:pointer;" title="المفضلة">${isFav ? '★' : '☆'}</button>
+                                <h4 style="color:#FBBF24; font-size:1.15rem; margin:0;">${st.name}</h4>
+                            </div>
                             ${distText}
                         </div>
                         <p style="font-size:0.82rem; color:#94A3B8; margin:0 0 0.75rem 0;">📍 المنطقة: <b style="color:#F8FAFC;">${st.region}</b> | ⭐ التقييم: <b style="color:#F59E0B;">${currentRating} / 5</b> (${ratingCount})</p>
@@ -1524,6 +1671,18 @@
                                 <button onclick="rateStation('${st.id}', 3)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐3</button>
                                 <button onclick="rateStation('${st.id}', 4)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐4</button>
                                 <button onclick="rateStation('${st.id}', 5)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐5</button>
+                            </div>
+                        </div>
+                        <!-- Queue Status Crowdsourcing UI -->
+                        <div style="background:#0F172A; padding:0.6rem; border-radius:10px; border:1px solid #1E293B; margin-top:0.6rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                                <span style="font-size:0.75rem; color:#94A3B8;">حالة الازدحام/الطابور الآن:</span>
+                                <span style="font-size:0.8rem; font-weight:bold; color:${st.queueStatus === '🔴 شديد' ? '#FCA5A5' : (st.queueStatus === '🟡 متوسط' ? '#FDE68A' : '#A7F3D0')};">${st.queueStatus || 'غير معروف'} ${st.queueUpdateTime ? `<span style="font-size:0.65rem; color:#64748B;">(${timeSince(st.queueUpdateTime)})</span>` : ''}</span>
+                            </div>
+                            <div style="display:flex; gap:0.3rem;">
+                                <button onclick="reportQueue('${st.id}', '🟢 خفيف')" style="flex:1; background:#064E3B; color:#34D399; border:1px solid #10B981; border-radius:6px; font-size:0.72rem; font-weight:bold; padding:0.3rem; cursor:pointer;">🟢 خفيف</button>
+                                <button onclick="reportQueue('${st.id}', '🟡 متوسط')" style="flex:1; background:#78350F; color:#FBBF24; border:1px solid #F59E0B; border-radius:6px; font-size:0.72rem; font-weight:bold; padding:0.3rem; cursor:pointer;">🟡 متوسط</button>
+                                <button onclick="reportQueue('${st.id}', '🔴 شديد')" style="flex:1; background:#7F1D1D; color:#FCA5A5; border:1px solid #EF4444; border-radius:6px; font-size:0.72rem; font-weight:bold; padding:0.3rem; cursor:pointer;">🔴 شديد</button>
                             </div>
                         </div>
                         ${actionsRowHtml}
@@ -2713,6 +2872,8 @@
                                     <p style="font-size:0.8rem; color:#CBD5E1; margin:0.15rem 0;">المنطقة: <b>${st.region}</b> | الهاتف: <b>${st.phone}</b></p>
                                     <p style="font-size:0.8rem; color:#FBBF24; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
                                     <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
+                                    ${st.vipExpiryDate ? `<p style="font-size:0.78rem; color:#A7F3D0; background:#064E3B; display:inline-block; padding:0.15rem 0.4rem; border-radius:4px; margin:0.15rem 0; border:1px solid #10B981;">⏳ انتهاء الـ VIP: ${new Date(st.vipExpiryDate).toLocaleDateString('ar-EG')}</p>` : ''}
+
                                     <div style="background:#0F172A; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
                                         <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
                                         ${(st.lat && st.lon) ? `
@@ -2784,8 +2945,7 @@
                                 </div>
                                 <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:95px;">
                                     <button onclick="updateStStatus('${id}', 'pending')" style="background:#475569; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">تعليق الحساب</button>
-                                    <button onclick="admSetTier('${id}', 'vip')" style="background:${(isVip && !isVipPlus) ? '#475569' : '#D97706'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${(isVip && !isVipPlus) ? 'إلغاء VIP' : 'تفعيل VIP ⭐'}</button>
-                                    <button onclick="admSetTier('${id}', 'vip_plus')" style="background:${isVipPlus ? '#475569' : 'linear-gradient(135deg, #C084FC 0%, #9333EA 100%)'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${isVipPlus ? 'إلغاء VIP+' : 'تفعيل VIP+ 👑'}</button>
+                                    <button onclick="openVipAssignModal('${id}', '${st.name}')" style="background:#D97706; color:white; border:none; padding:0.45rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem; box-shadow:0 2px 6px rgba(217, 119, 6, 0.4);">👑 إدارة باقة الـ VIP</button>
                                     <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف نهائي</button>
                                 </div>
                             </div>
