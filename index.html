@@ -2543,6 +2543,9 @@
         };
 
         // --- Admin Room Full Management ---
+                // --- Admin Room: Pending Stations Alarm & Clean Grouped Sorting ---
+        let lastKnownPendingCount = -1;
+
         async function loadAdminPanel() {
             if (!db) return;
             loadCategoriesAndInit();
@@ -2563,7 +2566,6 @@
                     document.getElementById('settingRegNoteInput').value = cData.prominentRegNote || globalProminentNote;
                     document.getElementById('settingAdminWaMsgInput').value = cData.adminWaMsg || globalAdminWaMsg;
 
-                    // Load Sponsor Ad & AdSense settings
                     document.getElementById('settingSponsorActive').checked = (cData.sponsorActive === true);
                     document.getElementById('settingSponsorTitle').value = cData.sponsorTitle || "";
                     document.getElementById('settingSponsorImg').value = cData.sponsorImg || "";
@@ -2583,7 +2585,6 @@
                     document.getElementById('settingAdsenseActive').checked = (cData.adsenseActive === true);
                     document.getElementById('settingAdsenseCode').value = cData.adsenseCode || "";
 
-                    // Load VIP subscription pricing & perks
                     document.getElementById('settingVipPrice').value = cData.vipPrice || "10";
                     document.getElementById('settingVipRadius').value = cData.vipRadius || "15";
                     document.getElementById('settingVipPerks').value = cData.vipPerks || "";
@@ -2615,6 +2616,8 @@
                 let totalClicks = 0;
                 let countVip = 0;
                 let countVipPlus = 0;
+                let currentPendingCount = 0;
+
                 sSnap.forEach(doc => {
                     let d = doc.data();
                     totalAlerts += (d.alertsReceivedCount || 0);
@@ -2622,8 +2625,10 @@
                     let lvl = getStationTierLevel(d);
                     if (lvl === 2) countVipPlus++;
                     else if (lvl === 1) countVip++;
+                    if (d.status === 'pending') currentPendingCount++;
                     allStations.push({ id: doc.id, ...d });
                 });
+
                 document.getElementById('admTotalAlerts').textContent = totalAlerts;
                 document.getElementById('admTotalClicks').textContent = totalClicks;
                 let elVip = document.getElementById('admCountVip');
@@ -2631,85 +2636,183 @@
                 if (elVip) elVip.textContent = countVip;
                 if (elVipPlus) elVipPlus.textContent = countVipPlus;
 
+                // Check if new pending requests arrived -> play very loud alarm & system notification
+                if (lastKnownPendingCount !== -1 && currentPendingCount > lastKnownPendingCount) {
+                    playVipSirenLong();
+                    if (navigator.vibrate) navigator.vibrate([600, 200, 600, 200, 900]);
+                    showToast("🚨 تنبيه صاخب: يوجد طلب تسجيل محطة جديد بانتظار الاعتماد!");
+                    if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
+                        navigator.serviceWorker.ready.then(reg => {
+                            reg.showNotification("🚨 طلب محطة جديد بانتظار الاعتماد - متوفر هناا", {
+                                body: `هناك طلب تسجيل محطة أو موزع جديد معلق بانتظار موافقتك في غرفة الإدارة.`,
+                                icon: "icon-192.png",
+                                badge: "icon-192.png",
+                                tag: "new-station-request",
+                                renotify: true,
+                                requireInteraction: true,
+                                vibrate: [600, 200, 600, 200, 900]
+                            });
+                        }).catch(e => {});
+                    }
+                }
+                lastKnownPendingCount = currentPendingCount;
+
                 renderAdminStationsList(allStations);
             } catch (e) {
                 listCont.innerHTML = '<p style="color:#EF4444; text-align:center;">خطأ في تحميل بيانات الإدارة.</p>';
             }
         }
 
+        function playVipSirenLong() {
+            try {
+                let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => {
+                        let o = ctx.createOscillator(), g = ctx.createGain();
+                        o.type = 'sawtooth';
+                        o.frequency.setValueAtTime(i % 2 === 0 ? 900 : 1300, ctx.currentTime);
+                        g.gain.setValueAtTime(0.5, ctx.currentTime);
+                        o.connect(g); g.connect(ctx.destination);
+                        o.start(); o.stop(ctx.currentTime + 0.4);
+                    }, i * 450);
+                }
+            } catch(e) {}
+        }
+
         function renderAdminStationsList(stations) {
             const container = document.getElementById('adminCloudList');
             if (!container) return;
-            // Sort canceled & pending first so admin sees them immediately
-            stations.sort((a, b) => {
-                let order = { 'canceled': 0, 'pending': 1, 'approved': 2 };
-                return (order[a.status] ?? 3) - (order[b.status] ?? 3);
-            });
+
+            let pendingList = stations.filter(s => s.status === 'pending');
+            let approvedList = stations.filter(s => s.status === 'approved');
+            let canceledList = stations.filter(s => s.status === 'canceled');
+
+            // Sort approved: VIP+ first, then VIP, then Free
+            approvedList.sort((a, b) => getStationTierLevel(b) - getStationTierLevel(a));
 
             let html = '';
-            stations.forEach(st => {
-                let id = st.id;
-                let isCanc = st.status === 'canceled';
-                let isApp = st.status === 'approved';
-                let tierLevel = getStationTierLevel(st);
-                let isVipPlus = (tierLevel === 2);
-                let isVip = (tierLevel >= 1);
 
-                let cardBg = isCanc ? '#450A0A' : (isVipPlus ? '#1E1B4B' : '#0F172A');
-                let cardBorder = isCanc ? '#EF4444' : (isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#334155'));
-                let badgeBg = isCanc ? '#DC2626' : (isApp ? '#064E3B' : '#78350F');
-                let badgeCol = isCanc ? '#FEF2F2' : (isApp ? '#34D399' : '#FDE68A');
-                let statusText = isCanc ? '⚠️ تراجع المستخدم (طلب ملغى)' : (isApp ? 'معتمدة ✓' : 'قيد الانتظار ⏳');
-                let catsList = st.categories ? st.categories.join('، ') : 'لا توجد فئات';
-                let currentAlertRadius = getStationDefaultAlertRadius(st);
-                let currentSearchRadius = getStationDefaultSearchRadius(st);
-                let tierLabel = isVipPlus ? '<span class="vip-plus-badge" style="margin:0 0.3rem;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0 0.3rem;">⭐ VIP</span>' : '');
+            // SECTION 1: PENDING REQUESTS (Prominent Highlight)
+            html += `<div style="margin-bottom:1.5rem;">
+                <h3 style="color:#FBBF24; font-size:1.05rem; border-bottom:2px solid #FBBF24; padding-bottom:0.4rem; margin-bottom:0.75rem;">🚨 الطلبات الجديدة المعلقة (${pendingList.length})</h3>`;
+            
+            if (pendingList.length === 0) {
+                html += `<p style="color:#94A3B8; font-size:0.85rem; background:#0F172A; padding:0.85rem; border-radius:10px; text-align:center;">لا توجد طلبات معلقة جديدة حالياً.</p>`;
+            } else {
+                pendingList.forEach(st => {
+                    let id = st.id;
+                    let catsList = st.categories ? st.categories.join('، ') : 'لا توجد فئات';
+                    let currentAlertRadius = getStationDefaultAlertRadius(st);
+                    let currentSearchRadius = getStationDefaultSearchRadius(st);
 
-                html += `
-                    <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${st.name} ${st.region} ${st.phone}">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
-                            <div style="flex:1;">
-                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${st.name} ${tierLabel}</h4>
-                                <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${st.region} | الدخول: <b>${st.phone}</b></p>
-                                <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
-                                <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
-                                <div style="background:#1E293B; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
-                                    <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
-                                    ${(st.lat && st.lon) ? `
-                                        <div style="color:#F8FAFC; direction:ltr; text-align:right; font-family:monospace; margin-bottom:0.25rem;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
-                                        <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold;">🗺️ فتح الموقع على خرائط Google</a>
-                                    ` : `<span style="color:#EF4444;">غير مسجل</span>`}
+                    html += `
+                        <div class="admin-station-card" style="background:#451A03; border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:0.75rem; box-shadow:0 4px 15px rgba(251,191,36,0.25);" data-search="${st.name} ${st.region} ${st.phone}">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
+                                <div style="flex:1;">
+                                    <h4 style="font-size:1rem; color:#FDE68A; margin:0 0 0.25rem 0;">⭐ ${st.name} (طلب جديد ⏳)</h4>
+                                    <p style="font-size:0.8rem; color:#CBD5E1; margin:0.15rem 0;">المنطقة: <b>${st.region}</b> | الهاتف: <b>${st.phone}</b></p>
+                                    <p style="font-size:0.8rem; color:#FBBF24; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
+                                    <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
+                                    <div style="background:#0F172A; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
+                                        <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
+                                        ${(st.lat && st.lon) ? `
+                                            <div style="color:#F8FAFC; direction:ltr; text-align:right; font-family:monospace; margin-bottom:0.25rem;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
+                                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold;">🗺️ فتح الموقع على خرائط Google</a>
+                                        ` : `<span style="color:#EF4444;">غير مسجل</span>`}
+                                    </div>
+                                    <span style="background:#D97706; color:white; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">قيد الانتظار بانتظار الاعتماد</span>
                                 </div>
-                                <div style="background:#0F172A; border:1px solid #334155; padding:0.5rem; border-radius:8px; margin: 0.4rem 0; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                                    <div style="display:flex; align-items:center; gap:0.25rem;">
-                                        <label style="font-size:0.73rem; color:#38BDF8; font-weight:bold;">🔍 نطاق البحث(كم):</label>
-                                        <input type="number" id="sradius_${id}" value="${currentSearchRadius}" style="width:52px; padding:0.2rem; margin:0; font-size:0.8rem;">
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:0.25rem;">
-                                        <label style="font-size:0.73rem; color:#34D399; font-weight:bold;">🔔 نطاق التنبيه(كم):</label>
-                                        <input type="number" id="radius_${id}" value="${currentAlertRadius}" style="width:52px; padding:0.2rem; margin:0; font-size:0.8rem;">
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:0.25rem;">
-                                        <label style="font-size:0.73rem; color:#FBBF24; font-weight:bold;">📢 حد البث اليومي:</label>
-                                        <input type="number" id="viplimit_${id}" value="${st.vipDailyLimit !== undefined ? st.vipDailyLimit : (isVipPlus ? 6 : 3)}" style="width:45px; padding:0.2rem; margin:0; font-size:0.8rem;">
-                                    </div>
-                                    <button onclick="updateStationLimits('${id}')" style="background:#0284C7; color:white; border:none; padding:0.3rem 0.65rem; border-radius:6px; cursor:pointer; font-size:0.75rem; font-weight:bold;">حفظ النطاقات</button>
+                                <div style="display:flex; flex-direction:column; gap:0.4rem; min-width:105px;">
+                                    <button onclick="approveAndNotify('${id}', '${st.name}', '${st.phone}')" style="background:#059669; color:white; border:none; padding:0.5rem; border-radius:6px; cursor:pointer; font-weight:900; font-size:0.78rem; box-shadow:0 2px 6px rgba(5,150,105,0.4);">✅ قبول + واتساب</button>
+                                    <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف الطلب</button>
                                 </div>
-                                <span style="background:${badgeBg}; color:${badgeCol}; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">${statusText} (بث اليوم: ${st.broadcastCountToday || 0})</span>
                             </div>
-                            <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:95px;">
-                                ${st.status !== 'approved' ?
-                                    `<button onclick="approveAndNotify('${id}', '${st.name}', '${st.phone}')" style="background:#059669; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">قبول + واتساب</button>` :
-                                    `<button onclick="updateStStatus('${id}', 'pending')" style="background:#475569; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">تعليق</button>`
-                                }
-                                <button onclick="admSetTier('${id}', 'vip')" style="background:${(isVip && !isVipPlus) ? '#475569' : '#D97706'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${(isVip && !isVipPlus) ? 'إلغاء VIP' : 'تفعيل VIP ⭐'}</button>
-                                <button onclick="admSetTier('${id}', 'vip_plus')" style="background:${isVipPlus ? '#475569' : 'linear-gradient(135deg, #C084FC 0%, #9333EA 100%)'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${isVipPlus ? 'إلغاء VIP+' : 'تفعيل VIP+ 👑'}</button>
-                                <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف نهائي</button>
+                        </div>`;
+                });
+            }
+            html += `</div>`;
+
+            // SECTION 2: APPROVED STATIONS
+            html += `<div style="margin-bottom:1.5rem;">
+                <h3 style="color:#34D399; font-size:1.05rem; border-bottom:2px solid #10B981; padding-bottom:0.4rem; margin-bottom:0.75rem;">✅ المحطات المعتمدة بالفعل (${approvedList.length})</h3>`;
+            
+            if (approvedList.length === 0) {
+                html += `<p style="color:#94A3B8; font-size:0.85rem; background:#0F172A; padding:0.85rem; border-radius:10px; text-align:center;">لا توجد محطات معتمدة حالياً.</p>`;
+            } else {
+                approvedList.forEach(st => {
+                    let id = st.id;
+                    let tierLevel = getStationTierLevel(st);
+                    let isVipPlus = (tierLevel === 2);
+                    let isVip = (tierLevel >= 1);
+                    let cardBg = isVipPlus ? '#1E1B4B' : '#0F172A';
+                    let cardBorder = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#334155');
+                    let catsList = st.categories ? st.categories.join('، ') : 'لا توجد فئات';
+                    let currentAlertRadius = getStationDefaultAlertRadius(st);
+                    let currentSearchRadius = getStationDefaultSearchRadius(st);
+                    let tierLabel = isVipPlus ? '<span class="vip-plus-badge" style="margin:0 0.3rem;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0 0.3rem;">⭐ VIP</span>' : '');
+
+                    html += `
+                        <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${st.name} ${st.region} ${st.phone}">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
+                                <div style="flex:1;">
+                                    <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${st.name} ${tierLabel}</h4>
+                                    <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${st.region} | الدخول: <b>${st.phone}</b></p>
+                                    <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
+                                    <div style="background:#1E293B; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
+                                        <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
+                                        ${(st.lat && st.lon) ? `
+                                            <div style="color:#F8FAFC; direction:ltr; text-align:right; font-family:monospace; margin-bottom:0.25rem;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
+                                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold;">🗺️ فتح الموقع على خرائط Google</a>
+                                        ` : `<span style="color:#EF4444;">غير مسجل</span>`}
+                                    </div>
+                                    <div style="background:#0F172A; border:1px solid #334155; padding:0.5rem; border-radius:8px; margin: 0.4rem 0; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                        <div style="display:flex; align-items:center; gap:0.25rem;">
+                                            <label style="font-size:0.73rem; color:#38BDF8; font-weight:bold;">🔍 نطاق البحث(كم):</label>
+                                            <input type="number" id="sradius_${id}" value="${currentSearchRadius}" style="width:52px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:0.25rem;">
+                                            <label style="font-size:0.73rem; color:#34D399; font-weight:bold;">🔔 نطاق التنبيه(كم):</label>
+                                            <input type="number" id="radius_${id}" value="${currentAlertRadius}" style="width:52px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                        </div>
+                                        <div style="display:flex; align-items:center; gap:0.25rem;">
+                                            <label style="font-size:0.73rem; color:#FBBF24; font-weight:bold;">📢 حد البث اليومي:</label>
+                                            <input type="number" id="viplimit_${id}" value="${st.vipDailyLimit !== undefined ? st.vipDailyLimit : (isVipPlus ? 6 : 3)}" style="width:45px; padding:0.2rem; margin:0; font-size:0.8rem;">
+                                        </div>
+                                        <button onclick="updateStationLimits('${id}')" style="background:#0284C7; color:white; border:none; padding:0.3rem 0.65rem; border-radius:6px; cursor:pointer; font-size:0.75rem; font-weight:bold;">حفظ النطاقات</button>
+                                    </div>
+                                    <span style="background:#064E3B; color:#34D399; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">معتمدة ✓ (بث اليوم: ${st.broadcastCountToday || 0})</span>
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:95px;">
+                                    <button onclick="updateStStatus('${id}', 'pending')" style="background:#475569; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">تعليق الحساب</button>
+                                    <button onclick="admSetTier('${id}', 'vip')" style="background:${(isVip && !isVipPlus) ? '#475569' : '#D97706'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${(isVip && !isVipPlus) ? 'إلغاء VIP' : 'تفعيل VIP ⭐'}</button>
+                                    <button onclick="admSetTier('${id}', 'vip_plus')" style="background:${isVipPlus ? '#475569' : 'linear-gradient(135deg, #C084FC 0%, #9333EA 100%)'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${isVipPlus ? 'إلغاء VIP+' : 'تفعيل VIP+ 👑'}</button>
+                                    <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف نهائي</button>
+                                </div>
                             </div>
-                        </div>
-                    </div>`;
-            });
-            container.innerHTML = html || '<p style="text-align:center; color:#94A3B8;">لا توجد محطات مسجلة.</p>';
+                        </div>`;
+                });
+            }
+            html += `</div>`;
+
+            // SECTION 3: CANCELED REQUESTS (If any)
+            if (canceledList.length > 0) {
+                html += `<div style="margin-bottom:1.5rem;">
+                    <h3 style="color:#EF4444; font-size:1.05rem; border-bottom:2px solid #EF4444; padding-bottom:0.4rem; margin-bottom:0.75rem;">⚠️ الطلبات الملغاة (${canceledList.length})</h3>`;
+                canceledList.forEach(st => {
+                    html += `
+                        <div class="admin-station-card" style="background:#450A0A; border:1px solid #EF4444; padding:0.85rem; border-radius:10px; margin-bottom:0.5rem; opacity:0.8;" data-search="${st.name} ${st.region} ${st.phone}">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <span style="color:#FEE2E2; font-weight:bold;">${st.name} (${st.region})</span> - <span style="font-size:0.78rem; color:#FCA5A5;">تراجع المستخدم</span>
+                                </div>
+                                <button onclick="admDelete('${st.id}')" style="background:#DC2626; color:white; border:none; padding:0.3rem 0.6rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">حذف السجل</button>
+                            </div>
+                        </div>`;
+                });
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
         }
 
         window.filterAdminList = function() {
