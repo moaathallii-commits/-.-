@@ -1383,7 +1383,7 @@
             return 0;
         }
 
-        function renderConsumerStations(stations) {
+                function renderConsumerStations(stations) {
             const list = document.getElementById('consumerStationsList');
             const dotsCont = document.getElementById('radarDotsContainer');
             if (!list || !dotsCont) return;
@@ -1426,7 +1426,7 @@
             let dotsHtml = '';
 
             if (topResults.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1rem; border-radius:12px;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
+                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.25rem; border-radius:14px; font-size:0.9rem;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
                 dotsCont.innerHTML = '';
                 return;
             }
@@ -1438,34 +1438,37 @@
                 let isVip = (tierLevel >= 1);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
                 let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
-                let distText = st.distance !== undefined ? `<p style="font-size:0.8rem; color:#38BDF8; margin: 0.25rem 0; font-weight:bold;">📍 المسافة: ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</p>` : '';
+                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.2rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:bold; border:1px solid #334155;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 let ratingCount = st.ratingCount || 1;
 
                 let broadcastHtml = '';
-                if (isVip && st.broadcastMsg) {
-                    let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
-                    let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
-                    broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                if (isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '') {
+                    let updateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
+                    if (Date.now() - updateTime <= 10800000) {
+                        let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
+                        let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
+                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                    }
                 }
 
-                let locationCoordsHtml = '';
+                let locationNavBtn = '';
                 if (st.lat && st.lon) {
-                    locationCoordsHtml = `
-                        <div style="margin: 0.5rem 0;">
-                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.6rem; border-radius:8px; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(2,132,199,0.3);">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
+                    locationNavBtn = `
+                        <div style="margin: 0.6rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.7rem; border-radius:10px; font-weight:900; font-size:0.88rem; box-shadow:0 3px 10px rgba(2,132,199,0.35); transition:transform 0.1s;">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
                         </div>`;
                 }
 
                 let matsHtml = '';
                 if (st.materialsStatus) {
                     for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
-                        let bBg = isAvail ? '#064E3B' : '#991B1B';
-                        let bCol = isAvail ? '#34D399' : '#FEE2E2';
+                        let bBg = isAvail ? 'linear-gradient(135deg, #064E3B 0%, #022C22 100%)' : 'linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)';
+                        let bCol = isAvail ? '#34D399' : '#FCA5A5';
                         let txt = isAvail ? '🟢 متوفر الآن ✓' : '🔴 نفدت الكمية ✗';
-                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b>${st.materialsPrices[mat]} ل.س</b>` : '';
-                        let ts = st.lastUpdate ? `<span style="font-size:0.7rem; opacity:0.85;">(${timeSince(st.lastUpdate)})</span>` : '';
-                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.75rem 1rem; border-radius:10px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${mat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
+                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b style="color:#FDE68A;">${st.materialsPrices[mat]} ل.س</b>` : '';
+                        let ts = st.lastUpdate ? `<span style="font-size:0.68rem; opacity:0.8; margin-right:auto;">(${timeSince(st.lastUpdate)})</span>` : '';
+                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.8rem 1rem; border-radius:12px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${mat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
                     }
                 }
 
@@ -1473,7 +1476,7 @@
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem;">💬 تواصل واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(37,211,102,0.3);">💬 تواصل واتساب</a>`;
                 }
                 let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.7rem; border-radius:10px; font-weight:bold; font-size:0.82rem; cursor:pointer; white-space:nowrap;">📤 مشاركة التوفر</button>`;
                 let actionsRowHtml = `<div style="display:flex; gap:0.5rem; margin-top:0.75rem; align-items:center;">${waBtn}${shareBtn}</div>`;
@@ -1481,21 +1484,24 @@
                 html += `
                     <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
-                        <h4 style="color:#FBBF24; font-size:1.1rem; margin:0 0 0.2rem 0;">${st.name}</h4>
-                        <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.25rem 0;">المنطقة: ${st.region}</p>
-                        ${distText}
-                        ${locationCoordsHtml}
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.3rem;">
+                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0;">${st.name}</h4>
+                            ${distText}
+                        </div>
+                        <p style="font-size:0.82rem; color:#94A3B8; margin:0 0 0.75rem 0;">📍 المنطقة: <b style="color:#F8FAFC;">${st.region}</b> | ⭐ التقييم: <b style="color:#F59E0B;">${currentRating} / 5</b> (${ratingCount})</p>
+                        
                         ${broadcastHtml}
-                        <div style="margin: 0.6rem 0;">${matsHtml}</div>
-                        <p style="font-size:0.8rem; color:#F59E0B; margin: 0.4rem 0;">⭐ التقييم العام: <b>${currentRating} / 5</b> (${ratingCount} تقييم)</p>
-                        <div style="background:#0F172A; padding:0.5rem; border-radius:8px; text-align:center;">
-                            <span style="font-size:0.75rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">قيّم هذه المحطة:</span>
-                            <div style="display:flex; justify-content:center; gap:0.3rem;">
-                                <button onclick="rateStation('${st.id}', 1)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐1</button>
-                                <button onclick="rateStation('${st.id}', 2)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐2</button>
-                                <button onclick="rateStation('${st.id}', 3)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐3</button>
-                                <button onclick="rateStation('${st.id}', 4)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐4</button>
-                                <button onclick="rateStation('${st.id}', 5)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐5</button>
+                        <div style="margin: 0.75rem 0;">${matsHtml}</div>
+                        ${locationNavBtn}
+
+                        <div style="background:#0F172A; padding:0.5rem 0.75rem; border-radius:8px; text-align:center; margin-top:0.6rem; border:1px solid #1E293B;">
+                            <span style="font-size:0.74rem; color:#94A3B8; display:block; margin-bottom:0.25rem;">هل زرت هذه المحطة؟ قيّم الخدمة:</span>
+                            <div style="display:flex; justify-content:center; gap:0.35rem;">
+                                <button onclick="rateStation('${st.id}', 1)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐1</button>
+                                <button onclick="rateStation('${st.id}', 2)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐2</button>
+                                <button onclick="rateStation('${st.id}', 3)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐3</button>
+                                <button onclick="rateStation('${st.id}', 4)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐4</button>
+                                <button onclick="rateStation('${st.id}', 5)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐5</button>
                             </div>
                         </div>
                         ${actionsRowHtml}
