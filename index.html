@@ -1260,7 +1260,7 @@
 
         async function initConsumerSettingsState() {
             if (localStorage.getItem('bg_alarm_active') === null) {
-                localStorage.setItem('bg_alarm_active', 'true');
+                localStorage.setItem('bg_alarm_active', 'false');
             }
             let isBg = localStorage.getItem('bg_alarm_active') === 'true';
             let bgToggle = document.getElementById('bgAlarmToggle');
