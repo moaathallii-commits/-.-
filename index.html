@@ -244,101 +244,6 @@
             overflow: hidden;
         }
 
-        
-        /* Toggle Switch for Available Only Filter */
-        .toggle-switch-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #1E293B;
-            border: 1px solid #334155;
-            padding: 0.55rem 0.9rem;
-            border-radius: 12px;
-            margin: 0.5rem 0;
-            cursor: pointer;
-            user-select: none;
-            transition: border-color 0.2s, background 0.2s;
-        }
-        .toggle-switch-bar.active-filter {
-            background: rgba(6, 78, 59, 0.45);
-            border-color: #10B981;
-        }
-        .switch-ui {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-            flex-shrink: 0;
-        }
-        .switch-ui input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            margin: 0;
-        }
-        .switch-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #475569;
-            transition: .25s;
-            border-radius: 24px;
-        }
-        .switch-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .25s;
-            border-radius: 50%;
-        }
-        .switch-ui input:checked + .switch-slider {
-            background-color: #10B981;
-        }
-        .switch-ui input:checked + .switch-slider:before {
-            transform: translateX(20px);
-        }
-
-        /* Ultra-Simple Consumer Card */
-        .clean-station-card {
-            background: #1E293B;
-            border: 1px solid #334155;
-            border-radius: 14px;
-            padding: 0.85rem 1rem;
-            margin-bottom: 0.65rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 0.15s;
-        }
-        .clean-mat-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            margin: 0.55rem 0;
-        }
-        .clean-mat-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.3rem 0.65rem;
-            border-radius: 8px;
-            font-size: 0.82rem;
-            font-weight: 800;
-        }
-        .clean-mat-avail {
-            background: rgba(6, 78, 59, 0.85);
-            color: #34D399;
-            border: 1px solid #10B981;
-        }
-        .clean-mat-out {
-            background: rgba(15, 23, 42, 0.6);
-            color: #94A3B8;
-            border: 1px solid #334155;
-            opacity: 0.75;
-        }
-
         /* Utilities */
         .settings-icon {
             position: absolute;
@@ -482,27 +387,12 @@
             
             <p id="radarStatusMsg" style="text-align:center; color:#94A3B8; font-size:0.85rem; min-height:22px; margin: 0.5rem 0;">اضغط على دائرة الرادار لفحص أقرب المحطات</p>
             
-            <div id="consumerCategoriesFilter" style="display: flex; gap: 0.45rem; margin: 0.6rem 0; overflow-x: auto; padding-bottom: 0.3rem;">
-                <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight:bold; font-size:0.82rem;">الكل</button>
+            <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 0.75rem 0; overflow-x: auto; padding-bottom: 0.4rem;">
+                <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
             </div>
 
-            <!-- Fast Toggle Switch: Available Now Only -->
-            <div id="availOnlyToggleBar" class="toggle-switch-bar" onclick="toggleConsumerAvailableOnlyFilter()">
-                <div style="display:flex; align-items:center; gap:0.45rem;">
-                    <span style="font-size:1rem;">🟢</span>
-                    <div>
-                        <div style="font-size:0.85rem; font-weight:bold; color:#F8FAFC;">إظهار المتوفر الآن فقط</div>
-                        <div style="font-size:0.7rem; color:#94A3B8;">إخفاء المحطات التي نفدت موادها تماماً</div>
-                    </div>
-                </div>
-                <label class="switch-ui" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="availOnlySwitchInput" onchange="toggleConsumerAvailableOnlyFilter(this.checked)">
-                    <span class="switch-slider"></span>
-                </label>
-            </div>
-
-            <div style="margin: 0.45rem 0;">
-                <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية..." style="margin-bottom:0; padding:0.6rem 0.85rem; font-size:0.83rem; background:#1E293B; border:1px solid #334155; border-radius:10px;">
+            <div style="margin: 0.5rem 0;">
+                <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية / المنطقة..." style="margin-bottom:0; padding:0.65rem 0.85rem; font-size:0.85rem; background:#1E293B; border:1px solid #334155;">
             </div>
 
             <!-- Local Sponsor / Promotional Banner (Top of Search Results) -->
@@ -719,17 +609,6 @@
                 </div>
 
                 <button onclick="saveVipSubscriptionSettings()" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.6rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; width:100%; font-size:0.88rem;">💾 حفظ وتحديث أسعار ومميزات الاشتراكات فوراً</button>
-            </div>
-
-            <!-- Local Sponsor Impression & Click Analytics Dashboard -->
-            <div style="background: #0F172A; border: 1px solid #9333EA; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
-                <h3 style="font-size: 0.95rem; color: #E9D5FF; margin-top: 0;">📈 لوحة تحليل الإعلانات والبنرات (الراعي المحلي)</h3>
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem; text-align:center; font-size:0.8rem; margin-bottom:0.75rem;">
-                    <div style="background:#1E293B; padding:0.6rem; border-radius:8px;">إجمالي الظهور: <b id="admSponsorImpressions" style="color:#38BDF8; font-size:1.05rem; display:block;">0</b></div>
-                    <div style="background:#1E293B; padding:0.6rem; border-radius:8px;">إجمالي النقرات: <b id="admSponsorClicks" style="color:#34D399; font-size:1.05rem; display:block;">0</b></div>
-                    <div style="background:#1E293B; padding:0.6rem; border-radius:8px;">نسبة النقر CTR: <b id="admSponsorCtr" style="color:#FBBF24; font-size:1.05rem; display:block;">0%</b></div>
-                </div>
-                <button onclick="resetSponsorAnalytics()" style="background:#475569; color:white; border:none; padding:0.45rem; border-radius:6px; cursor:pointer; font-size:0.78rem; width:100%; font-weight:bold;">🗑️ تصفير إحصائيات الإعلانات</button>
             </div>
 
             <!-- Local Sponsor Banner & Google AdSense Management -->
@@ -1244,39 +1123,16 @@
             updateAdminCategoriesList();
         }
 
-                let consumerOnlyAvailableFilter = false;
-
         function updateConsumerFilterButtons() {
             const filterEl = document.getElementById('consumerCategoriesFilter');
             if (!filterEl) return;
-            let html = `<button onclick="filterConsumerStations('all')" style="background: ${currentCategoryFilter==='all'?'#0284C7':'#1E293B'}; color: white; border: 1px solid ${currentCategoryFilter==='all'?'#38BDF8':'#334155'}; padding: 0.4rem 0.85rem; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight:bold; font-size:0.82rem;">الكل</button>`;
+            let html = `<button onclick="filterConsumerStations('all')" style="background: ${currentCategoryFilter==='all'?'#0284C7':'#334155'}; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>`;
             availableCategories.forEach(cat => {
-                let isSel = (currentCategoryFilter === cat);
-                let bg = isSel ? '#0284C7' : '#1E293B';
-                let brd = isSel ? '#38BDF8' : '#334155';
-                html += `<button onclick="filterConsumerStations('${cat}')" style="background: ${bg}; color: #F8FAFC; border: 1px solid ${brd}; padding: 0.4rem 0.85rem; border-radius: 8px; cursor: pointer; white-space: nowrap; font-size:0.82rem; font-weight:${isSel?'bold':'normal'};">${cat}</button>`;
+                let bg = (currentCategoryFilter === cat) ? '#0284C7' : '#334155';
+                html += `<button onclick="filterConsumerStations('${cat}')" style="background: ${bg}; color: #F8FAFC; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">${cat}</button>`;
             });
             filterEl.innerHTML = html;
-
-            // Sync toggle switch UI
-            let swInput = document.getElementById('availOnlySwitchInput');
-            let swBar = document.getElementById('availOnlyToggleBar');
-            if (swInput) swInput.checked = consumerOnlyAvailableFilter;
-            if (swBar) {
-                if (consumerOnlyAvailableFilter) swBar.classList.add('active-filter');
-                else swBar.classList.remove('active-filter');
-            }
         }
-
-        window.toggleConsumerAvailableOnlyFilter = function(forcedState) {
-            if (typeof forcedState === 'boolean') {
-                consumerOnlyAvailableFilter = forcedState;
-            } else {
-                consumerOnlyAvailableFilter = !consumerOnlyAvailableFilter;
-            }
-            updateConsumerFilterButtons();
-            renderConsumerStations(allStations);
-        };
 
         window.filterConsumerStations = function(cat) {
             currentCategoryFilter = cat;
@@ -1363,25 +1219,15 @@
             if (sponsorEl) {
                 let activeImgSrc = data.sponsorImgBase64 || data.sponsorImg || '';
                 if (data.sponsorActive && (data.sponsorTitle || activeImgSrc)) {
-                    let titleHtml = data.sponsorTitle ? `<div style="color:#FBBF24; font-weight:900; font-size:0.85rem; margin-bottom:${activeImgSrc ? '0.4rem' : '0'};">✨ ${data.sponsorTitle}</div>` : '';
-                    let imgHtml = activeImgSrc ? `<img src="${activeImgSrc}" alt="إعلان راعي" style="max-width:100%; max-height:130px; border-radius:6px; display:block; margin:auto; object-fit:cover;">` : '';
+                    let titleHtml = data.sponsorTitle ? `<div style="color:#FBBF24; font-weight:900; font-size:0.9rem; margin-bottom:${activeImgSrc ? '0.5rem' : '0'};">✨ ${data.sponsorTitle}</div>` : '';
+                    let imgHtml = activeImgSrc ? `<img src="${activeImgSrc}" alt="إعلان راعي" style="max-width:100%; max-height:150px; border-radius:8px; display:block; margin:auto; object-fit:cover;">` : '';
                     let innerContent = `${titleHtml}${imgHtml}`;
                     if (data.sponsorLink && data.sponsorLink.trim() !== '') {
-                        sponsorEl.innerHTML = `<a href="${data.sponsorLink.trim()}" target="_blank" onclick="trackSponsorClick()" style="text-decoration:none; display:block;">${innerContent}<div style="font-size:0.7rem; color:#38BDF8; margin-top:0.3rem; font-weight:bold;">🔗 اضغط هنا للتفاصيل والتواصل</div></a>`;
+                        sponsorEl.innerHTML = `<a href="${data.sponsorLink.trim()}" target="_blank" onclick="trackSponsorClick()" style="text-decoration:none; display:block;">${innerContent}<div style="font-size:0.72rem; color:#38BDF8; margin-top:0.35rem; font-weight:bold;">🔗 اضغط هنا للتفاصيل والتواصل</div></a>`;
                     } else {
                         sponsorEl.innerHTML = `<div onclick="trackSponsorClick()" style="cursor:pointer;">${innerContent}</div>`;
                     }
                     sponsorEl.style.display = 'block';
-
-                    // Track impression for local sponsor once per session view
-                    if (db && !window._sponsorImpressionLogged) {
-                        window._sponsorImpressionLogged = true;
-                        try {
-                            db.collection("settings").doc("config").set({
-                                sponsorImpressionsCount: firebase.firestore.FieldValue.increment(1)
-                            }, { merge: true }).catch(e => {});
-                        } catch(e) {}
-                    }
                 } else {
                     sponsorEl.style.display = 'none';
                     sponsorEl.innerHTML = '';
@@ -1396,6 +1242,7 @@
                     if (lastAdsenseRenderedCode !== data.adsenseCode.trim()) {
                         lastAdsenseRenderedCode = data.adsenseCode.trim();
                         adsenseEl.innerHTML = `<div style="font-size:0.65rem; color:#64748B; margin-bottom:0.25rem;">إعلان ممول</div>` + lastAdsenseRenderedCode;
+                        // Execute any embedded script tags safely for AdSense
                         Array.from(adsenseEl.querySelectorAll('script')).forEach(oldScript => {
                             const newScript = document.createElement('script');
                             Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
@@ -1411,8 +1258,154 @@
             }
         }
 
-        // --- Ultra-Simple, Easy-to-Read Consumer Station Cards ---
-        function renderConsumerStations(stations) {
+        async function initConsumerSettingsState() {
+            if (localStorage.getItem('bg_alarm_active') === null) {
+                localStorage.setItem('bg_alarm_active', 'false');
+            }
+            let isBg = localStorage.getItem('bg_alarm_active') === 'true';
+            let bgToggle = document.getElementById('bgAlarmToggle');
+            if (bgToggle) bgToggle.checked = isBg;
+            if (isBg) startBackgroundAlarmLoop();
+
+            let mode = localStorage.getItem('alert_trigger_mode');
+            let modeEl = document.getElementById('alertTriggerMode');
+            if (mode && modeEl) modeEl.value = mode;
+
+            let tone = localStorage.getItem('user_ringtone');
+            let toneEl = document.getElementById('userRingtoneSelect');
+            if (tone && toneEl) {
+                toneEl.value = tone;
+            }
+
+            if (db) {
+                if (!configAdsUnsubscribe) {
+                    try {
+                        configAdsUnsubscribe = db.collection("settings").doc("config").onSnapshot(doc => {
+                            if (doc.exists) {
+                                let d = doc.data();
+                                if (!localStorage.getItem('user_ringtone') && d.defaultRingtone && toneEl) {
+                                    toneEl.value = d.defaultRingtone;
+                                }
+                                renderConsumerAdsFromConfig(d);
+                            }
+                        }, err => {});
+                    } catch (e) {}
+                }
+            }
+
+            let stations = await loadCloudStationsData();
+            if (stations.length > 0) {
+                renderConsumerStations(stations);
+            }
+        }
+
+        function updateConsumerPrefsUI() {
+            const container = document.getElementById('consumerAlertPreferences');
+            if (!container) return;
+            let saved = JSON.parse(localStorage.getItem('alert_prefs') || '[]');
+            let html = '';
+            availableCategories.forEach(cat => {
+                let checked = (saved.length === 0 || saved.includes(cat)) ? 'checked' : '';
+                html += `<label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; cursor:pointer; color:#F8FAFC; background:#334155; padding:0.4rem 0.7rem; border-radius:6px;"><input type="checkbox" value="${cat}" class="pref-checkbox" ${checked} onchange="saveConsumerPrefs()" style="width:1rem; height:1rem; margin:0;"> ${cat}</label>`;
+            });
+            container.innerHTML = html;
+        }
+
+        window.saveConsumerPrefs = function() {
+            let prefs = Array.from(document.querySelectorAll('.pref-checkbox:checked')).map(cb => cb.value);
+            localStorage.setItem('alert_prefs', JSON.stringify(prefs));
+            let modeEl = document.getElementById('alertTriggerMode');
+            if (modeEl) localStorage.setItem('alert_trigger_mode', modeEl.value);
+            let toneEl = document.getElementById('userRingtoneSelect');
+            if (toneEl) localStorage.setItem('user_ringtone', toneEl.value);
+            showToast("تم حفظ الإعدادات");
+        };
+
+                window.playRadarSearchSound = function() {
+            try {
+                let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                let now = ctx.currentTime;
+                // Radar sonar sweeps
+                for (let i = 0; i < 4; i++) {
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450 + i * 180, now + i * 0.32);
+                    osc.frequency.exponentialRampToValueAtTime(1400, now + i * 0.32 + 0.28);
+                    gain.gain.setValueAtTime(0.25, now + i * 0.32);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.32 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + i * 0.32);
+                    osc.stop(now + i * 0.32 + 0.3);
+                }
+            } catch(e) {}
+        };
+
+        window.activateRadar = async function() {
+            playRadarSearchSound();
+            const btn = document.getElementById('radarBtn');
+            const sweep = document.getElementById('radarSweep');
+            const status = document.getElementById('radarStatusMsg');
+            const dotsCont = document.getElementById('radarDotsContainer');
+
+            btn.style.display = 'none';
+            sweep.style.display = 'block';
+            status.textContent = "جاري مسح النطاق وتحديد الموقع الجغرافي (GPS)...";
+            dotsCont.innerHTML = '';
+
+            const finishRadarScan = async () => {
+                status.textContent = "جاري جلب بيانات المحطات القريبة...";
+                let stations = await loadCloudStationsData();
+                setTimeout(() => {
+                    sweep.style.display = 'none';
+                    btn.style.display = 'flex';
+                    btn.textContent = "تحديث الرادار";
+                    status.textContent = userLat ? "تم تحديد موقعك وعرض أقرب المحطات المعتمدة." : "تم عرض المحطات المعتمدة (يرجى تفعيل GPS لحساب المسافة).";
+                    renderConsumerStations(stations);
+                }, 1200);
+            };
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    userLat = pos.coords.latitude;
+                    userLon = pos.coords.longitude;
+                    localStorage.setItem('user_lat', userLat);
+                    localStorage.setItem('user_lon', userLon);
+                    finishRadarScan();
+                }, () => {
+                    finishRadarScan();
+                }, { timeout: 8000 });
+            } else {
+                finishRadarScan();
+            }
+        };
+
+        function getStationDefaultSearchRadius(st) {
+            if (st.searchRadius !== undefined && !isNaN(parseFloat(st.searchRadius))) {
+                return parseFloat(st.searchRadius);
+            }
+            if (st.isVipPlus || st.vipTier === 'vip_plus') return 30.0;
+            if (st.isVip || st.vipTier === 'vip') return 15.0;
+            return 5.0;
+        }
+
+        function getStationDefaultAlertRadius(st) {
+            if (st.alertRadius !== undefined && !isNaN(parseFloat(st.alertRadius))) {
+                return parseFloat(st.alertRadius);
+            }
+            if (st.isVipPlus || st.vipTier === 'vip_plus') return 25.0;
+            if (st.isVip || st.vipTier === 'vip') return 15.0;
+            return 5.0;
+        }
+
+        function getStationTierLevel(st) {
+            if (st.isVipPlus || st.vipTier === 'vip_plus') return 2;
+            if (st.isVip || st.vipTier === 'vip') return 1;
+            return 0;
+        }
+
+                function renderConsumerStations(stations) {
             const list = document.getElementById('consumerStationsList');
             const dotsCont = document.getElementById('radarDotsContainer');
             if (!list || !dotsCont) return;
@@ -1425,15 +1418,11 @@
                 }
             });
 
-            // Filter by status, category, text search query, Available Only toggle switch, AND Search Range
+            // Filter by status, category, text search query, AND independent Search Range (نطاق البحث)
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
                 if (currentCategoryFilter !== 'all') {
                     if (!st.materialsStatus || st.materialsStatus[currentCategoryFilter] !== true) return false;
-                }
-                if (consumerOnlyAvailableFilter) {
-                    let hasAnyAvail = st.materialsStatus && Object.values(st.materialsStatus).some(val => val === true);
-                    if (!hasAnyAvail) return false;
                 }
                 if (currentSearchQuery !== '') {
                     let matchText = `${st.name || ''} ${st.region || ''}`.toLowerCase();
@@ -1446,7 +1435,7 @@
                 return true;
             });
 
-            // Sort: VIP+ first, then VIP, then Free, then by closest distance
+            // Sort: VIP+ (Tier 2) first, then VIP (Tier 1), then Free (Tier 0), then by distance
             filtered.sort((a, b) => {
                 let tierA = getStationTierLevel(a);
                 let tierB = getStationTierLevel(b);
@@ -1459,7 +1448,7 @@
             let dotsHtml = '';
 
             if (topResults.length === 0) {
-                list.innerHTML = '<div style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.1rem; border-radius:12px; font-size:0.85rem; border:1px solid #334155;">لا توجد محطات مطابقة حالياً. جرّب إيقاف فلتر (المتوفر الآن فقط) أو تحديث الرادار.</div>';
+                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.25rem; border-radius:14px; font-size:0.9rem;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
                 dotsCont.innerHTML = '';
                 return;
             }
@@ -1470,81 +1459,77 @@
                 let isVipPlus = (tierLevel === 2);
                 let isVip = (tierLevel >= 1);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
-                let vipTag = isVipPlus
-                    ? `<span style="background:#9333EA; color:#FFF; padding:0.1rem 0.45rem; border-radius:5px; font-size:0.68rem; font-weight:bold;">👑 VIP+</span>`
-                    : (isVip ? `<span style="background:#FBBF24; color:#0F172A; padding:0.1rem 0.45rem; border-radius:5px; font-size:0.68rem; font-weight:bold;">⭐ VIP</span>` : '');
-                
-                let distBadge = st.distance !== undefined
-                    ? `<span style="color:#38BDF8; font-size:0.76rem; font-weight:bold;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' م' : st.distance.toFixed(1) + ' كم'}</span>`
-                    : '';
-                let timeAgoTxt = st.lastUpdate ? `<span style="color:#64748B; font-size:0.7rem;">• ${timeSince(st.lastUpdate)}</span>` : '';
+                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
+                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.2rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:bold; border:1px solid #334155;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
+                let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
+                let ratingCount = st.ratingCount || 1;
 
                 let broadcastHtml = '';
                 if (isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '') {
                     let updateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
                     if (Date.now() - updateTime <= 10800000) {
-                        broadcastHtml = `<div style="background:rgba(245, 158, 11, 0.15); border-right:3px solid #FBBF24; color:#FDE68A; padding:0.35rem 0.6rem; border-radius:6px; font-size:0.78rem; font-weight:bold; margin:0.4rem 0;">📢 ${st.broadcastMsg}</div>`;
+                        let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
+                        let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
+                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
                     }
                 }
 
-                // Ultra-Simple Material Pills (Available ones first, clear status)
-                let matsPills = '';
+                let locationNavBtn = '';
+                if (st.lat && st.lon) {
+                    locationNavBtn = `
+                        <div style="margin: 0.6rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.7rem; border-radius:10px; font-weight:900; font-size:0.88rem; box-shadow:0 3px 10px rgba(2,132,199,0.35); transition:transform 0.1s;">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
+                        </div>`;
+                }
+
+                let matsHtml = '';
                 if (st.materialsStatus) {
-                    let entries = Object.entries(st.materialsStatus);
-                    // Sort available materials first
-                    entries.sort((a, b) => (b[1] === true ? 1 : 0) - (a[1] === true ? 1 : 0));
-                    matsPills = `<div class="clean-mat-grid">`;
-                    for (let [mat, isAvail] of entries) {
-                        // If consumerOnlyAvailableFilter is on, hide out-of-stock pills to reduce clutter even further
-                        if (consumerOnlyAvailableFilter && !isAvail) continue;
-                        let pillClass = isAvail ? 'clean-mat-pill clean-mat-avail' : 'clean-mat-pill clean-mat-out';
-                        let icon = isAvail ? '🟢' : '🔴';
-                        let statusWord = isAvail ? 'متوفر' : 'نفد';
-                        let prc = (isAvail && st.materialsPrices && st.materialsPrices[mat]) ? ` • <span style="color:#FDE68A;">${st.materialsPrices[mat]} ل.س</span>` : '';
-                        matsPills += `<div class="${pillClass}">${icon} <span>${mat}: ${statusWord}</span>${prc}</div>`;
+                    for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
+                        let bBg = isAvail ? 'linear-gradient(135deg, #064E3B 0%, #022C22 100%)' : 'linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)';
+                        let bCol = isAvail ? '#34D399' : '#FCA5A5';
+                        let txt = isAvail ? '🟢 متوفر الآن ✓' : '🔴 نفدت الكمية ✗';
+                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b style="color:#FDE68A;">${st.materialsPrices[mat]} ل.س</b>` : '';
+                        let ts = st.lastUpdate ? `<span style="font-size:0.68rem; opacity:0.8; margin-right:auto;">(${timeSince(st.lastUpdate)})</span>` : '';
+                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.8rem 1rem; border-radius:12px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${mat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
                     }
-                    matsPills += `</div>`;
                 }
-
-                // Compact Action Bar (Direct Navigation + WhatsApp + ShareIcon)
-                let navBtn = (st.lat && st.lon)
-                    ? `<a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="flex:2; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.45rem 0.6rem; border-radius:8px; font-weight:bold; font-size:0.78rem;">🗺️ الاتجاهات ( الخريطة )</a>`
-                    : '';
 
                 let waBtn = '';
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أستفسر عن توفر المحروقات في محطة ' + st.name)}" target="_blank" onclick="trackClick('${st.id}')" style="flex:1; text-align:center; background:#059669; color:white; padding:0.45rem 0.5rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.78rem;">💬 واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(37,211,102,0.3);">💬 تواصل واتساب</a>`;
                 }
-
-                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" title="مشاركة" style="background:#334155; color:#CBD5E1; border:none; padding:0.45rem 0.65rem; border-radius:8px; cursor:pointer; font-size:0.78rem;">📤</button>`;
+                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.7rem; border-radius:10px; font-weight:bold; font-size:0.82rem; cursor:pointer; white-space:nowrap;">📤 مشاركة التوفر</button>`;
+                let actionsRowHtml = `<div style="display:flex; gap:0.5rem; margin-top:0.75rem; align-items:center;">${waBtn}${shareBtn}</div>`;
 
                 html += `
-                    <div class="clean-station-card ${cardClass}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem;">
-                            <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
-                                <strong style="color:#F8FAFC; font-size:0.98rem;">⛽ ${st.name}</strong>
-                                <span style="color:#94A3B8; font-size:0.78rem;">(${st.region})</span>
-                                ${vipTag}
-                            </div>
-                            <div style="display:flex; align-items:center; gap:0.25rem; white-space:nowrap;">
-                                ${distBadge}
-                                ${timeAgoTxt}
-                            </div>
+                    <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
+                        ${vipBadge}
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.3rem;">
+                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0;">${st.name}</h4>
+                            ${distText}
                         </div>
-
+                        <p style="font-size:0.82rem; color:#94A3B8; margin:0 0 0.75rem 0;">📍 المنطقة: <b style="color:#F8FAFC;">${st.region}</b> | ⭐ التقييم: <b style="color:#F59E0B;">${currentRating} / 5</b> (${ratingCount})</p>
+                        
                         ${broadcastHtml}
-                        ${matsPills}
+                        <div style="margin: 0.75rem 0;">${matsHtml}</div>
+                        ${locationNavBtn}
 
-                        <div style="display:flex; gap:0.4rem; align-items:center; margin-top:0.45rem;">
-                            ${navBtn}
-                            ${waBtn}
-                            ${shareBtn}
+                        <div style="background:#0F172A; padding:0.5rem 0.75rem; border-radius:8px; text-align:center; margin-top:0.6rem; border:1px solid #1E293B;">
+                            <span style="font-size:0.74rem; color:#94A3B8; display:block; margin-bottom:0.25rem;">هل زرت هذه المحطة؟ قيّم الخدمة:</span>
+                            <div style="display:flex; justify-content:center; gap:0.35rem;">
+                                <button onclick="rateStation('${st.id}', 1)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐1</button>
+                                <button onclick="rateStation('${st.id}', 2)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐2</button>
+                                <button onclick="rateStation('${st.id}', 3)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐3</button>
+                                <button onclick="rateStation('${st.id}', 4)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐4</button>
+                                <button onclick="rateStation('${st.id}', 5)" style="background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:5px; cursor:pointer; font-size:0.8rem;">⭐5</button>
+                            </div>
                         </div>
+                        ${actionsRowHtml}
                     </div>`;
 
-                // Radar dot plotting
+                // Plot Radar Dot
                 let angle = (idx * 77 + 35) % 360;
                 let distForPlot = st.distance !== undefined ? st.distance : (idx + 1) * 2;
                 let radiusPercent = Math.min(Math.max((distForPlot / 15) * 42, 18), 44);
@@ -2585,13 +2570,7 @@
                     document.getElementById('settingSponsorTitle').value = cData.sponsorTitle || "";
                     document.getElementById('settingSponsorImg').value = cData.sponsorImg || "";
                     document.getElementById('settingSponsorLink').value = cData.sponsorLink || "";
-                    let sClicks = cData.sponsorClicksCount || 0;
-                    let sImps = cData.sponsorImpressionsCount || 0;
-                    let sCtr = sImps > 0 ? ((sClicks / sImps) * 100).toFixed(1) + '%' : '0%';
-                    document.getElementById('admSponsorClicksCount').textContent = sClicks;
-                    document.getElementById('admSponsorClicks').textContent = sClicks;
-                    document.getElementById('admSponsorImpressions').textContent = sImps;
-                    document.getElementById('admSponsorCtr').textContent = sCtr;
+                    document.getElementById('admSponsorClicksCount').textContent = cData.sponsorClicksCount || 0;
 
                     uploadedSponsorBase64 = cData.sponsorImgBase64 || "";
                     let prevCont = document.getElementById('sponsorImgPreviewContainer');
@@ -2999,20 +2978,6 @@
                 document.getElementById('admSponsorClicksCount').textContent = "0";
                 showToast("تم تصفير عداد نقرات الإعلان");
             } catch (e) {}
-        };
-
-        window.resetSponsorAnalytics = async function() {
-            if (!db) return;
-            if (confirm("تأكيد تصفير إحصائيات ظهور ونقرات الإعلانات؟")) {
-                try {
-                    await db.collection("settings").doc("config").set({ sponsorClicksCount: 0, sponsorImpressionsCount: 0 }, { merge: true });
-                    document.getElementById('admSponsorClicksCount').textContent = "0";
-                    document.getElementById('admSponsorClicks').textContent = "0";
-                    document.getElementById('admSponsorImpressions').textContent = "0";
-                    document.getElementById('admSponsorCtr').textContent = "0%";
-                    showToast("✅ تم تصفير إحصائيات الإعلانات بالكامل");
-                } catch (e) {}
-            }
         };
 
         window.saveSponsorAdSettings = async function() {
