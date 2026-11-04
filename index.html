@@ -1321,7 +1321,29 @@
             showToast("تم حفظ الإعدادات");
         };
 
+                window.playRadarSearchSound = function() {
+            try {
+                let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                let now = ctx.currentTime;
+                // Radar sonar sweeps
+                for (let i = 0; i < 4; i++) {
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450 + i * 180, now + i * 0.32);
+                    osc.frequency.exponentialRampToValueAtTime(1400, now + i * 0.32 + 0.28);
+                    gain.gain.setValueAtTime(0.25, now + i * 0.32);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.32 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + i * 0.32);
+                    osc.stop(now + i * 0.32 + 0.3);
+                }
+            } catch(e) {}
+        };
+
         window.activateRadar = async function() {
+            playRadarSearchSound();
             const btn = document.getElementById('radarBtn');
             const sweep = document.getElementById('radarSweep');
             const status = document.getElementById('radarStatusMsg');
