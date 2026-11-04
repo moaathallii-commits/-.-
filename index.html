@@ -727,22 +727,117 @@
             showToast("⚠️ انقطع الاتصال بالإنترنت - وضع التصفح المحلي");
         });
 
-        // --- PWA Install Prompt ---
-        let deferredPrompt;
+        // --- PWA Install Prompt & First-Launch Popup ---
+        let deferredPrompt = null;
+
+        function isAppRunningStandalone() {
+            return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
+        }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             const installBtn = document.getElementById('installBtn');
-            if (installBtn) {
+            if (installBtn && !isAppRunningStandalone()) {
                 installBtn.style.display = 'block';
-                installBtn.onclick = async () => {
-                    installBtn.style.display = 'none';
-                    deferredPrompt.prompt();
-                    await deferredPrompt.userChoice;
-                    deferredPrompt = null;
-                };
+                installBtn.onclick = () => triggerPwaInstallAction();
+            }
+            // If the first-launch install popup is already open, update its button state
+            const popupActionBtn = document.getElementById('pwaModalInstallNowBtn');
+            if (popupActionBtn) {
+                popupActionBtn.textContent = "📲 تثبيت التطبيق الآن (بضغطة واحدة)";
             }
         });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            localStorage.setItem('pwa_installed_done', 'true');
+            const installBtn = document.getElementById('installBtn');
+            if (installBtn) installBtn.style.display = 'none';
+            let m = document.getElementById('firstLaunchInstallModal');
+            if (m) m.remove();
+            showToast("✅ تم تثبيت تطبيق (متوفر هناا) على شاشتك الرئيسية بنجاح!");
+        });
+
+        window.triggerPwaInstallAction = async function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const choiceResult = await deferredPrompt.userChoice;
+                if (choiceResult.outcome === 'accepted') {
+                    localStorage.setItem('pwa_installed_done', 'true');
+                    let m = document.getElementById('firstLaunchInstallModal');
+                    if (m) m.remove();
+                    checkAndRequestAllPermissionsOnFirstLaunch();
+                }
+                deferredPrompt = null;
+            } else {
+                // Fallback instructions if browser hasn't fired beforeinstallprompt yet or on iOS/Safari
+                let helpBox = document.getElementById('manualInstallGuideBox');
+                if (helpBox) {
+                    helpBox.style.display = 'block';
+                } else {
+                    showToast("📲 للتثبيت: افتح قائمة المتصفح (⋮) في الأعلى واختر (تثبيت التطبيق / الإضافة إلى الشاشة الرئيسية)");
+                }
+            }
+        };
+
+        window.dismissPwaInstallModal = function() {
+            localStorage.setItem('pwa_install_popup_seen', 'true');
+            let m = document.getElementById('firstLaunchInstallModal');
+            if (m) m.remove();
+            checkAndRequestAllPermissionsOnFirstLaunch();
+        };
+
+        function showFirstLaunchPwaInstallModalIfNeeded() {
+            // Do not show if already running as installed standalone app
+            if (isAppRunningStandalone() || localStorage.getItem('pwa_installed_done') === 'true') {
+                checkAndRequestAllPermissionsOnFirstLaunch();
+                return;
+            }
+
+            let hasSeenInstallPopup = localStorage.getItem('pwa_install_popup_seen');
+            if (!hasSeenInstallPopup) {
+                let existing = document.getElementById('firstLaunchInstallModal');
+                if (existing) return;
+
+                let isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+                let guideText = isIos
+                    ? `اضغط على زر المشاركة <b>(Share ⬆️)</b> في أسفل المتصفح ثم اختر <b>"إضافة إلى الصفحة الرئيسية" (Add to Home Screen ➕)</b>.`
+                    : `اضغط على زر خيارات المتصفح <b>(⋮)</b> في أعلى الشاشة ثم اختر <b>"تثبيت التطبيق" (Install App)</b> أو <b>"الإضافة إلى الشاشة الرئيسية"</b>.`;
+
+                let modalHtml = `
+                    <div id="firstLaunchInstallModal" class="modal-overlay" style="display:flex; z-index:26000; background:rgba(15, 23, 42, 0.92); backdrop-filter:blur(5px);">
+                        <div class="modal-content" style="border:2px solid #8B5CF6; max-width:420px; text-align:center; box-shadow:0 0 30px rgba(139, 92, 246, 0.4);">
+                            <div style="font-size:3rem; margin-bottom:0.3rem;">📲⛽</div>
+                            <h3 style="color:#FBBF24; margin:0 0 0.5rem 0; font-size:1.25rem;">تثبيت تطبيق "متوفر هناا"</h3>
+                            <p style="font-size:0.86rem; color:#CBD5E1; line-height:1.6; margin-bottom:1rem;">
+                                قم بتثبيت المنصة كتطبيق رسمي على شاشة هاتفك الرئيسية للوصول السريع الفوري، وتلقي إشعارات توفر المحروقات والغاز وصافرات الإنذار بالخلفية:
+                            </p>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.75rem; border-radius:10px; margin-bottom:1rem; text-align:right; font-size:0.8rem; color:#A7F3D0; line-height:1.7;">
+                                ✓ يفتح فوراً بضغطة واحدة بدون متصفح.<br>
+                                ✓ يعمل حتى عند ضعف الشبكة ويحفظ آخر البيانات.<br>
+                                ✓ يدعم إشعارات البث العاجل المنسدلة في الهاتف.
+                            </div>
+                            <div id="manualInstallGuideBox" style="display:${isIos ? 'block' : 'none'}; background:#451A03; border:1px solid #F59E0B; color:#FDE68A; padding:0.75rem; border-radius:10px; margin-bottom:1rem; font-size:0.8rem; line-height:1.6; text-align:right;">
+                                💡 <b>طريقة التثبيت السريع:</b><br>${guideText}
+                            </div>
+                            ${!isIos ? `
+                            <button id="pwaModalInstallNowBtn" onclick="triggerPwaInstallAction()" class="btn-primary" style="background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0.6rem; box-shadow:0 4px 14px rgba(139, 92, 246, 0.5);">
+                                📲 تثبيت التطبيق على الهاتف الآن
+                            </button>` : ''}
+                            <button onclick="dismissPwaInstallModal()" style="background:transparent; border:1px solid #475569; color:#94A3B8; width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.82rem; font-weight:bold;">
+                                المتابعة عبر المتصفح (تثبيت لاحقاً)
+                            </button>
+                        </div>
+                    </div>
+                `;
+                let div = document.createElement('div');
+                div.innerHTML = modalHtml;
+                document.body.appendChild(div.firstElementChild);
+            } else {
+                checkAndRequestAllPermissionsOnFirstLaunch();
+            }
+        }
 
         // --- Core Helpers ---
         function showToast(msg, duration = 3000) {
@@ -943,7 +1038,7 @@
         // --- Initial Boot ---
         window.addEventListener('DOMContentLoaded', () => {
             updateNetworkStatusBar();
-            checkAndRequestAllPermissionsOnFirstLaunch();
+            showFirstLaunchPwaInstallModalIfNeeded();
 
             // 1. Show correct route immediately so screen is never blank
             let route = localStorage.getItem('app_route');
