@@ -244,101 +244,6 @@
             overflow: hidden;
         }
 
-        
-        /* Toggle Switch for Available Only Filter */
-        .toggle-switch-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #1E293B;
-            border: 1px solid #334155;
-            padding: 0.55rem 0.9rem;
-            border-radius: 12px;
-            margin: 0.5rem 0;
-            cursor: pointer;
-            user-select: none;
-            transition: border-color 0.2s, background 0.2s;
-        }
-        .toggle-switch-bar.active-filter {
-            background: rgba(6, 78, 59, 0.45);
-            border-color: #10B981;
-        }
-        .switch-ui {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-            flex-shrink: 0;
-        }
-        .switch-ui input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            margin: 0;
-        }
-        .switch-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #475569;
-            transition: .25s;
-            border-radius: 24px;
-        }
-        .switch-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .25s;
-            border-radius: 50%;
-        }
-        .switch-ui input:checked + .switch-slider {
-            background-color: #10B981;
-        }
-        .switch-ui input:checked + .switch-slider:before {
-            transform: translateX(20px);
-        }
-
-        /* Ultra-Simple Consumer Card */
-        .clean-station-card {
-            background: #1E293B;
-            border: 1px solid #334155;
-            border-radius: 14px;
-            padding: 0.85rem 1rem;
-            margin-bottom: 0.65rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 0.15s;
-        }
-        .clean-mat-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            margin: 0.55rem 0;
-        }
-        .clean-mat-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.3rem 0.65rem;
-            border-radius: 8px;
-            font-size: 0.82rem;
-            font-weight: 800;
-        }
-        .clean-mat-avail {
-            background: rgba(6, 78, 59, 0.85);
-            color: #34D399;
-            border: 1px solid #10B981;
-        }
-        .clean-mat-out {
-            background: rgba(15, 23, 42, 0.6);
-            color: #94A3B8;
-            border: 1px solid #334155;
-            opacity: 0.75;
-        }
-
         /* Utilities */
         .settings-icon {
             position: absolute;
@@ -482,27 +387,12 @@
             
             <p id="radarStatusMsg" style="text-align:center; color:#94A3B8; font-size:0.85rem; min-height:22px; margin: 0.5rem 0;">اضغط على دائرة الرادار لفحص أقرب المحطات</p>
             
-            <div id="consumerCategoriesFilter" style="display: flex; gap: 0.45rem; margin: 0.6rem 0; overflow-x: auto; padding-bottom: 0.3rem;">
-                <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight:bold; font-size:0.82rem;">الكل</button>
+            <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 0.75rem 0; overflow-x: auto; padding-bottom: 0.4rem;">
+                <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
             </div>
 
-            <!-- Fast Toggle Switch: Available Now Only -->
-            <div id="availOnlyToggleBar" class="toggle-switch-bar" onclick="toggleConsumerAvailableOnlyFilter()">
-                <div style="display:flex; align-items:center; gap:0.45rem;">
-                    <span style="font-size:1rem;">🟢</span>
-                    <div>
-                        <div style="font-size:0.85rem; font-weight:bold; color:#F8FAFC;">إظهار المتوفر الآن فقط</div>
-                        <div style="font-size:0.7rem; color:#94A3B8;">إخفاء المحطات التي نفدت موادها تماماً</div>
-                    </div>
-                </div>
-                <label class="switch-ui" onclick="event.stopPropagation()">
-                    <input type="checkbox" id="availOnlySwitchInput" onchange="toggleConsumerAvailableOnlyFilter(this.checked)">
-                    <span class="switch-slider"></span>
-                </label>
-            </div>
-
-            <div style="margin: 0.45rem 0;">
-                <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية..." style="margin-bottom:0; padding:0.6rem 0.85rem; font-size:0.83rem; background:#1E293B; border:1px solid #334155; border-radius:10px;">
+            <div style="margin: 0.5rem 0;">
+                <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية / المنطقة..." style="margin-bottom:0; padding:0.65rem 0.85rem; font-size:0.85rem; background:#1E293B; border:1px solid #334155;">
             </div>
 
             <!-- Local Sponsor / Promotional Banner (Top of Search Results) -->
@@ -1249,31 +1139,19 @@
         function updateConsumerFilterButtons() {
             const filterEl = document.getElementById('consumerCategoriesFilter');
             if (!filterEl) return;
-            let html = `<button onclick="filterConsumerStations('all')" style="background: ${currentCategoryFilter==='all'?'#0284C7':'#1E293B'}; color: white; border: 1px solid ${currentCategoryFilter==='all'?'#38BDF8':'#334155'}; padding: 0.4rem 0.85rem; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight:bold; font-size:0.82rem;">الكل</button>`;
+            let html = `<button onclick="filterConsumerStations('all')" style="background: ${currentCategoryFilter==='all'?'#0284C7':'#334155'}; color: white; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold; font-size:0.8rem;">الكل</button>`;
             availableCategories.forEach(cat => {
-                let isSel = (currentCategoryFilter === cat);
-                let bg = isSel ? '#0284C7' : '#1E293B';
-                let brd = isSel ? '#38BDF8' : '#334155';
-                html += `<button onclick="filterConsumerStations('${cat}')" style="background: ${bg}; color: #F8FAFC; border: 1px solid ${brd}; padding: 0.4rem 0.85rem; border-radius: 8px; cursor: pointer; white-space: nowrap; font-size:0.82rem; font-weight:${isSel?'bold':'normal'};">${cat}</button>`;
+                let bg = (currentCategoryFilter === cat) ? '#0284C7' : '#334155';
+                html += `<button onclick="filterConsumerStations('${cat}')" style="background: ${bg}; color: #F8FAFC; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-size:0.8rem;">${cat}</button>`;
             });
+            let availBg = consumerOnlyAvailableFilter ? '#059669' : '#1E293B';
+            let availBorder = consumerOnlyAvailableFilter ? '#34D399' : '#334155';
+            html += `<button onclick="toggleConsumerAvailableOnlyFilter()" style="background: ${availBg}; color: #F8FAFC; border: 1px solid ${availBorder}; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold; font-size:0.8rem;">🟢 المتوفر الآن فقط</button>`;
             filterEl.innerHTML = html;
-
-            // Sync toggle switch UI
-            let swInput = document.getElementById('availOnlySwitchInput');
-            let swBar = document.getElementById('availOnlyToggleBar');
-            if (swInput) swInput.checked = consumerOnlyAvailableFilter;
-            if (swBar) {
-                if (consumerOnlyAvailableFilter) swBar.classList.add('active-filter');
-                else swBar.classList.remove('active-filter');
-            }
         }
 
-        window.toggleConsumerAvailableOnlyFilter = function(forcedState) {
-            if (typeof forcedState === 'boolean') {
-                consumerOnlyAvailableFilter = forcedState;
-            } else {
-                consumerOnlyAvailableFilter = !consumerOnlyAvailableFilter;
-            }
+        window.toggleConsumerAvailableOnlyFilter = function() {
+            consumerOnlyAvailableFilter = !consumerOnlyAvailableFilter;
             updateConsumerFilterButtons();
             renderConsumerStations(allStations);
         };
@@ -1312,8 +1190,13 @@
                 }
             }
             let matsText = availMats.length > 0 ? `✅ متوفر الآن: ${availMats.join(' ، ')}` : `ℹ️ حالة المحطة محدثة على المنصة`;
-            let mapsLink = (st.lat && st.lon) ? `\n🗺️ موقع المحطة على الخريطة: https://maps.google.com/?q=${st.lat},${st.lon}` : '';
-            let shareText = `⛽ *محطة ${st.name}* (${st.region})\n${matsText}${mapsLink}\n\n📲 عبر منصة *متوفر هناا* للمحروقات والغاز:\n${window.location.href}`;
+            let mapsLink = (st.lat && st.lon) ? `
+🗺️ موقع المحطة على الخريطة: https://maps.google.com/?q=${st.lat},${st.lon}` : '';
+            let shareText = `⛽ *محطة ${st.name}* (${st.region})
+${matsText}${mapsLink}
+
+📲 عبر منصة *متوفر هناا* للمحروقات والغاز:
+${window.location.href}`;
             
             if (navigator.share) {
                 navigator.share({
@@ -1373,7 +1256,7 @@
                     }
                     sponsorEl.style.display = 'block';
 
-                    // Track impression for local sponsor once per session view
+                    // Track impression for local sponsor
                     if (db && !window._sponsorImpressionLogged) {
                         window._sponsorImpressionLogged = true;
                         try {
@@ -1411,7 +1294,7 @@
             }
         }
 
-        // --- Ultra-Simple, Easy-to-Read Consumer Station Cards ---
+        // --- Streamlined Minimalist Consumer Station Cards ---
         function renderConsumerStations(stations) {
             const list = document.getElementById('consumerStationsList');
             const dotsCont = document.getElementById('radarDotsContainer');
@@ -1425,7 +1308,7 @@
                 }
             });
 
-            // Filter by status, category, text search query, Available Only toggle switch, AND Search Range
+            // Filter by status, category, text search query, Available Only filter, AND independent Search Range
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
                 if (currentCategoryFilter !== 'all') {
@@ -1446,7 +1329,7 @@
                 return true;
             });
 
-            // Sort: VIP+ first, then VIP, then Free, then by closest distance
+            // Sort: VIP+ (Tier 2) first, then VIP (Tier 1), then Free (Tier 0), then by distance
             filtered.sort((a, b) => {
                 let tierA = getStationTierLevel(a);
                 let tierB = getStationTierLevel(b);
@@ -1459,7 +1342,7 @@
             let dotsHtml = '';
 
             if (topResults.length === 0) {
-                list.innerHTML = '<div style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.1rem; border-radius:12px; font-size:0.85rem; border:1px solid #334155;">لا توجد محطات مطابقة حالياً. جرّب إيقاف فلتر (المتوفر الآن فقط) أو تحديث الرادار.</div>';
+                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.1rem; border-radius:12px; font-size:0.86rem;">لا توجد محطات معتمدة ضمن معايير بحثك الحالي. جرب تغيير الفلتر أو توسيع نطاق الرادار.</p>';
                 dotsCont.innerHTML = '';
                 return;
             }
@@ -1470,81 +1353,69 @@
                 let isVipPlus = (tierLevel === 2);
                 let isVip = (tierLevel >= 1);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
-                let vipTag = isVipPlus
-                    ? `<span style="background:#9333EA; color:#FFF; padding:0.1rem 0.45rem; border-radius:5px; font-size:0.68rem; font-weight:bold;">👑 VIP+</span>`
-                    : (isVip ? `<span style="background:#FBBF24; color:#0F172A; padding:0.1rem 0.45rem; border-radius:5px; font-size:0.68rem; font-weight:bold;">⭐ VIP</span>` : '');
-                
-                let distBadge = st.distance !== undefined
-                    ? `<span style="color:#38BDF8; font-size:0.76rem; font-weight:bold;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' م' : st.distance.toFixed(1) + ' كم'}</span>`
-                    : '';
-                let timeAgoTxt = st.lastUpdate ? `<span style="color:#64748B; font-size:0.7rem;">• ${timeSince(st.lastUpdate)}</span>` : '';
+                let vipBadge = isVipPlus ? `<span class="vip-plus-badge" style="font-size:0.7rem; padding:0.15rem 0.5rem; margin-bottom:0.2rem;">👑 VIP+</span>` : (isVip ? `<span class="vip-badge" style="font-size:0.7rem; padding:0.15rem 0.5rem; margin-bottom:0.2rem;">⭐ VIP</span>` : '');
+                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.15rem 0.45rem; border-radius:5px; font-size:0.72rem; font-weight:bold; border:1px solid #334155;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + 'م' : st.distance.toFixed(1) + 'كم'}</span>` : '';
+                let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
 
                 let broadcastHtml = '';
                 if (isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '') {
                     let updateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
                     if (Date.now() - updateTime <= 10800000) {
-                        broadcastHtml = `<div style="background:rgba(245, 158, 11, 0.15); border-right:3px solid #FBBF24; color:#FDE68A; padding:0.35rem 0.6rem; border-radius:6px; font-size:0.78rem; font-weight:bold; margin:0.4rem 0;">📢 ${st.broadcastMsg}</div>`;
+                        let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
+                        broadcastHtml = `<div class="${bannerClass}" style="padding:0.4rem; font-size:0.82rem; margin:0.4rem 0;">🚨 <b>${st.broadcastMsg}</b></div>`;
                     }
                 }
 
-                // Ultra-Simple Material Pills (Available ones first, clear status)
-                let matsPills = '';
+                // Compact Minimalist Materials Badges (Inline Chips)
+                let matsChipsHtml = '';
                 if (st.materialsStatus) {
-                    let entries = Object.entries(st.materialsStatus);
-                    // Sort available materials first
-                    entries.sort((a, b) => (b[1] === true ? 1 : 0) - (a[1] === true ? 1 : 0));
-                    matsPills = `<div class="clean-mat-grid">`;
-                    for (let [mat, isAvail] of entries) {
-                        // If consumerOnlyAvailableFilter is on, hide out-of-stock pills to reduce clutter even further
-                        if (consumerOnlyAvailableFilter && !isAvail) continue;
-                        let pillClass = isAvail ? 'clean-mat-pill clean-mat-avail' : 'clean-mat-pill clean-mat-out';
-                        let icon = isAvail ? '🟢' : '🔴';
-                        let statusWord = isAvail ? 'متوفر' : 'نفد';
-                        let prc = (isAvail && st.materialsPrices && st.materialsPrices[mat]) ? ` • <span style="color:#FDE68A;">${st.materialsPrices[mat]} ل.س</span>` : '';
-                        matsPills += `<div class="${pillClass}">${icon} <span>${mat}: ${statusWord}</span>${prc}</div>`;
+                    matsChipsHtml = `<div style="display:flex; gap:0.35rem; flex-wrap:wrap; margin:0.45rem 0;">`;
+                    for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
+                        let bgCol = isAvail ? '#064E3B' : '#7F1D1D';
+                        let borderCol = isAvail ? '#10B981' : '#EF4444';
+                        let txtCol = isAvail ? '#34D399' : '#FCA5A5';
+                        let statusSymbol = isAvail ? '🟢 متوفر' : '🔴 نفد';
+                        let prcStr = (st.materialsPrices && st.materialsPrices[mat]) ? ` (${st.materialsPrices[mat]} ل.س)` : '';
+                        matsChipsHtml += `<span style="background:${bgCol}; border:1px solid ${borderCol}; color:${txtCol}; padding:0.25rem 0.55rem; border-radius:6px; font-size:0.78rem; font-weight:900;">${mat}: ${statusSymbol}${prcStr}</span>`;
                     }
-                    matsPills += `</div>`;
+                    matsChipsHtml += `</div>`;
                 }
 
-                // Compact Action Bar (Direct Navigation + WhatsApp + ShareIcon)
-                let navBtn = (st.lat && st.lon)
-                    ? `<a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="flex:2; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.45rem 0.6rem; border-radius:8px; font-weight:bold; font-size:0.78rem;">🗺️ الاتجاهات ( الخريطة )</a>`
-                    : '';
+                let locationNavBtn = '';
+                if (st.lat && st.lon) {
+                    locationNavBtn = `<a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.4rem 0.75rem; border-radius:7px; font-weight:bold; font-size:0.78rem;">🗺️ خرائط Google</a>`;
+                }
 
                 let waBtn = '';
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أستفسر عن توفر المحروقات في محطة ' + st.name)}" target="_blank" onclick="trackClick('${st.id}')" style="flex:1; text-align:center; background:#059669; color:white; padding:0.45rem 0.5rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.78rem;">💬 واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="background:#25D366; color:white; padding:0.4rem 0.75rem; border-radius:7px; text-decoration:none; font-weight:bold; font-size:0.78rem;">💬 واتساب</a>`;
                 }
 
-                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" title="مشاركة" style="background:#334155; color:#CBD5E1; border:none; padding:0.45rem 0.65rem; border-radius:8px; cursor:pointer; font-size:0.78rem;">📤</button>`;
-
                 html += `
-                    <div class="clean-station-card ${cardClass}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem;">
-                            <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
-                                <strong style="color:#F8FAFC; font-size:0.98rem;">⛽ ${st.name}</strong>
-                                <span style="color:#94A3B8; font-size:0.78rem;">(${st.region})</span>
-                                ${vipTag}
+                    <div class="app-section ${cardClass}" style="display:block; padding:0.9rem 1rem; margin: 0 0 0.75rem 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; margin-bottom:0.15rem;">
+                            <div style="display:flex; align-items:center; gap:0.4rem;">
+                                <h4 style="color:#FBBF24; font-size:1.02rem; margin:0;">${st.name}</h4>
+                                ${vipBadge}
                             </div>
-                            <div style="display:flex; align-items:center; gap:0.25rem; white-space:nowrap;">
-                                ${distBadge}
-                                ${timeAgoTxt}
-                            </div>
+                            ${distText}
                         </div>
-
+                        <div style="font-size:0.78rem; color:#94A3B8; margin-bottom:0.3rem;">📍 ${st.region} | ⭐ ${currentRating}</div>
+                        
                         ${broadcastHtml}
-                        ${matsPills}
+                        ${matsChipsHtml}
 
-                        <div style="display:flex; gap:0.4rem; align-items:center; margin-top:0.45rem;">
-                            ${navBtn}
-                            ${waBtn}
-                            ${shareBtn}
+                        <div style="display:flex; gap:0.4rem; align-items:center; margin-top:0.5rem; justify-content:space-between;">
+                            <div style="display:flex; gap:0.4rem;">
+                                ${locationNavBtn}
+                                ${waBtn}
+                            </div>
+                            <button onclick="shareStationInfo('${st.id}')" style="background:#334155; color:#CBD5E1; border:1px solid #475569; padding:0.35rem 0.6rem; border-radius:7px; font-weight:bold; font-size:0.75rem; cursor:pointer;">📤 مشاركة</button>
                         </div>
                     </div>`;
 
-                // Radar dot plotting
                 let angle = (idx * 77 + 35) % 360;
                 let distForPlot = st.distance !== undefined ? st.distance : (idx + 1) * 2;
                 let radiusPercent = Math.min(Math.max((distForPlot / 15) * 42, 18), 44);
@@ -1564,6 +1435,7 @@
         }
 
         window.trackClick = function(id) {
+window.trackClick = function(id) {
             activityBatch.clicks[id] = (activityBatch.clicks[id] || 0) + 1;
         };
 
