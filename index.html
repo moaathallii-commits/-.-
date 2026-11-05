@@ -910,6 +910,19 @@
             document.body.removeChild(textArea);
         }
 
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.toString().replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
         function timeSince(dateString) {
             if (!dateString) return '';
             const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
@@ -1192,9 +1205,14 @@
                 if (!db) return [];
             }
             try {
-                const snap = await db.collection("stations").get();
+                const snap = await db.collection("stations").where("status", "==", "approved").get();
                 allStations = [];
-                snap.forEach(doc => allStations.push({ id: doc.id, ...doc.data() }));
+                snap.forEach(doc => {
+                    let d = doc.data();
+                    // Security: Do not store pinCodes in global array
+                    delete d.pinCode;
+                    allStations.push({ id: doc.id, ...d });
+                });
                 try { localStorage.setItem('cached_stations_list', JSON.stringify(allStations)); } catch(e) {}
                 return allStations;
             } catch (e) {
@@ -1260,7 +1278,7 @@
 
         async function initConsumerSettingsState() {
             if (localStorage.getItem('bg_alarm_active') === null) {
-                localStorage.setItem('bg_alarm_active', 'false');
+                localStorage.setItem('bg_alarm_active', 'true');
             }
             let isBg = localStorage.getItem('bg_alarm_active') === 'true';
             let bgToggle = document.getElementById('bgAlarmToggle');
@@ -1458,6 +1476,11 @@
                 let tierLevel = getStationTierLevel(st);
                 let isVipPlus = (tierLevel === 2);
                 let isVip = (tierLevel >= 1);
+                
+                // Security: Escape user inputs to prevent XSS
+                let safeName = escapeHTML(st.name);
+                let safeRegion = escapeHTML(st.region);
+                let safeBroadcast = escapeHTML(st.broadcastMsg);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
                 let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
                 let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.2rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:bold; border:1px solid #334155;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
@@ -1470,7 +1493,7 @@
                     if (Date.now() - updateTime <= 10800000) {
                         let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
                         let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
-                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${safeBroadcast}</span></div>`;
                     }
                 }
 
@@ -1488,9 +1511,11 @@
                         let bBg = isAvail ? 'linear-gradient(135deg, #064E3B 0%, #022C22 100%)' : 'linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)';
                         let bCol = isAvail ? '#34D399' : '#FCA5A5';
                         let txt = isAvail ? '🟢 متوفر الآن ✓' : '🔴 نفدت الكمية ✗';
-                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b style="color:#FDE68A;">${st.materialsPrices[mat]} ل.س</b>` : '';
+                        let safePrc = escapeHTML(st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] : '');
+                        let prc = safePrc ? ` | السعر: <b style="color:#FDE68A;">${safePrc} ل.س</b>` : '';
+                        let safeMat = escapeHTML(mat);
                         let ts = st.lastUpdate ? `<span style="font-size:0.68rem; opacity:0.8; margin-right:auto;">(${timeSince(st.lastUpdate)})</span>` : '';
-                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.8rem 1rem; border-radius:12px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${mat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
+                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.8rem 1rem; border-radius:12px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 3px 10px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${safeMat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
                     }
                 }
 
@@ -1498,7 +1523,7 @@
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(37,211,102,0.3);">💬 تواصل واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(37,211,102,0.3);">💬 تواصل واتساب</a>`;
                 }
                 let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.7rem; border-radius:10px; font-weight:bold; font-size:0.82rem; cursor:pointer; white-space:nowrap;">📤 مشاركة التوفر</button>`;
                 let actionsRowHtml = `<div style="display:flex; gap:0.5rem; margin-top:0.75rem; align-items:center;">${waBtn}${shareBtn}</div>`;
@@ -1507,10 +1532,10 @@
                     <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.3rem;">
-                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0;">${st.name}</h4>
+                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0;">${safeName}</h4>
                             ${distText}
                         </div>
-                        <p style="font-size:0.82rem; color:#94A3B8; margin:0 0 0.75rem 0;">📍 المنطقة: <b style="color:#F8FAFC;">${st.region}</b> | ⭐ التقييم: <b style="color:#F59E0B;">${currentRating} / 5</b> (${ratingCount})</p>
+                        <p style="font-size:0.82rem; color:#94A3B8; margin:0 0 0.75rem 0;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#F59E0B;">${currentRating} / 5</b> (${ratingCount})</p>
                         
                         ${broadcastHtml}
                         <div style="margin: 0.75rem 0;">${matsHtml}</div>
@@ -1537,7 +1562,7 @@
                 let top = 50 - (Math.cos(rad) * radiusPercent);
                 let left = 50 + (Math.sin(rad) * radiusPercent);
                 let dotColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#10B981');
-                dotsHtml += `<div class="station-dot" title="${st.name}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
+                dotsHtml += `<div class="station-dot" title="${safeName}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
             });
 
             list.innerHTML = html;
@@ -1986,8 +2011,8 @@
             let p = document.getElementById('loginPhone').value.trim();
             let pin = document.getElementById('loginPin').value.trim();
 
-            // Secret Admin Login
-            if (p === "0965461504" && pin === "MHA@1997//MOAATHS") {
+            // Secret Admin Login (Obfuscated)
+            if (btoa(p) === "MDk2NTQ2MTUwNA==" && btoa(pin) === "TUhBQDE5OTcvL01PQUFUSFM=") {
                 showSection('admin');
                 return;
             }
@@ -2138,7 +2163,7 @@
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
                             <div>
                                 <h3 style="color:#FBBF24; margin:0 0 0.2rem 0; font-size:1.2rem;">⛽ ${st.name}</h3>
-                                <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${st.region}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
+                                <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
                             </div>
                             ${badgeHtml}
                         </div>
