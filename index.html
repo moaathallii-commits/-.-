@@ -1419,7 +1419,7 @@
                 }
             });
 
-            // Filter by status, category, text search query, AND independent Search Range (نطاق البحث)
+            // Filter by status, category, text search query, AND independent Search Range
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
                 if (currentCategoryFilter !== 'all') {
@@ -1464,60 +1464,63 @@
                 let safeRegion = escapeHTML(st.region);
                 let safeBroadcast = escapeHTML(st.broadcastMsg);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
-                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع VIP</div>` : '');
-                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.2rem 0.5rem; border-radius:6px; font-size:0.72rem; font-weight:bold; border:1px solid #334155;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' م' : st.distance.toFixed(1) + ' كم'}</span>` : '';
+                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
+                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.25rem 0.6rem; border-radius:8px; font-size:0.78rem; font-weight:bold; border:1px solid #334155;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
+                let ratingCount = st.ratingCount || 1;
 
                 let broadcastHtml = '';
                 if (isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '') {
                     let updateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
                     if (Date.now() - updateTime <= 10800000) {
                         let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
-                        let bannerIcon = isVipPlus ? '👑🚨 بث عاجل:' : '🚨📢 بث عاجل:';
-                        broadcastHtml = `<div class="${bannerClass}" style="padding:0.5rem; font-size:0.85rem; margin:0.5rem 0;">${bannerIcon} <span style="color:#FFFFFF;">${safeBroadcast}</span></div>`;
+                        let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
+                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${safeBroadcast}</span></div>`;
                     }
-                }
-
-                // Simplified Clean Materials Badges
-                let matsHtml = '';
-                if (st.materialsStatus) {
-                    matsHtml = '<div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.6rem 0;">';
-                    for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
-                        let bgCol = isAvail ? '#064E3B' : '#7F1D1D';
-                        let textCol = isAvail ? '#34D399' : '#FCA5A5';
-                        let statusSymbol = isAvail ? '🟢 متوفر' : '🔴 نفد';
-                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` (${st.materialsPrices[mat]} ل.س)` : '';
-                        let safeMat = escapeHTML(mat);
-                        matsHtml += `<div style="background:${bgCol}; color:${textCol}; border:1px solid ${isAvail?'#10B981':'#EF4444'}; padding:0.35rem 0.65rem; border-radius:8px; font-size:0.82rem; font-weight:bold; flex:1; min-width:110px; text-align:center;">📦 ${safeMat}: <b>${statusSymbol}</b>${prc}</div>`;
-                    }
-                    matsHtml += '</div>';
                 }
 
                 let locationNavBtn = '';
                 if (st.lat && st.lon) {
                     locationNavBtn = `
-                        <div style="margin: 0.5rem 0;">
-                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.6rem; border-radius:9px; font-weight:900; font-size:0.85rem; box-shadow:0 2px 8px rgba(2,132,199,0.3);">🗺️ الانتقال للموقع عبر خرائط Google</a>
+                        <div style="margin: 0.75rem 0 0.5rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.75rem; border-radius:10px; font-weight:900; font-size:0.9rem; box-shadow:0 3px 12px rgba(2,132,199,0.4);">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
                         </div>`;
                 }
+
+                let matsHtml = '<div style="display:flex; flex-direction:column; gap:0.4rem; margin:0.6rem 0;">';
+                if (st.materialsStatus) {
+                    for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
+                        let safeMat = escapeHTML(mat);
+                        let safePrc = escapeHTML(st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] : '');
+                        let prcText = safePrc ? ` (${safePrc} ل.س)` : '';
+                        
+                        if (isAvail) {
+                            matsHtml += `<div style="background:linear-gradient(135deg, #064E3B 0%, #022C22 100%); color:#34D399; border:1px solid #10B981; padding:0.5rem 0.8rem; border-radius:8px; font-weight:900; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center;"><span>🟢 ${safeMat}: <b>متوفر الآن</b>${prcText}</span><span style="font-size:0.7rem; color:#A7F3D0;">✓</span></div>`;
+                        } else {
+                            // Sleek muted style for out of stock so it doesn't clutter the card
+                            matsHtml += `<div style="background:#0F172A; color:#64748B; border:1px solid #1E293B; padding:0.4rem 0.8rem; border-radius:8px; font-weight:600; font-size:0.82rem; display:flex; justify-content:space-between; align-items:center; opacity:0.7;"><span>⚪ ${safeMat}: نفدت الكمية</span></div>`;
+                        }
+                    }
+                }
+                matsHtml += '</div>';
 
                 let waBtn = '';
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.6rem; border-radius:9px; text-decoration:none; font-weight:bold; font-size:0.82rem;">💬 مراسلة واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.65rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.82rem;">💬 تواصل واتساب</a>`;
                 }
-                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.6rem; border-radius:9px; font-weight:bold; font-size:0.78rem; cursor:pointer; white-space:nowrap;">📤 مشاركة</button>`;
+                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.65rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer; white-space:nowrap;">📤 مشاركة</button>`;
                 let actionsRowHtml = `<div style="display:flex; gap:0.4rem; margin-top:0.6rem; align-items:center;">${waBtn}${shareBtn}</div>`;
 
                 html += `
-                    <div class="app-section ${cardClass}" style="display:block; padding:1rem; margin: 0 0 0.85rem 0; border-radius:14px;">
+                    <div class="app-section ${cardClass}" style="display:block; padding:1.1rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; margin-bottom:0.2rem;">
-                            <h4 style="color:#FBBF24; font-size:1.05rem; margin:0;">${safeName}</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0;">${safeName}</h4>
                             ${distText}
                         </div>
-                        <div style="font-size:0.78rem; color:#94A3B8; margin-bottom:0.4rem;">📍 ${safeRegion} &nbsp;|&nbsp; ⭐ ${currentRating} (${st.ratingCount || 1} تقييم)</div>
+                        <div style="font-size:0.8rem; color:#94A3B8; margin-bottom:0.4rem;">📍 <b style="color:#CBD5E1;">${safeRegion}</b> | ⭐ <b style="color:#F59E0B;">${currentRating}</b> (${ratingCount})</div>
                         
                         ${broadcastHtml}
                         ${matsHtml}
@@ -1525,7 +1528,6 @@
                         ${actionsRowHtml}
                     </div>`;
 
-                // Plot Radar Dot
                 let angle = (idx * 77 + 35) % 360;
                 let distForPlot = st.distance !== undefined ? st.distance : (idx + 1) * 2;
                 let radiusPercent = Math.min(Math.max((distForPlot / 15) * 42, 18), 44);
@@ -1543,7 +1545,6 @@
                 checkSmartAlertsSilent(stations, userLat, userLon);
             }
         }
-
 
         window.trackClick = function(id) {
             activityBatch.clicks[id] = (activityBatch.clicks[id] || 0) + 1;
