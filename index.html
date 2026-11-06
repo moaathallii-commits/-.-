@@ -8,12 +8,16 @@
     <link rel="manifest" href="manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
                     registration.update();
-                }
+                })
+                .catch(function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
             });
-            navigator.serviceWorker.register('sw.js').catch(function(e){});
         }
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -727,21 +731,73 @@
             showToast("⚠️ انقطع الاتصال بالإنترنت - وضع التصفح المحلي");
         });
 
-        // --- PWA Install Prompt ---
+        // --- PWA Install Prompt & Smart Fallback ---
         let deferredPrompt;
+        let isInstallPromptFired = false;
+        
+        const isIos = () => {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            return /iphone|ipad|ipod/.test(userAgent);
+        };
+        // Match standard standalone property or matchMedia for Android/Desktop PWA
+        const isInStandaloneMode = () => ('standalone' in window.navigator) && window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+
+        // دالة لعرض الزر
+        function showInstallButton(text, onClickAction) {
+             const installBtn = document.getElementById('installBtn');
+             if (installBtn) {
+                 installBtn.style.display = 'block';
+                 installBtn.innerHTML = text;
+                 installBtn.onclick = onClickAction;
+             }
+        }
+
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('beforeinstallprompt fired');
             e.preventDefault();
             deferredPrompt = e;
+            isInstallPromptFired = true;
+            
+            showInstallButton('📲 تثبيت التطبيق على الشاشة الرئيسية', async () => {
+                const installBtn = document.getElementById('installBtn');
+                if (installBtn) installBtn.style.display = 'none';
+                if(deferredPrompt) {
+                     deferredPrompt.prompt();
+                     const { outcome } = await deferredPrompt.userChoice;
+                     console.log(`User response to the install prompt: ${outcome}`);
+                     deferredPrompt = null;
+                }
+            });
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA was installed');
             const installBtn = document.getElementById('installBtn');
-            if (installBtn) {
-                installBtn.style.display = 'block';
-                installBtn.onclick = async () => {
-                    installBtn.style.display = 'none';
-                    deferredPrompt.prompt();
-                    await deferredPrompt.userChoice;
-                    deferredPrompt = null;
-                };
+            if(installBtn) installBtn.style.display = 'none';
+        });
+
+        // Smart Fallback for iOS or Browsers that block automatic prompts (like UC Browser)
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check if already installed
+            if (isInStandaloneMode()) {
+                 console.log("App is already installed (standalone mode). Hiding button.");
+                 const installBtn = document.getElementById('installBtn');
+                 if(installBtn) installBtn.style.display = 'none';
+                 return;
             }
+
+            setTimeout(() => {
+                if (!isInstallPromptFired) {
+                    console.log("Fallback triggered: showing manual install instructions.");
+                    showInstallButton('📲 دليل تثبيت التطبيق يدوياً (مهم)', () => {
+                        if (isIos()) {
+                            showAlertModal("<div style='text-align:right; font-size:0.9rem; line-height:1.7;'><b style='color:#34D399; font-size:1.05rem;'>لتثبيت التطبيق على الآيفون (Safari):</b><br><br>1️⃣ اضغط على زر <b>المشاركة</b> <span style='font-size:1.2rem;'>⍐</span> في أسفل الشاشة.<br>2️⃣ اسحب للأعلى واختر <b>'إضافة إلى الصفحة الرئيسية'</b> (Add to Home Screen).<br>3️⃣ اضغط <b>إضافة</b>.</div>");
+                        } else {
+                            showAlertModal("<div style='text-align:right; font-size:0.9rem; line-height:1.7;'><b style='color:#34D399; font-size:1.05rem;'>لتثبيت التطبيق على الأندرويد:</b><br><br>1️⃣ افتح الرابط حصراً في متصفح <b>Google Chrome</b>.<br>2️⃣ اضغط على <b>النقاط الثلاث</b> (⋮) في زاوية المتصفح.<br>3️⃣ اختر <b>'تثبيت التطبيق'</b> أو <b>'الإضافة للشاشة الرئيسية'</b>.<br><br><span style='color:#FCA5A5;'>⚠️ إذا لم يظهر الخيار، فتأكد من مسح ذاكرة التخزين المؤقت للمتصفح.</span></div>");
+                        }
+                    });
+                }
+            }, 3000);
         });
 
         // --- Core Helpers ---
