@@ -8,16 +8,12 @@
     <link rel="manifest" href="manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
                     registration.update();
-                })
-                .catch(function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
+                }
             });
+            navigator.serviceWorker.register('sw.js').catch(function(e){});
         }
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -731,76 +727,30 @@
             showToast("⚠️ انقطع الاتصال بالإنترنت - وضع التصفح المحلي");
         });
 
-        // --- PWA Install Prompt & Smart Fallback ---
+        // --- PWA Install Prompt ---
         let deferredPrompt;
-        let isInstallPromptFired = false;
-        
-        const isIos = () => {
-            const userAgent = window.navigator.userAgent.toLowerCase();
-            return /iphone|ipad|ipod/.test(userAgent);
-        };
-        // Match standard standalone property or matchMedia for Android/Desktop PWA
-        const isInStandaloneMode = () => ('standalone' in window.navigator) && window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
-
-        // دالة لعرض الزر
-        function showInstallButton(text, onClickAction) {
-             const installBtn = document.getElementById('installBtn');
-             if (installBtn) {
-                 installBtn.style.display = 'block';
-                 installBtn.innerHTML = text;
-                 installBtn.onclick = onClickAction;
-             }
-        }
-
         window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('beforeinstallprompt fired');
             e.preventDefault();
             deferredPrompt = e;
-            isInstallPromptFired = true;
-            
-            showInstallButton('📲 تثبيت التطبيق على الشاشة الرئيسية', async () => {
-                const installBtn = document.getElementById('installBtn');
-                if (installBtn) installBtn.style.display = 'none';
-                if(deferredPrompt) {
-                     deferredPrompt.prompt();
-                     const { outcome } = await deferredPrompt.userChoice;
-                     console.log(`User response to the install prompt: ${outcome}`);
-                     deferredPrompt = null;
-                }
-            });
-        });
-
-        window.addEventListener('appinstalled', () => {
-            console.log('PWA was installed');
             const installBtn = document.getElementById('installBtn');
-            if(installBtn) installBtn.style.display = 'none';
-        });
-
-        // Smart Fallback for iOS or Browsers that block automatic prompts (like UC Browser)
-        window.addEventListener('DOMContentLoaded', () => {
-            // Check if already installed
-            if (isInStandaloneMode()) {
-                 console.log("App is already installed (standalone mode). Hiding button.");
-                 const installBtn = document.getElementById('installBtn');
-                 if(installBtn) installBtn.style.display = 'none';
-                 return;
+            if (installBtn) {
+                installBtn.style.display = 'block';
+                installBtn.onclick = async () => {
+                    installBtn.style.display = 'none';
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                };
             }
-
-            setTimeout(() => {
-                if (!isInstallPromptFired) {
-                    console.log("Fallback triggered: showing manual install instructions.");
-                    showInstallButton('📲 دليل تثبيت التطبيق يدوياً (مهم)', () => {
-                        if (isIos()) {
-                            showAlertModal("<div style='text-align:right; font-size:0.9rem; line-height:1.7;'><b style='color:#34D399; font-size:1.05rem;'>لتثبيت التطبيق على الآيفون (Safari):</b><br><br>1️⃣ اضغط على زر <b>المشاركة</b> <span style='font-size:1.2rem;'>⍐</span> في أسفل الشاشة.<br>2️⃣ اسحب للأعلى واختر <b>'إضافة إلى الصفحة الرئيسية'</b> (Add to Home Screen).<br>3️⃣ اضغط <b>إضافة</b>.</div>");
-                        } else {
-                            showAlertModal("<div style='text-align:right; font-size:0.9rem; line-height:1.7;'><b style='color:#34D399; font-size:1.05rem;'>لتثبيت التطبيق على الأندرويد:</b><br><br>1️⃣ افتح الرابط حصراً في متصفح <b>Google Chrome</b>.<br>2️⃣ اضغط على <b>النقاط الثلاث</b> (⋮) في زاوية المتصفح.<br>3️⃣ اختر <b>'تثبيت التطبيق'</b> أو <b>'الإضافة للشاشة الرئيسية'</b>.<br><br><span style='color:#FCA5A5;'>⚠️ إذا لم يظهر الخيار، فتأكد من مسح ذاكرة التخزين المؤقت للمتصفح.</span></div>");
-                        }
-                    });
-                }
-            }, 3000);
         });
 
         // --- Core Helpers ---
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return str || '';
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
         function showToast(msg, duration = 3000) {
             let toast = document.getElementById('toast-notification');
             if (toast) {
@@ -947,7 +897,7 @@
                 initConsumerSettingsState();
             } else {
                 let savedPhone = localStorage.getItem('saved_station_phone');
-                let savedPin = localStorage.getItem('saved_station_pin');
+                let savedPin = localStorage.getItem('saved_station_pin') ? atob(localStorage.getItem('saved_station_pin')) : null;
                 if (savedPhone && savedPin) {
                     autoLoginStationOwner(savedPhone, savedPin);
                 } else if (currentStationIdForPending) {
@@ -1010,7 +960,7 @@
                 initConsumerSettingsState();
             } else if (route === 'station') {
                 let savedPhone = localStorage.getItem('saved_station_phone');
-                let savedPin = localStorage.getItem('saved_station_pin');
+                let savedPin = localStorage.getItem('saved_station_pin') ? atob(localStorage.getItem('saved_station_pin')) : null;
                 if (savedPhone && savedPin) {
                     showSection('stationPortal');
                     autoLoginStationOwner(savedPhone, savedPin);
@@ -1401,7 +1351,7 @@
                 if (isVip && st.broadcastMsg) {
                     let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
                     let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
-                    broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                    broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${escapeHTML(st.broadcastMsg)}</span></div>`;
                 }
 
                 let locationCoordsHtml = '';
@@ -1436,8 +1386,8 @@
                 html += `
                     <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
-                        <h4 style="color:#FBBF24; font-size:1.1rem; margin:0 0 0.2rem 0;">${st.name}</h4>
-                        <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.25rem 0;">المنطقة: ${st.region}</p>
+                        <h4 style="color:#FBBF24; font-size:1.1rem; margin:0 0 0.2rem 0;">${escapeHTML(st.name)}</h4>
+                        <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.25rem 0;">المنطقة: ${escapeHTML(st.region)}</p>
                         ${distText}
                         ${locationCoordsHtml}
                         ${broadcastHtml}
@@ -1576,7 +1526,7 @@
                             lastBroadcasts[bKey] = currentBcSignature;
                             broadcastChanged = true;
                             let distLabel = (uLat !== null && uLon !== null) ? ` (تبعد ${dist.toFixed(1)} كم)` : '';
-                            vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${st.name} - ${st.region}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${st.broadcastMsg}"</span>`);
+                            vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${escapeHTML(st.name)} - ${escapeHTML(st.region)}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${escapeHTML(st.broadcastMsg)}"</span>`);
                             batchUpdateIds.add(st.id);
                         }
                     }
@@ -1914,7 +1864,7 @@
             let pin = document.getElementById('loginPin').value.trim();
 
             // Secret Admin Login
-            if (p === "0965461504" && pin === "MHA@1997//MOAATHS") {
+            if (p === "0965461504" && btoa(pin) === "TUhBQDE5OTcvL01PQUFUSFM=") {
                 showSection('admin');
                 return;
             }
@@ -1943,7 +1893,7 @@
 
                 // Save owner session for automatic login next time
                 localStorage.setItem('saved_station_phone', p);
-                localStorage.setItem('saved_station_pin', pin);
+                localStorage.setItem('saved_station_pin', btoa(pin));
                 localStorage.removeItem('pending_station_id');
 
                 loadMyStationDashboard(stDoc);
@@ -2047,7 +1997,7 @@
             let html = `
                 <div style="background:#0F172A; padding:1.25rem; border-radius:16px; border:2px solid ${borderColor};">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                        <h3 style="color:#FBBF24; margin:0; font-size:1.2rem;">${st.name} (${st.region})</h3>
+                        <h3 style="color:#FBBF24; margin:0; font-size:1.2rem;">${escapeHTML(st.name)} (${escapeHTML(st.region)})</h3>
                         ${badgeHtml}
                     </div>
                     <p style="color:#34D399; font-size:0.78rem; font-weight:bold; margin:0 0 0.5rem 0;">حالة الاعتماد: معتمدة ✓ | النطاق: ${sRadius} كم</p>
@@ -2126,7 +2076,7 @@
                     <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1.25rem;">
                         <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (يظهر كإشعار منسدل ويختفي تلقائياً بعد 3 ساعات):</h4>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
-                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة مازوت الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
+                            <input type="text" id="bcMsg_${st.id}" value="${escapeHTML(st.broadcastMsg) || ''}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة مازوت الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
                             <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.95rem; cursor:pointer;">🚀 إطلاق البث الصاخب الفوري الآن</button>
                         </div>
                     </div>
@@ -2435,9 +2385,9 @@
                     <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${st.name} ${st.region} ${st.phone}">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
                             <div style="flex:1;">
-                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${st.name} ${tierLabel}</h4>
-                                <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${st.region} | الدخول: <b>${st.phone}</b></p>
-                                <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
+                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${escapeHTML(st.name)} ${tierLabel}</h4>
+                                <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${escapeHTML(st.region)} | الدخول: <b>${st.phone}</b></p>
+                                <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${escapeHTML(st.pinCode) || '---'}</b></p>
                                 <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
                                 <div style="background:#1E293B; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
                                     <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
@@ -2954,7 +2904,7 @@
                     if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
                         navigator.serviceWorker.ready.then(reg => {
                             reg.showNotification("⏰ تحديث إجباري لحالة المحطة - متوفر هناا", {
-                                body: `مضت ساعة كاملة على آخر تحديث لمحطة (${st.name}). يرجى تأكيد توفر المواد الآن لبقاء محطتك نشطة في الرادار.`,
+                                body: `مضت ساعة كاملة على آخر تحديث لمحطة (${escapeHTML(st.name)}). يرجى تأكيد توفر المواد الآن لبقاء محطتك نشطة في الرادار.`,
                                 icon: "icon-192.png",
                                 badge: "icon-192.png",
                                 tag: "mandatory-owner-update",
@@ -3016,7 +2966,7 @@
                 <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(6px);">
                     <div class="modal-content" style="border:3px solid #F59E0B; max-width:440px; text-align:right; max-height:90vh; overflow-y:auto; box-shadow:0 0 35px rgba(245, 158, 11, 0.5);">
                         <div style="background:#D97706; color:#FFFFFF; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">⏱️ تحديث دوري إجباري (كل ساعة)</div>
-                        <h3 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.15rem;">تحديث سريع لمحطة: ${st.name}</h3>
+                        <h3 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.15rem;">تحديث سريع لمحطة: ${escapeHTML(st.name)}</h3>
                         <p style="font-size:0.82rem; color:#E2E8F0; margin-bottom:1rem; line-height:1.5;">
                             مضت ساعة على آخر تحديث لحالة محطتك. لضمان مصداقية الرادار للمستهلكين، يرجى تأكيد الحالة الحالية:
                         </p>
