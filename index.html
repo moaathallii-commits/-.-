@@ -1001,9 +1001,9 @@
             if (db) {
                 try {
                     const snap = await db.collection("categories").get();
-                    availableCategories = [];
-                    categoryDocs = {};
                     if (!snap.empty) {
+                        availableCategories = [];
+                        categoryDocs = {};
                         snap.forEach(doc => {
                             let cName = doc.data().name;
                             if (cName) {
@@ -1011,6 +1011,14 @@
                                 categoryDocs[cName] = doc.id;
                             }
                         });
+                    } else {
+                        let defaults = ["بنزين", "مازوت", "غاز منزلي"];
+                        availableCategories = [];
+                        for (let cat of defaults) {
+                            let ref = await db.collection("categories").add({ name: cat });
+                            availableCategories.push(cat);
+                            categoryDocs[cat] = ref.id;
+                        }
                     }
                 } catch (err) {}
             }
@@ -2813,7 +2821,7 @@
             } catch(e) {}
         };
 
-        // --- 3. Simple 1-Hour Station Status Update (Local Memory Tracked, 1-Tap Confirmation) ---
+        // --- 3. Mandatory 3-Hour Station Status Update Enforcement (Non-Dismissible Lock) ---
         let stationSurveyInterval = null;
         let activeStationDocForSurvey = null;
         let lastOwnerReminderNotifTime = 0;
@@ -2825,7 +2833,7 @@
             // 1. Check immediately upon opening/loading the dashboard
             triggerStationQuickSurveyIfNeeded(stationDoc);
 
-            // 2. Check every 60 seconds
+            // 2. Check every 60 seconds while app is open or in background
             stationSurveyInterval = setInterval(async () => {
                 if (!activeStationDocForSurvey) return;
                 if (db && navigator.onLine) {
@@ -2840,6 +2848,7 @@
             }, 60000);
         }
 
+        // Also re-check immediately whenever the owner brings the phone/browser back from background
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && activeStationDocForSurvey) {
                 let dashEl = document.getElementById('sec-stationDashboard');
@@ -2851,18 +2860,17 @@
 
         window.triggerStationQuickSurveyIfNeeded = function(st) {
             if (!st || !st.id) return;
-            // Track last survey time strictly in localStorage starting from previous confirmation
-            let lastSurveyMs = parseInt(localStorage.getItem(`last_survey_${st.id}`) || '0');
-            if (isNaN(lastSurveyMs) || lastSurveyMs === 0) {
-                lastSurveyMs = st.lastUpdate ? new Date(st.lastUpdate).getTime() : Date.now();
-                localStorage.setItem(`last_survey_${st.id}`, lastSurveyMs.toString());
-            }
+            // Use the cloud `lastUpdate` timestamp (or fallback to `createdAt`) so owner cannot bypass by clearing local cache
+            let lastUpdateRaw = st.lastUpdate || st.createdAt || 0;
+            let lastUpdateMs = lastUpdateRaw ? new Date(lastUpdateRaw).getTime() : 0;
+            if (isNaN(lastUpdateMs)) lastUpdateMs = 0;
 
             let now = Date.now();
-            const ONE_HOUR_MS = 60 * 60 * 1000; // Exactly 1 hour
+            const THREE_HOURS_MS = 3 * 60 * 60 * 1000; // 10,800,000 ms
 
+            // Update countdown indicator on dashboard if present
             let timerBadge = document.getElementById('ownerMandatoryTimerBadge');
-            let remainingMs = ONE_HOUR_MS - (now - lastSurveyMs);
+            let remainingMs = THREE_HOURS_MS - (now - lastUpdateMs);
             if (timerBadge) {
                 if (remainingMs > 0) {
                     let remMinsTotal = Math.ceil(remainingMs / 60000);
@@ -2871,29 +2879,33 @@
                     timerBadge.style.background = '#064E3B';
                     timerBadge.style.color = '#34D399';
                     timerBadge.style.borderColor = '#10B981';
-                    timerBadge.innerHTML = `⏳ التحديث الدوري القادم خلال: <b>${mins} دقيقة</b>`;
+                    timerBadge.innerHTML = `⏳ التحديث الإجباري القادم بعد: <b>${hrs} س و ${mins} د</b>`;
                 } else {
                     timerBadge.style.background = '#7F1D1D';
                     timerBadge.style.color = '#FCA5A5';
                     timerBadge.style.borderColor = '#EF4444';
-                    timerBadge.innerHTML = `🚨 حان وقت التحديث الساعي للحالة`;
+                    timerBadge.innerHTML = `🚨 انتهت مهلة الـ 3 ساعات! يجب تحديث الحالة الآن`;
                 }
             }
 
-            if (now - lastSurveyMs >= ONE_HOUR_MS) {
+            if (now - lastUpdateMs >= THREE_HOURS_MS) {
                 showStationSurveyModal(st);
 
+                // Fire loud alert & dropdown system notification (throttled to once every 10 minutes if ignored in background)
                 if (now - lastOwnerReminderNotifTime > 600000) {
                     lastOwnerReminderNotifTime = now;
+                    playTone('alarm1');
+                    if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 600]);
                     if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
                         navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification("⏰ تذكير تحديث الحالة الساعي - متوفر هناا", {
-                                body: `مرت ساعة منذ آخر تحديث لمحطة (${st.name}). اضغط لتأكيد توفر المواد ببساطة.`,
+                            reg.showNotification("⏰ تحديث إجباري لحالة المحطة - متوفر هناا", {
+                                body: `مضى أكثر من 3 ساعات على آخر تحديث لمحطة (${st.name}). يرجى تأكيد توفر المواد الآن لبقاء محطتك نشطة في الرادار.`,
                                 icon: "icon-192.png",
                                 badge: "icon-192.png",
-                                tag: "hourly-owner-update",
+                                tag: "mandatory-owner-update",
                                 renotify: true,
-                                requireInteraction: false
+                                requireInteraction: true,
+                                vibrate: [400, 150, 400, 150, 600]
                             });
                         }).catch(e => {});
                     }
@@ -2901,7 +2913,26 @@
             }
         };
 
+        window.selectSurveyRadioStyle = function(cat, isAvailVal) {
+            let lblTrue = document.getElementById(`surv_lbl_true_${cat}`);
+            let lblFalse = document.getElementById(`surv_lbl_false_${cat}`);
+            if (lblTrue && lblFalse) {
+                if (isAvailVal) {
+                    lblTrue.style.background = '#059669';
+                    lblTrue.style.border = '2px solid #34D399';
+                    lblFalse.style.background = '#1E293B';
+                    lblFalse.style.border = '1px solid #475569';
+                } else {
+                    lblTrue.style.background = '#1E293B';
+                    lblTrue.style.border = '1px solid #475569';
+                    lblFalse.style.background = '#DC2626';
+                    lblFalse.style.border = '2px solid #FCA5A5';
+                }
+            }
+        };
+
         window.showStationSurveyModal = function(st) {
+            // If modal is already open on screen, don't recreate it so we don't wipe what the owner is typing
             if (document.getElementById('stationSurveyModal')) return;
 
             let matsCheckHtml = '';
@@ -2910,30 +2941,32 @@
                     let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
                     let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
                     matsCheckHtml += `
-                        <div style="background:#0F172A; padding:0.65rem 0.8rem; border-radius:8px; margin-bottom:0.5rem; border:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-weight:bold; color:#FBBF24; font-size:0.9rem;">📦 ${cat}</span>
-                            <div style="display:flex; gap:0.4rem;">
-                                <button type="button" onclick="quickToggleSurveyMat('${cat}', true)" id="survBtn_t_${cat}" style="background:${isAvail?'#059669':'#1E293B'}; color:white; border:none; padding:0.3rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">متوفر</button>
-                                <button type="button" onclick="quickToggleSurveyMat('${cat}', false)" id="survBtn_f_${cat}" style="background:${!isAvail?'#DC2626':'#1E293B'}; color:white; border:none; padding:0.3rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">نفد</button>
+                        <div style="background:#0F172A; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; border:1px solid #475569; text-align:right;">
+                            <div style="font-weight:900; color:#FBBF24; margin-bottom:0.45rem; font-size:0.98rem;">📦 مادة: ${cat}</div>
+                            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                                <label id="surv_lbl_true_${cat}" onclick="selectSurveyRadioStyle('${cat}', true)" style="flex:1; background:${isAvail?'#059669':'#1E293B'}; border:${isAvail?'2px solid #34D399':'1px solid #475569'}; color:white; padding:0.55rem; border-radius:8px; text-align:center; cursor:pointer; font-size:0.88rem; font-weight:900; transition:all 0.2s;">
+                                    <input type="radio" name="surv_avail_${cat}" value="true" ${isAvail?'checked':''} style="margin-left:4px;"> 🟢 متوفر ✓
+                                </label>
+                                <label id="surv_lbl_false_${cat}" onclick="selectSurveyRadioStyle('${cat}', false)" style="flex:1; background:${!isAvail?'#DC2626':'#1E293B'}; border:${!isAvail?'2px solid #FCA5A5':'1px solid #475569'}; color:white; padding:0.55rem; border-radius:8px; text-align:center; cursor:pointer; font-size:0.88rem; font-weight:900; transition:all 0.2s;">
+                                    <input type="radio" name="surv_avail_${cat}" value="false" ${!isAvail?'checked':''} style="margin-left:4px;"> 🔴 نفد ✗
+                                </label>
                             </div>
+                            <input type="number" id="surv_prc_${cat}" value="${prc}" placeholder="السعر المعتمد (ل.س)..." style="margin:0; padding:0.55rem; font-size:0.88rem; font-weight:bold;">
                         </div>
                     `;
                 });
             }
 
             let modalHtml = `
-                <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.9); backdrop-filter:blur(4px);">
-                    <div class="modal-content" style="border:2px solid #3B82F6; max-width:400px; text-align:right; max-height:85vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0, 0, 0, 0.5);">
-                        <div style="background:#0284C7; color:#FFFFFF; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold; display:inline-block; margin-bottom:0.4rem;">⏰ مراجعة الحالة الساعية الخفيفة</div>
-                        <h3 style="color:#FBBF24; margin:0 0 0.3rem 0; font-size:1.05rem;">مرحباً ${st.name}</h3>
-                        <p style="font-size:0.8rem; color:#CBD5E1; margin-bottom:0.85rem; line-height:1.4;">
-                            هل ما زالت الحالة كما هي؟ إن لم يحدث تغيير، اضغط زر التأكيد السريع بضغطة واحدة فقط:
+                <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(6px);">
+                    <div class="modal-content" style="border:3px solid #EF4444; max-width:440px; text-align:right; max-height:90vh; overflow-y:auto; box-shadow:0 0 35px rgba(239, 68, 68, 0.5);">
+                        <div style="background:#DC2626; color:#FFFFFF; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">🔒 تحديث إجباري مطلوب (كل 3 ساعات)</div>
+                        <h3 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.15rem;">تأكيد حالة محطة: ${st.name}</h3>
+                        <p style="font-size:0.82rem; color:#FCA5A5; margin-bottom:1rem; line-height:1.5; font-weight:bold;">
+                            ⚠️ مضى أكثر من 3 ساعات على آخر تحديث. تم قفل لوحة التحكم مؤقتاً؛ يرجى تأكيد حالة المواد الحالية والضغط على حفظ للمتابعة والظهور كـ (محدث الآن) للمستهلكين:
                         </p>
                         ${matsCheckHtml}
-                        <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
-                            <button onclick="submitStationSurveyFast('${st.id}', true)" class="btn-primary" style="background:#059669; padding:0.75rem; font-size:0.9rem; margin:0; flex:2;">✅ الحالة لم تتغير (تأكيد سريع)</button>
-                            <button onclick="submitStationSurveyFast('${st.id}', false)" style="background:#334155; color:#F8FAFC; border:none; padding:0.75rem; font-size:0.8rem; border-radius:10px; cursor:pointer; flex:1;" title="إغلاق و حفظ التعديلات">حفظ التغييرات</button>
-                        </div>
+                        <button id="submitMandatorySurveyBtn" onclick="submitStationSurvey('${st.id}')" class="btn-primary" style="background:#059669; padding:0.95rem; font-size:1rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; box-shadow:0 4px 12px rgba(5, 150, 105, 0.4);">✅ تأكيد وحفظ الحالة الآن (فتح اللوحة)</button>
                     </div>
                 </div>
             `;
@@ -2943,53 +2976,122 @@
             document.body.appendChild(div);
         };
 
-        window.quickToggleSurveyMat = function(cat, isAv) {
-            let btnT = document.getElementById(`survBtn_t_${cat}`);
-            let btnF = document.getElementById(`survBtn_f_${cat}`);
-            if (btnT && btnF) {
-                btnT.style.background = isAv ? '#059669' : '#1E293B';
-                btnF.style.background = !isAv ? '#DC2626' : '#1E293B';
+        window.submitStationSurvey = async function(id) {
+            if (!db) return showToast("خطأ في الاتصال بقاعدة البيانات");
+            let btn = document.getElementById('submitMandatorySurveyBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "⏳ جاري حفظ وتأكيد الحالة...";
             }
-        };
-
-        window.submitStationSurveyFast = async function(id, keepSame) {
-            if (!db) return;
             try {
                 let ref = db.collection("stations").doc(id);
-                let nowMs = Date.now();
-                let nowIso = new Date(nowMs).toISOString();
+                let doc = await ref.get();
+                if (!doc.exists) return;
+                let d = doc.data();
 
-                if (keepSame) {
-                    await ref.update({ lastUpdate: nowIso });
-                } else {
-                    let doc = await ref.get();
-                    if (doc.exists) {
-                        let d = doc.data();
-                        let mStatus = d.materialsStatus || {};
-                        if (d.categories) {
-                            d.categories.forEach(cat => {
-                                let btnT = document.getElementById(`survBtn_t_${cat}`);
-                                if (btnT) {
-                                    mStatus[cat] = (btnT.style.background.includes('rgb(5, 150, 105)') || btnT.style.background.includes('#059669'));
-                                }
-                            });
+                let mStatus = d.materialsStatus || {};
+                let mPrices = d.materialsPrices || {};
+
+                if (d.categories) {
+                    d.categories.forEach(cat => {
+                        let radioEl = document.querySelector(`input[name="surv_avail_${cat}"]:checked`);
+                        if (radioEl) {
+                            mStatus[cat] = (radioEl.value === 'true');
                         }
-                        await ref.update({ materialsStatus: mStatus, lastUpdate: nowIso });
-                    }
+                        let prcEl = document.getElementById(`surv_prc_${cat}`);
+                        if (prcEl) {
+                            mPrices[cat] = prcEl.value.trim();
+                        }
+                    });
                 }
 
-                localStorage.setItem(`last_survey_${id}`, nowMs.toString());
+                let nowIso = new Date().toISOString();
+                await ref.update({
+                    materialsStatus: mStatus,
+                    materialsPrices: mPrices,
+                    lastUpdate: nowIso
+                });
+
+                localStorage.setItem(`last_survey_${id}`, Date.now().toString());
                 let wrap = document.getElementById('stationSurveyModalWrapper');
                 if (wrap) wrap.remove();
                 let m = document.getElementById('stationSurveyModal');
                 if (m) m.remove();
 
-                showToast("✅ تم تحديث وقت الحالة بنجاح (مهلة ساعة جديدة)!");
+                showToast("✅ تم تأكيد وتحديث حالة المحطة لمدة 3 ساعات قادمة!");
+                
                 let updated = await ref.get();
+                loadMyStationDashboard({ id, ...updated.data() });
+            } catch (e) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "✅ تأكيد وحفظ الحالة الآن (فتح اللوحة)";
+                }
+                showToast("حدث خطأ أثناء حفظ التحديث، يرجى المحاولة مرة أخرى.");
+            }
+        };
+
+        window.quickRefreshStationTimestamp = async function(id) {
+            if (!db) return;
+            try {
+                let nowIso = new Date().toISOString();
+                await db.collection("stations").doc(id).update({ lastUpdate: nowIso });
+                localStorage.setItem(`last_survey_${id}`, Date.now().toString());
+                showToast("✅ تم تجديد وقت التوفر إلى (الآن) وتمديد المهلة 3 ساعات!");
+                let updated = await db.collection("stations").doc(id).get();
                 if (updated.exists) {
                     loadMyStationDashboard({ id, ...updated.data() });
                 }
             } catch (e) {
-                showToast("حدث خطأ أثناء التحديث");
+                showToast("تعذر تجديد الوقت حالياً");
             }
         };
+
+        // --- 4. Double Back-Button Protection (Prevent Accidental App Exit) ---
+        let lastBackPressTime = 0;
+        history.pushState({ page: 'app_root' }, document.title, window.location.href);
+
+        window.addEventListener('popstate', function (event) {
+            // If Mandatory Station Survey Modal is open, block back button completely!
+            if (document.getElementById('stationSurveyModal')) {
+                history.pushState({ page: 'locked_survey' }, document.title, window.location.href);
+                showToast("🔒 يجب تأكيد وحفظ حالة توفر المواد أولاً للمتابعة!");
+                return;
+            }
+
+            // If Consumer Settings is open, return to Consumer Radar instead of exiting
+            let settSec = document.getElementById('sec-consumerSettings');
+            if (settSec && settSec.style.display === 'block') {
+                history.pushState({ page: 'radar' }, document.title, window.location.href);
+                showSection('consumerRadar');
+                return;
+            }
+
+            // If Upgrade Modal is open, close it instead of exiting
+            let upgModal = document.getElementById('upgradeModalOverlay');
+            if (upgModal && upgModal.style.display === 'flex') {
+                history.pushState({ page: 'dashboard' }, document.title, window.location.href);
+                closeUpgradeModal();
+                return;
+            }
+
+            let currentTime = Date.now();
+            if (currentTime - lastBackPressTime < 2000) {
+                history.back();
+            } else {
+                lastBackPressTime = currentTime;
+                showToast("⚠️ اضغط زر الرجوع مرة أخرى خلال ثانيتين للخروج من التطبيق");
+                history.pushState({ page: 'app_root' }, document.title, window.location.href);
+            }
+        });
+
+        window.admDelete = async function(id) {
+            if (confirm("تأكيد حذف المحطة نهائياً؟")) {
+                await db.collection("stations").doc(id).delete();
+                showToast("تم الحذف");
+                loadAdminPanel();
+            }
+        };
+    </script>
+</body>
+</html>
