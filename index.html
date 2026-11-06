@@ -727,117 +727,22 @@
             showToast("⚠️ انقطع الاتصال بالإنترنت - وضع التصفح المحلي");
         });
 
-        // --- PWA Install Prompt & First-Launch Popup ---
-        let deferredPrompt = null;
-
-        function isAppRunningStandalone() {
-            return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
-        }
-
+        // --- PWA Install Prompt ---
+        let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             const installBtn = document.getElementById('installBtn');
-            if (installBtn && !isAppRunningStandalone()) {
+            if (installBtn) {
                 installBtn.style.display = 'block';
-                installBtn.onclick = () => triggerPwaInstallAction();
-            }
-            // If the first-launch install popup is already open, update its button state
-            const popupActionBtn = document.getElementById('pwaModalInstallNowBtn');
-            if (popupActionBtn) {
-                popupActionBtn.textContent = "📲 تثبيت التطبيق الآن (بضغطة واحدة)";
+                installBtn.onclick = async () => {
+                    installBtn.style.display = 'none';
+                    deferredPrompt.prompt();
+                    await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                };
             }
         });
-
-        window.addEventListener('appinstalled', () => {
-            deferredPrompt = null;
-            localStorage.setItem('pwa_installed_done', 'true');
-            const installBtn = document.getElementById('installBtn');
-            if (installBtn) installBtn.style.display = 'none';
-            let m = document.getElementById('firstLaunchInstallModal');
-            if (m) m.remove();
-            showToast("✅ تم تثبيت تطبيق (متوفر هناا) على شاشتك الرئيسية بنجاح!");
-        });
-
-        window.triggerPwaInstallAction = async function() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const choiceResult = await deferredPrompt.userChoice;
-                if (choiceResult.outcome === 'accepted') {
-                    localStorage.setItem('pwa_installed_done', 'true');
-                    let m = document.getElementById('firstLaunchInstallModal');
-                    if (m) m.remove();
-                    checkAndRequestAllPermissionsOnFirstLaunch();
-                }
-                deferredPrompt = null;
-            } else {
-                // Fallback instructions if browser hasn't fired beforeinstallprompt yet or on iOS/Safari
-                let helpBox = document.getElementById('manualInstallGuideBox');
-                if (helpBox) {
-                    helpBox.style.display = 'block';
-                } else {
-                    showToast("📲 للتثبيت: افتح قائمة المتصفح (⋮) في الأعلى واختر (تثبيت التطبيق / الإضافة إلى الشاشة الرئيسية)");
-                }
-            }
-        };
-
-        window.dismissPwaInstallModal = function() {
-            localStorage.setItem('pwa_install_popup_seen', 'true');
-            let m = document.getElementById('firstLaunchInstallModal');
-            if (m) m.remove();
-            checkAndRequestAllPermissionsOnFirstLaunch();
-        };
-
-        function showFirstLaunchPwaInstallModalIfNeeded() {
-            // Do not show if already running as installed standalone app
-            if (isAppRunningStandalone() || localStorage.getItem('pwa_installed_done') === 'true') {
-                checkAndRequestAllPermissionsOnFirstLaunch();
-                return;
-            }
-
-            let hasSeenInstallPopup = localStorage.getItem('pwa_install_popup_seen');
-            if (!hasSeenInstallPopup) {
-                let existing = document.getElementById('firstLaunchInstallModal');
-                if (existing) return;
-
-                let isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
-                let guideText = isIos
-                    ? `اضغط على زر المشاركة <b>(Share ⬆️)</b> في أسفل المتصفح ثم اختر <b>"إضافة إلى الصفحة الرئيسية" (Add to Home Screen ➕)</b>.`
-                    : `اضغط على زر خيارات المتصفح <b>(⋮)</b> في أعلى الشاشة ثم اختر <b>"تثبيت التطبيق" (Install App)</b> أو <b>"الإضافة إلى الشاشة الرئيسية"</b>.`;
-
-                let modalHtml = `
-                    <div id="firstLaunchInstallModal" class="modal-overlay" style="display:flex; z-index:26000; background:rgba(15, 23, 42, 0.92); backdrop-filter:blur(5px);">
-                        <div class="modal-content" style="border:2px solid #8B5CF6; max-width:420px; text-align:center; box-shadow:0 0 30px rgba(139, 92, 246, 0.4);">
-                            <div style="font-size:3rem; margin-bottom:0.3rem;">📲⛽</div>
-                            <h3 style="color:#FBBF24; margin:0 0 0.5rem 0; font-size:1.25rem;">تثبيت تطبيق "متوفر هناا"</h3>
-                            <p style="font-size:0.86rem; color:#CBD5E1; line-height:1.6; margin-bottom:1rem;">
-                                قم بتثبيت المنصة كتطبيق رسمي على شاشة هاتفك الرئيسية للوصول السريع الفوري، وتلقي إشعارات توفر المحروقات والغاز وصافرات الإنذار بالخلفية:
-                            </p>
-                            <div style="background:#0F172A; border:1px solid #334155; padding:0.75rem; border-radius:10px; margin-bottom:1rem; text-align:right; font-size:0.8rem; color:#A7F3D0; line-height:1.7;">
-                                ✓ يفتح فوراً بضغطة واحدة بدون متصفح.<br>
-                                ✓ يعمل حتى عند ضعف الشبكة ويحفظ آخر البيانات.<br>
-                                ✓ يدعم إشعارات البث العاجل المنسدلة في الهاتف.
-                            </div>
-                            <div id="manualInstallGuideBox" style="display:${isIos ? 'block' : 'none'}; background:#451A03; border:1px solid #F59E0B; color:#FDE68A; padding:0.75rem; border-radius:10px; margin-bottom:1rem; font-size:0.8rem; line-height:1.6; text-align:right;">
-                                💡 <b>طريقة التثبيت السريع:</b><br>${guideText}
-                            </div>
-                            ${!isIos ? `
-                            <button id="pwaModalInstallNowBtn" onclick="triggerPwaInstallAction()" class="btn-primary" style="background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0.6rem; box-shadow:0 4px 14px rgba(139, 92, 246, 0.5);">
-                                📲 تثبيت التطبيق على الهاتف الآن
-                            </button>` : ''}
-                            <button onclick="dismissPwaInstallModal()" style="background:transparent; border:1px solid #475569; color:#94A3B8; width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.82rem; font-weight:bold;">
-                                المتابعة عبر المتصفح (تثبيت لاحقاً)
-                            </button>
-                        </div>
-                    </div>
-                `;
-                let div = document.createElement('div');
-                div.innerHTML = modalHtml;
-                document.body.appendChild(div.firstElementChild);
-            } else {
-                checkAndRequestAllPermissionsOnFirstLaunch();
-            }
-        }
 
         // --- Core Helpers ---
         function showToast(msg, duration = 3000) {
@@ -908,19 +813,6 @@
                 showToast("تعذر النسخ تلقائياً.");
             }
             document.body.removeChild(textArea);
-        }
-
-        function escapeHTML(str) {
-            if (!str) return '';
-            return str.toString().replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
         }
 
         function timeSince(dateString) {
@@ -1051,7 +943,7 @@
         // --- Initial Boot ---
         window.addEventListener('DOMContentLoaded', () => {
             updateNetworkStatusBar();
-            showFirstLaunchPwaInstallModalIfNeeded();
+            checkAndRequestAllPermissionsOnFirstLaunch();
 
             // 1. Show correct route immediately so screen is never blank
             let route = localStorage.getItem('app_route');
@@ -1109,9 +1001,9 @@
             if (db) {
                 try {
                     const snap = await db.collection("categories").get();
+                    availableCategories = [];
+                    categoryDocs = {};
                     if (!snap.empty) {
-                        availableCategories = [];
-                        categoryDocs = {};
                         snap.forEach(doc => {
                             let cName = doc.data().name;
                             if (cName) {
@@ -1119,14 +1011,6 @@
                                 categoryDocs[cName] = doc.id;
                             }
                         });
-                    } else {
-                        let defaults = ["بنزين", "مازوت", "غاز منزلي"];
-                        availableCategories = [];
-                        for (let cat of defaults) {
-                            let ref = await db.collection("categories").add({ name: cat });
-                            availableCategories.push(cat);
-                            categoryDocs[cat] = ref.id;
-                        }
                     }
                 } catch (err) {}
             }
@@ -1205,14 +1089,9 @@
                 if (!db) return [];
             }
             try {
-                const snap = await db.collection("stations").where("status", "==", "approved").get();
+                const snap = await db.collection("stations").get();
                 allStations = [];
-                snap.forEach(doc => {
-                    let d = doc.data();
-                    // Security: Do not store pinCodes in global array
-                    delete d.pinCode;
-                    allStations.push({ id: doc.id, ...d });
-                });
+                snap.forEach(doc => allStations.push({ id: doc.id, ...doc.data() }));
                 try { localStorage.setItem('cached_stations_list', JSON.stringify(allStations)); } catch(e) {}
                 return allStations;
             } catch (e) {
@@ -1339,29 +1218,7 @@
             showToast("تم حفظ الإعدادات");
         };
 
-                window.playRadarSearchSound = function() {
-            try {
-                let ctx = new (window.AudioContext || window.webkitAudioContext)();
-                let now = ctx.currentTime;
-                // Radar sonar sweeps
-                for (let i = 0; i < 4; i++) {
-                    let osc = ctx.createOscillator();
-                    let gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(450 + i * 180, now + i * 0.32);
-                    osc.frequency.exponentialRampToValueAtTime(1400, now + i * 0.32 + 0.28);
-                    gain.gain.setValueAtTime(0.25, now + i * 0.32);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.32 + 0.3);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now + i * 0.32);
-                    osc.stop(now + i * 0.32 + 0.3);
-                }
-            } catch(e) {}
-        };
-
         window.activateRadar = async function() {
-            playRadarSearchSound();
             const btn = document.getElementById('radarBtn');
             const sweep = document.getElementById('radarSweep');
             const status = document.getElementById('radarStatusMsg');
@@ -1423,7 +1280,7 @@
             return 0;
         }
 
-                        function renderConsumerStations(stations) {
+        function renderConsumerStations(stations) {
             const list = document.getElementById('consumerStationsList');
             const dotsCont = document.getElementById('radarDotsContainer');
             if (!list || !dotsCont) return;
@@ -1466,7 +1323,7 @@
             let dotsHtml = '';
 
             if (topResults.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.25rem; border-radius:14px; font-size:0.9rem;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
+                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1rem; border-radius:12px;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
                 dotsCont.innerHTML = '';
                 return;
             }
@@ -1476,50 +1333,36 @@
                 let tierLevel = getStationTierLevel(st);
                 let isVipPlus = (tierLevel === 2);
                 let isVip = (tierLevel >= 1);
-                
-                // Security: Escape user inputs to prevent XSS
-                let safeName = escapeHTML(st.name);
-                let safeRegion = escapeHTML(st.region);
-                let safeBroadcast = escapeHTML(st.broadcastMsg);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
-                let vipBadge = isVipPlus ? `<div class="vip-plus-badge" style="margin-bottom:0.5rem;">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge" style="margin-bottom:0.5rem;">⭐ موزع معتمد VIP</div>` : '');
-                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.25rem 0.65rem; border-radius:8px; font-size:0.78rem; font-weight:bold; border:1px solid #334155; white-space:nowrap;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
+                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
+                let distText = st.distance !== undefined ? `<p style="font-size:0.8rem; color:#38BDF8; margin: 0.25rem 0; font-weight:bold;">📍 المسافة: ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</p>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 let ratingCount = st.ratingCount || 1;
 
                 let broadcastHtml = '';
-                if (isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '') {
-                    let updateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
-                    if (Date.now() - updateTime <= 10800000) {
-                        let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
-                        let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
-                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${safeBroadcast}</span></div>`;
-                    }
+                if (isVip && st.broadcastMsg) {
+                    let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
+                    let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
+                    broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
                 }
 
-                let locationNavBtn = '';
+                let locationCoordsHtml = '';
                 if (st.lat && st.lon) {
-                    locationNavBtn = `
-                        <div style="margin: 0.75rem 0 0.5rem 0;">
-                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:white; text-decoration:none; padding:0.75rem; border-radius:12px; font-weight:900; font-size:0.92rem; box-shadow:0 4px 12px rgba(2,132,199,0.4); transition:transform 0.1s;">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
+                    locationCoordsHtml = `
+                        <div style="margin: 0.5rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.6rem; border-radius:8px; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(2,132,199,0.3);">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
                         </div>`;
                 }
 
                 let matsHtml = '';
                 if (st.materialsStatus) {
                     for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
-                        let safeMat = escapeHTML(mat);
-                        let safePrc = escapeHTML(st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] : '');
-                        let prcText = safePrc ? ` <span style="font-size:0.85rem; color:#FDE68A; font-weight:normal;">(${safePrc} ل.س)</span>` : '';
-                        let ts = st.lastUpdate ? `<span style="font-size:0.68rem; opacity:0.8; margin-right:auto;">(${timeSince(st.lastUpdate)})</span>` : '';
-
-                        if (isAvail) {
-                            // Available item: prominent green bar
-                            matsHtml += `<div style="background:linear-gradient(135deg, #064E3B 0%, #022C22 100%); color:#34D399; padding:0.75rem 1rem; border-radius:10px; font-size:1.02rem; font-weight:900; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #10B981; box-shadow:0 2px 6px rgba(16, 185, 129, 0.2);"><span>🟢 ${safeMat}: <b style="color:#FFFFFF;">متوفر</b>${prcText}</span> ${ts}</div>`;
-                        } else {
-                            // Unavailable item: subtle faded bar or hidden/compact
-                            matsHtml += `<div style="background:#172033; color:#94A3B8; padding:0.5rem 0.85rem; border-radius:10px; font-size:0.85rem; font-weight:600; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #334155; opacity:0.65;"><span>🔴 ${safeMat}: <span style="color:#EF4444;">نفد</span></span></div>`;
-                        }
+                        let bBg = isAvail ? '#064E3B' : '#991B1B';
+                        let bCol = isAvail ? '#34D399' : '#FEE2E2';
+                        let txt = isAvail ? '🟢 متوفر الآن ✓' : '🔴 نفدت الكمية ✗';
+                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b>${st.materialsPrices[mat]} ل.س</b>` : '';
+                        let ts = st.lastUpdate ? `<span style="font-size:0.7rem; opacity:0.85;">(${timeSince(st.lastUpdate)})</span>` : '';
+                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.75rem 1rem; border-radius:10px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${mat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
                     }
                 }
 
@@ -1527,24 +1370,32 @@
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="background:#25D366; color:white; padding:0.45rem 0.85rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.78rem; display:inline-flex; align-items:center; gap:0.3rem;">💬 تواصل</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem;">💬 تواصل واتساب</a>`;
                 }
-                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="background:#334155; color:#CBD5E1; border:1px solid #475569; padding:0.45rem 0.85rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📤 مشاركة</button>`;
-                let footerBarHtml = `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.08);"><div style="font-size:0.75rem; color:#F59E0B;">⭐ ${currentRating} (${ratingCount} تقييم)</div><div style="display:flex; gap:0.4rem;">${waBtn}${shareBtn}</div></div>`;
+                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.7rem; border-radius:10px; font-weight:bold; font-size:0.82rem; cursor:pointer; white-space:nowrap;">📤 مشاركة التوفر</button>`;
+                let actionsRowHtml = `<div style="display:flex; gap:0.5rem; margin-top:0.75rem; align-items:center;">${waBtn}${shareBtn}</div>`;
 
                 html += `
-                    <div class="app-section ${cardClass}" style="display:block; padding:1.15rem; margin: 0 0 1rem 0;">
+                    <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.2rem;">
-                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0; font-weight:900; letter-spacing:0.3px;">${safeName}</h4>
-                            ${distText}
-                        </div>
-                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.65rem 0;">📍 المنطقة: <b style="color:#E2E8F0;">${safeRegion}</b></p>
-                        
+                        <h4 style="color:#FBBF24; font-size:1.1rem; margin:0 0 0.2rem 0;">${st.name}</h4>
+                        <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.25rem 0;">المنطقة: ${st.region}</p>
+                        ${distText}
+                        ${locationCoordsHtml}
                         ${broadcastHtml}
-                        <div style="margin: 0.5rem 0;">${matsHtml}</div>
-                        ${locationNavBtn}
-                        ${footerBarHtml}
+                        <div style="margin: 0.6rem 0;">${matsHtml}</div>
+                        <p style="font-size:0.8rem; color:#F59E0B; margin: 0.4rem 0;">⭐ التقييم العام: <b>${currentRating} / 5</b> (${ratingCount} تقييم)</p>
+                        <div style="background:#0F172A; padding:0.5rem; border-radius:8px; text-align:center;">
+                            <span style="font-size:0.75rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">قيّم هذه المحطة:</span>
+                            <div style="display:flex; justify-content:center; gap:0.3rem;">
+                                <button onclick="rateStation('${st.id}', 1)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐1</button>
+                                <button onclick="rateStation('${st.id}', 2)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐2</button>
+                                <button onclick="rateStation('${st.id}', 3)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐3</button>
+                                <button onclick="rateStation('${st.id}', 4)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐4</button>
+                                <button onclick="rateStation('${st.id}', 5)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐5</button>
+                            </div>
+                        </div>
+                        ${actionsRowHtml}
                     </div>`;
 
                 // Plot Radar Dot
@@ -1555,7 +1406,7 @@
                 let top = 50 - (Math.cos(rad) * radiusPercent);
                 let left = 50 + (Math.sin(rad) * radiusPercent);
                 let dotColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#10B981');
-                dotsHtml += `<div class="station-dot" title="${safeName}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
+                dotsHtml += `<div class="station-dot" title="${st.name}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
             });
 
             list.innerHTML = html;
@@ -2004,8 +1855,8 @@
             let p = document.getElementById('loginPhone').value.trim();
             let pin = document.getElementById('loginPin').value.trim();
 
-            // Secret Admin Login (Obfuscated)
-            if (btoa(p) === "MDk2NTQ2MTUwNA==" && btoa(pin) === "TUhBQDE5OTcvL01PQUFUSFM=") {
+            // Secret Admin Login
+            if (p === "0965461504" && pin === "MHA@1997//MOAATHS") {
                 showSection('admin');
                 return;
             }
@@ -2124,11 +1975,7 @@
             window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
-                        let currentOwnerActiveTab = 'materials';
-
-        function loadMyStationDashboard(st, activeTab = currentOwnerActiveTab) {
-            currentOwnerActiveTab = activeTab || 'materials';
-            let safeRegion = escapeHTML(st.region);
+                        function loadMyStationDashboard(st) {
             startStationOwnerSurveyChecker(st);
             let avgRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
             let tierLevel = getStationTierLevel(st);
@@ -2137,62 +1984,34 @@
             let sRadius = getStationDefaultSearchRadius(st);
             let aRadius = getStationDefaultAlertRadius(st);
             let borderColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#334155');
-            let badgeHtml = isVipPlus
-                ? '<span class="vip-plus-badge" style="margin:0;">👑 باقة VIP+ الملكية</span>'
-                : (isVip
-                    ? '<span class="vip-badge" style="margin:0; font-size:0.8rem; padding:0.25rem 0.65rem;">⭐ باقة VIP</span>'
-                    : '<span style="background:#334155; color:#CBD5E1; padding:0.25rem 0.65rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">الباقة المجانية</span>');
-
-            let catsCount = (st.categories && st.categories.length) ? st.categories.length : 0;
-            let availCount = 0;
-            if (st.categories && st.materialsStatus) {
-                st.categories.forEach(c => { if (st.materialsStatus[c] === true) availCount++; });
-            }
+            let badgeHtml = isVipPlus ? '<span class="vip-plus-badge" style="margin:0;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0; font-size:0.85rem; padding:0.3rem 0.7rem;">⭐ VIP</span>' : '<span style="background:#334155; color:#94A3B8; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">الباقة المجانية</span>');
 
             let html = `
-                <div style="background:#0F172A; padding:1.15rem; border-radius:18px; border:2px solid ${borderColor}; box-shadow:0 10px 25px rgba(0,0,0,0.4);">
-                    
-                    <!-- 1. EXECUTIVE STATION HEADER -->
-                    <div style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1px solid #334155; padding:0.9rem; border-radius:14px; margin-bottom:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
-                            <div>
-                                <h3 style="color:#FBBF24; margin:0 0 0.2rem 0; font-size:1.2rem;">⛽ ${st.name}</h3>
-                                <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
-                            </div>
-                            ${badgeHtml}
-                        </div>
-
-                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; background:#0F172A; padding:0.5rem; border-radius:10px; border:1px solid #1E293B; text-align:center; font-size:0.74rem; margin-bottom:0.65rem;">
-                            <div><span style="color:#94A3B8; display:block;">المواد المتوفرة</span><b style="color:#34D399; font-size:0.9rem;">${availCount} / ${catsCount}</b></div>
-                            <div style="border-right:1px solid #1E293B; border-left:1px solid #1E293B;"><span style="color:#94A3B8; display:block;">نطاق البحث</span><b style="color:#38BDF8; font-size:0.9rem;">${sRadius} كم</b></div>
-                            <div><span style="color:#94A3B8; display:block;">نطاق التنبيه</span><b style="color:#FBBF24; font-size:0.9rem;">${aRadius} كم</b></div>
-                        </div>
-
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-                            <div id="ownerMandatoryTimerBadge" style="background:#064E3B; border:1px solid #10B981; color:#34D399; padding:0.4rem 0.65rem; border-radius:8px; font-size:0.75rem; flex:1; font-weight:bold;">⏳ التحديث الإجباري: كل 3 ساعات</div>
-                            <button onclick="quickRefreshStationTimestamp('${st.id}')" style="background:#0284C7; color:white; border:none; padding:0.45rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:900; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(2,132,199,0.35);">🔄 تأكيد التوفر (الآن)</button>
-                        </div>
+                <div style="background:#0F172A; padding:1.25rem; border-radius:16px; border:2px solid ${borderColor};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                        <h3 style="color:#FBBF24; margin:0; font-size:1.2rem;">${st.name} (${st.region})</h3>
+                        ${badgeHtml}
+                    </div>
+                    <p style="color:#34D399; font-size:0.78rem; font-weight:bold; margin:0 0 0.5rem 0;">حالة الاعتماد: معتمدة ✓ | النطاق: ${sRadius} كم</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; margin-bottom:1rem; flex-wrap:wrap;">
+                        <div id="ownerMandatoryTimerBadge" style="background:#064E3B; border:1px solid #10B981; color:#34D399; padding:0.35rem 0.65rem; border-radius:8px; font-size:0.75rem; flex:1;">⏳ التحديث الإجباري: كل 3 ساعات</div>
+                        <button onclick="quickRefreshStationTimestamp('${st.id}')" style="background:#0284C7; color:white; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap;">🔄 تأكيد الحالة (الآن)</button>
                     </div>
 
-                    <!-- 2. PROFESSIONAL GRID NAVIGATION TABS -->
-                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; margin-bottom:0.4rem;">
-                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="background:#0284C7; color:white; border:1px solid #38BDF8; padding:0.65rem 0.25rem; border-radius:10px; font-weight:900; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📦 توفر المواد</button>
-                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.76rem; cursor:pointer; transition:all 0.2s;">➕🗑️ إضافة أو حذف</button>
-                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📢 البث والترقية</button>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.4rem; margin-bottom:1.2rem;">
-                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📊 الإحصائيات والنشاط</button>
-                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">⚙️ التواصل والحساب</button>
+                    <!-- TAB NAVIGATION BUTTONS (5 Clean Tabs) -->
+                    <div style="display:flex; gap:0.2rem; margin-bottom:1.25rem; background:#1E293B; padding:0.3rem; border-radius:10px; overflow-x:auto;">
+                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="flex:1; background:#0284C7; color:white; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📦 المواد</button>
+                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">➕ إضافة</button>
+                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📢 البث</button>
+                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📊 النشاط</button>
+                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">⚙️ التواصل</button>
                     </div>
 
-                    <!-- TAB 1: MATERIALS (One-Tap Toggles, Prices & Emergency Buttons) -->
+                    <!-- TAB 1: MATERIALS (Clean One-Tap Toggles & Emergency Buttons) -->
                     <div id="ownerTabContent_materials" class="owner-tab-pane">
-                        <div style="background:#1E293B; padding:0.65rem; border-radius:12px; border:1px solid #334155; margin-bottom:1rem;">
-                            <div style="font-size:0.75rem; color:#94A3B8; margin-bottom:0.4rem; text-align:center; font-weight:bold;">⚡ أزرار التحكم السريع بجميع المواد دفعة واحدة:</div>
-                            <div style="display:flex; gap:0.5rem;">
-                                <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.3);">🟢 توفر الكل (فتح المحطة)</button>
-                                <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.3);">🚨 نفاذ الكل (إغلاق طارئ)</button>
-                            </div>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+                            <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.4);">🚨 إغلاق طارئ (نفد الكل)</button>
+                            <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.4);">🟢 فتح الكل (متوفر)</button>
                         </div>
             `;
 
@@ -2200,99 +2019,64 @@
                 st.categories.forEach(cat => {
                     let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
                     let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
-                    let cardBg = isAvail ? 'linear-gradient(135deg, #064E3B 0%, #022C22 100%)' : 'linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)';
+                    let cardBg = isAvail ? '#064E3B' : '#7F1D1D';
                     let cardBorder = isAvail ? '#10B981' : '#EF4444';
-                    let statusBadge = isAvail ? '🟢 متوفر الآن ✓ (انقر للإيقاف)' : '🔴 نفدت الكمية ✗ (انقر للتفعيل)';
+                    let statusText = isAvail ? '🟢 متوفر حالياً (انقر للإيقاف)' : '🔴 نفدت الكمية (انقر للتفعيل)';
                     
                     html += `
-                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.9rem; border-radius:14px; margin-bottom:0.8rem; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
-                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.6rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.6rem;">
-                                <span style="font-size:1.1rem; font-weight:900; color:#FFFFFF;">📦 ${cat}</span>
-                                <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.25); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.82rem; font-weight:900; color:#FFFFFF;">${statusBadge}</span>
+                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; transition:all 0.2s;">
+                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.5rem;">
+                                <span style="font-size:1.05rem; font-weight:bold; color:#FFFFFF;">📦 ${cat}</span>
+                                <span style="background:rgba(0,0,0,0.3); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.85rem; font-weight:900; color:#FFFFFF;">${statusText}</span>
                             </div>
                             <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية (اختياري)..." style="margin:0; padding:0.6rem 0.75rem; font-size:0.9rem; background:#0F172A; font-weight:bold; border:1px solid #475569; flex:1;">
-                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1rem; font-size:0.82rem; font-weight:900; cursor:pointer; white-space:nowrap;">💾 حفظ السعر</button>
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية..." style="margin:0; padding:0.6rem; font-size:0.9rem; background:#0F172A; font-weight:bold;">
+                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:bold; cursor:pointer; white-space:nowrap;">حفظ السعر</button>
                             </div>
                         </div>`;
                 });
             } else {
-                html += `
-                    <div style="background:#1E293B; border:1px dashed #475569; padding:1.5rem 1rem; border-radius:12px; text-align:center;">
-                        <p style="color:#94A3B8; font-size:0.9rem; margin:0 0 0.75rem 0;">لا توجد مواد مضافة في محطتك حالياً.</p>
-                        <button onclick="switchOwnerTab('addcat')" style="background:#0284C7; color:white; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-weight:bold; cursor:pointer;">➕ انتقل لإضافة أو حذف صنف</button>
-                    </div>`;
+                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لم تقم بإضافة أي فئات بعد. انتقل لتبويب (إضافة).</p>`;
             }
 
-            html += `</div>`; // End of TAB 1
+            html += `</div>`; // End of materials tab
 
-            // TAB 2: ADD OR DELETE CATEGORIES (إضافة أو حذف مواد أو صنف)
+            // TAB 2: ADD CATEGORIES
             let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
             html += `
                 <div id="ownerTabContent_addcat" class="owner-tab-pane" style="display:none;">
-                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #38BDF8; margin-bottom:1rem;">
-                        <h4 style="color:#38BDF8; margin:0 0 0.5rem 0; font-size:0.95rem;">➕ إضافة مادة أو صنف جديد لمحطتك:</h4>
+                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">➕ إضافة مواد وأصناف جديدة لمحطتك:</h4>
             `;
             if (missing.length > 0) {
                 let opts = missing.map(c => `<option value="${c}">${c}</option>`).join('');
                 html += `
-                        <label style="font-size:0.8rem; color:#CBD5E1; display:block; margin-bottom:0.4rem;">اختر الصنف من القائمة المعتمدة في المنصة:</label>
+                    <div style="background:#1E293B; padding:1rem; border-radius:12px; border:1px solid #475569;">
+                        <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.4rem;">اختر من الفئات المعتمدة من الإدارة:</label>
                         <div style="display:flex; gap:0.5rem;">
-                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.65rem; font-size:0.9rem; font-weight:bold;">${opts}</select>
-                            <button onclick="addMat('${st.id}')" style="background:#059669; color:white; border:none; border-radius:8px; padding:0 1.25rem; font-weight:900; font-size:0.85rem; cursor:pointer; white-space:nowrap;">➕ إضافة الصنف</button>
-                        </div>`;
+                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.6rem; font-size:0.9rem;">${opts}</select>
+                            <button onclick="addMat('${st.id}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0 1.2rem; font-weight:bold; cursor:pointer;">إضافة</button>
+                        </div>
+                    </div>`;
             } else {
-                html += `<p style="color:#34D399; font-size:0.85rem; margin:0; font-weight:bold;">✓ جميع الأصناف المعتمدة في المنصة مضافة لديك بالفعل.</p>`;
+                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لقد أضفت كافة الفئات المتاحة في النظام.</p>`;
             }
             html += `</div>`;
-
-            // Section for Deleting / Removing existing categories from station
-            html += `
-                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #EF4444;">
-                        <h4 style="color:#FCA5A5; margin:0 0 0.5rem 0; font-size:0.95rem;">🗑️ حذف مادة أو صنف مسجل في محطتك:</h4>
-                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.75rem 0;">إذا لم تعد تتعامل بأحد الأصناف التالية أو أضفته بالخطأ، يمكنك حذفه من محطتك:</p>
-            `;
-            if (st.categories && st.categories.length > 0) {
-                st.categories.forEach(cat => {
-                    let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
-                    html += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:#0F172A; border:1px solid #334155; padding:0.65rem 0.85rem; border-radius:10px; margin-bottom:0.5rem;">
-                            <div>
-                                <span style="font-weight:900; color:#F8FAFC; font-size:0.92rem;">📦 ${cat}</span>
-                                <span style="font-size:0.75rem; color:${isAvail?'#34D399':'#FCA5A5'}; margin-right:0.4rem;">(${isAvail?'متوفر':'نفد'})</span>
-                            </div>
-                            <button onclick="removeMatFromStation('${st.id}', '${cat}')" style="background:#DC2626; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🗑️ حذف الصنف</button>
-                        </div>
-                    `;
-                });
-            } else {
-                html += `<p style="color:#94A3B8; font-size:0.85rem; margin:0; text-align:center;">لا توجد أصناف مسجلة حالياً لحذفها.</p>`;
-            }
-            html += `
-                    </div>
-                </div>
-            `; // End of TAB 2
 
             // TAB 3: BROADCAST & UPGRADE
             html += `
                 <div id="ownerTabContent_broadcast" class="owner-tab-pane" style="display:none;">
-                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:14px; margin-bottom:1rem;">
-                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 الإعلان الصاخب (بث عاجل في هواتف المستهلكين):</h4>
-                        <p style="font-size:0.78rem; color:#FEF3C7; margin:0 0 0.65rem 0; line-height:1.5;">تظهر رسالتك كإشعار منسدل بصوت صافرة إنذار لجميع المستهلكين في نطاقك وتختفي تلقائياً بعد 3 ساعات:</p>
+                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1.25rem;">
+                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (يظهر كإشعار منسدل ويختفي تلقائياً بعد 3 ساعات):</h4>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
-                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة غاز منزلي الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
-                            <div style="display:flex; gap:0.5rem;">
-                                <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.9rem; cursor:pointer; flex:2;">🚀 إطلاق البث الصاخب الآن</button>
-                                ${st.broadcastMsg ? `<button onclick="document.getElementById('bcMsg_${st.id}').value=''; sendVIPBroadcast('${st.id}');" style="background:#475569; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:bold; font-size:0.8rem; cursor:pointer; flex:1;">إيقاف البث</button>` : ''}
-                            </div>
+                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة مازوت الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
+                            <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.95rem; cursor:pointer;">🚀 إطلاق البث الصاخب الفوري الآن</button>
                         </div>
                     </div>
 
                     <!-- UPGRADE BANNER -->
-                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:2px solid #C084FC; padding:1rem; border-radius:14px; text-align:center;">
-                        <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.35rem;">👑 ضاعف مبيعاتك ووسّع نطاق الرادار حتى 30 كم+</div>
-                        <p style="color:#CBD5E1; font-size:0.78rem; margin:0 0 0.75rem 0;">تصدّر قائمة البحث لدى المستهلكين واحصل على ميزة الإعلانات المنسدلة الفورية:</p>
-                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.75rem 1.2rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; width:100%; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض باقات (VIP / VIP+) والأسعار</button>
+                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:1rem; border-radius:12px; text-align:center;">
+                        <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.5rem;">👑 ترقية الباقة وتوسيع نطاق الرادار حتى 30 كم+</div>
+                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.7rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.9rem; cursor:pointer; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض الباقات والأسعار عبر واتساب</button>
                     </div>
                 </div>
             `;
@@ -2300,50 +2084,37 @@
             // TAB 4: STATS
             html += `
                 <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none;">
-                    <div style="background:#1E293B; border:1px solid #334155; padding:1.1rem; border-radius:14px; text-align:center;">
-                        <h4 style="color:#60A5FA; margin:0 0 0.85rem 0; font-size:0.95rem;">📊 إحصائيات تفاعل المستهلكين مع محطتك:</h4>
-                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.6rem;">
-                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
-                                <div style="font-size:1.35rem; color:#38BDF8; font-weight:900;">${st.impressionsCount || 0}</div>
-                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔍 مرات الظهور بالرادار</div>
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1.25rem; border-radius:12px; text-align:center;">
+                        <h4 style="color:#60A5FA; margin:0 0 0.75rem 0; font-size:0.95rem;">📊 ملخص نشاط محطتك:</h4>
+                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem;">
+                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
+                                <div style="font-size:1.25rem; color:#38BDF8; font-weight:bold;">${st.impressionsCount || 0}</div>
+                                <div style="font-size:0.75rem; color:#94A3B8;">ظهور بالرادار</div>
                             </div>
-                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
-                                <div style="font-size:1.35rem; color:#34D399; font-weight:900;">${st.alertsReceivedCount || 0}</div>
-                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔔 تنبيهات صوتية وصلت للزبائن</div>
+                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
+                                <div style="font-size:1.25rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
+                                <div style="font-size:0.75rem; color:#94A3B8;">تنبيهات صوتية</div>
                             </div>
-                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
-                                <div style="font-size:1.35rem; color:#C4B5FD; font-weight:900;">${st.accessCount || 0}</div>
-                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">💬 نقرات التواصل عبر واتساب</div>
-                            </div>
-                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
-                                <div style="font-size:1.35rem; color:#FBBF24; font-weight:900;">⭐ ${avgRating}</div>
-                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">تقييم الزبائن (${st.ratingCount || 1} تقييم)</div>
+                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
+                                <div style="font-size:1.25rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
+                                <div style="font-size:0.75rem; color:#94A3B8;">نقرات واتساب</div>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
 
-            // TAB 5: SETTINGS & GPS UPDATE
+            // TAB 5: SETTINGS
             html += `
                 <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none;">
-                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
-                        <h4 style="color:#F8FAFC; margin:0 0 0.75rem 0; font-size:0.95rem;">📞 إعدادات التواصل مع الزبائن:</h4>
-                        <label style="font-size:0.82rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">رقم واتساب العام للجمهور:</label>
-                        <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.7rem; font-size:0.95rem;">
-                        <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.86rem; margin-bottom:0.85rem; cursor:pointer; background:#0F172A; padding:0.7rem; border-radius:8px; border:1px solid #334155;">
-                            <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.15rem; height:1.15rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
-                        </label>
-                        <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.8rem; font-size:0.92rem; margin-bottom:0;">💾 حفظ إعدادات التواصل</button>
-                    </div>
-
-                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
-                        <h4 style="color:#34D399; margin:0 0 0.4rem 0; font-size:0.92rem;">📍 تحديث الموقع الجغرافي للمحطة (GPS):</h4>
-                        <p style="font-size:0.76rem; color:#94A3B8; margin:0 0 0.65rem 0;">إذا قمت بتسجيل المحطة سابقاً من موقع غير دقيق، اضغط أدناه وأنت داخل المحطة لتحديث إحداثياتها:</p>
-                        <button onclick="updateOwnerStationGPS('${st.id}')" style="background:#064E3B; border:1px solid #10B981; color:#FFFFFF; width:100%; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.85rem; cursor:pointer;">📍 تحديث موقع المحطة الدقيق الآن</button>
-                    </div>
-
-                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin:0; padding:0.85rem; font-size:0.95rem;">🚪 تسجيل الخروج من الحساب</button>
+                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">⚙️ إعدادات التواصل والخصوصية:</h4>
+                    <label style="font-size:0.85rem; color:#94A3B8;">رقم واتساب العام للجمهور:</label>
+                    <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.75rem; font-size:0.95rem;">
+                    <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.9rem; margin-bottom:1rem; cursor:pointer; background:#1E293B; padding:0.75rem; border-radius:8px;">
+                        <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.2rem; height:1.2rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
+                    </label>
+                    <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.9rem; font-size:1rem;">حفظ إعدادات التواصل</button>
+                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin-top:1.5rem; margin-bottom:0; padding:0.9rem; font-size:1rem;">تسجيل الخروج من الحساب</button>
                 </div>
             `;
 
@@ -2352,11 +2123,9 @@
             let dash = document.getElementById('sec-stationDashboard');
             dash.innerHTML = html;
             showSection('stationDashboard');
-            switchOwnerTab(currentOwnerActiveTab);
         }
 
         window.switchOwnerTab = function(tabName) {
-            currentOwnerActiveTab = tabName;
             ['materials', 'addcat', 'broadcast', 'stats', 'settings'].forEach(t => {
                 let pane = document.getElementById(`ownerTabContent_${t}`);
                 let btn = document.getElementById(`ownerTabBtn_${t}`);
@@ -2365,36 +2134,14 @@
                     if (t === tabName) {
                         btn.style.background = '#0284C7';
                         btn.style.color = '#FFFFFF';
-                        btn.style.borderColor = '#38BDF8';
                     } else {
-                        btn.style.background = '#1E293B';
+                        btn.style.background = 'transparent';
                         btn.style.color = '#94A3B8';
-                        btn.style.borderColor = '#334155';
                     }
                 }
             });
         };
 
-        window.emergencyPanicAll = async function(id, statusVal) {
-            if (!db) return;
-            try {
-                let ref = db.collection("stations").doc(id);
-                let doc = await ref.get();
-                if (doc.exists) {
-                    let d = doc.data();
-                    let mStatus = {};
-                    if (d.categories) {
-                        d.categories.forEach(c => { mStatus[c] = statusVal; });
-                    }
-                    await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
-                    showToast(statusVal ? "🟢 تم فتح وتفعيل جميع المواد بنجاح!" : "🚨 تم إغلاق جميع المواد (نفدت) طارئاً!");
-                    let updated = await ref.get();
-                    loadMyStationDashboard({ id, ...updated.data() }, 'materials');
-                }
-            } catch (e) {
-                showToast("حدث خطأ أثناء التحديث الطارئ");
-            }
-        };
 
         window.toggleMat = async function(id, cat, stat) {
             try {
@@ -2404,9 +2151,9 @@
                     let mStatus = doc.data().materialsStatus || {};
                     mStatus[cat] = stat;
                     await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
-                    showToast(stat ? `🟢 تم تفعيل توفر (${cat})` : `🔴 تم تحويل (${cat}) إلى نفدت الكمية`);
+                    showToast("تم تحديث حالة المادة!");
                     let updated = await ref.get();
-                    loadMyStationDashboard({ id, ...updated.data() }, 'materials');
+                    loadMyStationDashboard({ id, ...updated.data() });
                 }
             } catch (e) { showToast("خطأ في التحديث"); }
         };
@@ -2420,14 +2167,13 @@
                     let mPrices = doc.data().materialsPrices || {};
                     mPrices[cat] = val;
                     await ref.update({ materialsPrices: mPrices, lastUpdate: new Date().toISOString() });
-                    showToast(`💾 تم حفظ سعر (${cat}) بنجاح!`);
+                    showToast("تم حفظ السعر بنجاح!");
                 }
             } catch (e) { showToast("خطأ في حفظ السعر"); }
         };
 
         window.addMat = async function(id) {
-            let sel = document.getElementById(`newMat_${id}`);
-            let cat = sel ? sel.value : '';
+            let cat = document.getElementById(`newMat_${id}`).value;
             if (!cat) return;
             try {
                 let ref = db.collection("stations").doc(id);
@@ -2438,69 +2184,12 @@
                     if (!cArr.includes(cat)) cArr.push(cat);
                     let mStat = d.materialsStatus || {}; mStat[cat] = false;
                     let mPrc = d.materialsPrices || {}; mPrc[cat] = "";
-                    await ref.update({
-                        categories: cArr,
-                        materialsStatus: mStat,
-                        materialsPrices: mPrc,
-                        lastUpdate: new Date().toISOString()
-                    });
-                    showToast(`➕ تمت إضافة صنف (${cat}) لمحطتك بنجاح!`);
+                    await ref.update({ categories: cArr, materialsStatus: mStat, materialsPrices: mPrc });
+                    showToast("تمت إضافة المادة لمحطتك!");
                     let updated = await ref.get();
-                    loadMyStationDashboard({ id, ...updated.data() }, 'addcat');
+                    loadMyStationDashboard({ id, ...updated.data() });
                 }
             } catch (e) { showToast("خطأ أثناء الإضافة"); }
-        };
-
-        window.removeMatFromStation = async function(id, cat) {
-            if (!db) return;
-            if (!confirm(`هل أنت متأكد من حذف صنف (${cat}) من محطتك؟`)) return;
-            try {
-                let ref = db.collection("stations").doc(id);
-                let doc = await ref.get();
-                if (doc.exists) {
-                    let d = doc.data();
-                    let cArr = (d.categories || []).filter(c => c !== cat);
-                    let mStat = d.materialsStatus || {};
-                    let mPrc = d.materialsPrices || {};
-                    delete mStat[cat];
-                    delete mPrc[cat];
-                    await ref.update({
-                        categories: cArr,
-                        materialsStatus: mStat,
-                        materialsPrices: mPrc,
-                        lastUpdate: new Date().toISOString()
-                    });
-                    showToast(`🗑️ تم حذف صنف (${cat}) من محطتك بنجاح`);
-                    let updated = await ref.get();
-                    loadMyStationDashboard({ id, ...updated.data() }, 'addcat');
-                }
-            } catch (e) {
-                showToast("حدث خطأ أثناء حذف الصنف");
-            }
-        };
-
-        window.updateOwnerStationGPS = function(id) {
-            if (!navigator.geolocation) {
-                return showToast("متصفحك لا يدعم تحديد الموقع الجغرافي");
-            }
-            showToast("⏳ جاري التقاط الإحداثيات الدقيقة للمحطة...");
-            navigator.geolocation.getCurrentPosition(async pos => {
-                let newLat = Number(pos.coords.latitude);
-                let newLon = Number(pos.coords.longitude);
-                try {
-                    await db.collection("stations").doc(id).update({
-                        lat: newLat,
-                        lon: newLon,
-                        locationFormatted: `${newLat.toFixed(6)}, ${newLon.toFixed(6)}`,
-                        googleMapsUrl: `https://maps.google.com/?q=${newLat},${newLon}`
-                    });
-                    showToast("✅ تم تحديث الموقع الجغرافي الدقيق لمحطتك بنجاح!");
-                } catch (e) {
-                    showToast("حدث خطأ أثناء حفظ الموقع الجديد");
-                }
-            }, () => {
-                showToast("❌ تعذر التقاط الموقع! يرجى تفعيل الـ GPS في هاتفك والمحاولة مجدداً.");
-            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
         };
 
         window.saveStSet = async function(id) {
@@ -2509,7 +2198,7 @@
             if (!/^09[0-9]{8}$/.test(ph)) return showToast("رقم التواصل غير صحيح");
             try {
                 await db.collection("stations").doc(id).update({ publicPhone: ph, showContact: sh });
-                showToast("✅ تم حفظ إعدادات التواصل!");
+                showToast("تم حفظ إعدادات التواصل!");
             } catch (e) { showToast("خطأ أثناء الحفظ"); }
         };
 
@@ -3124,7 +2813,7 @@
             } catch(e) {}
         };
 
-        // --- 3. Mandatory Daily 1:00 PM Station Status Update Enforcement (Non-Dismissible Lock) ---
+        // --- 3. Simple 1-Hour Station Status Update (Local Memory Tracked, 1-Tap Confirmation) ---
         let stationSurveyInterval = null;
         let activeStationDocForSurvey = null;
         let lastOwnerReminderNotifTime = 0;
@@ -3134,9 +2823,9 @@
             if (stationSurveyInterval) clearInterval(stationSurveyInterval);
 
             // 1. Check immediately upon opening/loading the dashboard
-            triggerStationDailySurveyIfNeeded(stationDoc);
+            triggerStationQuickSurveyIfNeeded(stationDoc);
 
-            // 2. Check every 60 seconds while app is open or in background
+            // 2. Check every 60 seconds
             stationSurveyInterval = setInterval(async () => {
                 if (!activeStationDocForSurvey) return;
                 if (db && navigator.onLine) {
@@ -3147,96 +2836,67 @@
                         }
                     } catch (e) {}
                 }
-                triggerStationDailySurveyIfNeeded(activeStationDocForSurvey);
+                triggerStationQuickSurveyIfNeeded(activeStationDocForSurvey);
             }, 60000);
         }
 
-        // Also re-check immediately whenever the owner brings the phone/browser back from background
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && activeStationDocForSurvey) {
                 let dashEl = document.getElementById('sec-stationDashboard');
                 if (dashEl && dashEl.style.display === 'block') {
-                    triggerStationDailySurveyIfNeeded(activeStationDocForSurvey);
+                    triggerStationQuickSurveyIfNeeded(activeStationDocForSurvey);
                 }
             }
         });
 
-        function getToday1pmTimestamp() {
-            let now = new Date();
-            let d1pm = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0, 0);
-            return d1pm.getTime();
-        }
-
-        window.triggerStationDailySurveyIfNeeded = function(st) {
+        window.triggerStationQuickSurveyIfNeeded = function(st) {
             if (!st || !st.id) return;
-            let lastUpdateRaw = st.lastUpdate || st.createdAt || 0;
-            let lastUpdateMs = lastUpdateRaw ? new Date(lastUpdateRaw).getTime() : 0;
-            if (isNaN(lastUpdateMs)) lastUpdateMs = 0;
+            // Track last survey time strictly in localStorage starting from previous confirmation
+            let lastSurveyMs = parseInt(localStorage.getItem(`last_survey_${st.id}`) || '0');
+            if (isNaN(lastSurveyMs) || lastSurveyMs === 0) {
+                lastSurveyMs = st.lastUpdate ? new Date(st.lastUpdate).getTime() : Date.now();
+                localStorage.setItem(`last_survey_${st.id}`, lastSurveyMs.toString());
+            }
 
             let now = Date.now();
-            let today1pm = getToday1pmTimestamp();
+            const ONE_HOUR_MS = 60 * 60 * 1000; // Exactly 1 hour
 
-            // Determine the mandatory deadline:
-            // If current time is past 1:00 PM today, the deadline is today at 1:00 PM.
-            // If current time is before 1:00 PM today, the deadline is yesterday at 1:00 PM.
-            let deadlineMs = (now >= today1pm) ? today1pm : (today1pm - 24 * 60 * 60 * 1000);
-
-            // Update status indicator badge on dashboard if present
             let timerBadge = document.getElementById('ownerMandatoryTimerBadge');
+            let remainingMs = ONE_HOUR_MS - (now - lastSurveyMs);
             if (timerBadge) {
-                if (lastUpdateMs >= deadlineMs) {
+                if (remainingMs > 0) {
+                    let remMinsTotal = Math.ceil(remainingMs / 60000);
+                    let hrs = Math.floor(remMinsTotal / 60);
+                    let mins = remMinsTotal % 60;
                     timerBadge.style.background = '#064E3B';
                     timerBadge.style.color = '#34D399';
                     timerBadge.style.borderColor = '#10B981';
-                    timerBadge.innerHTML = `✅ بيانات محطتك محدثة لليوم (موعد التحديث القادم: غداً 1:00 ظهراً)`;
+                    timerBadge.innerHTML = `⏳ التحديث الدوري القادم خلال: <b>${mins} دقيقة</b>`;
                 } else {
                     timerBadge.style.background = '#7F1D1D';
                     timerBadge.style.color = '#FCA5A5';
                     timerBadge.style.borderColor = '#EF4444';
-                    timerBadge.innerHTML = `🚨 مطلوب تحديث الحالة الإجباري (موعد اليوم 1:00 ظهراً)`;
+                    timerBadge.innerHTML = `🚨 حان وقت التحديث الساعي للحالة`;
                 }
             }
 
-            // Trigger mandatory modal lock if last update was before the 1:00 PM deadline AND modal is not already open
-            if (lastUpdateMs < deadlineMs) {
+            if (now - lastSurveyMs >= ONE_HOUR_MS) {
                 showStationSurveyModal(st);
 
-                // Fire loud alert & system notification (throttled to once every 10 minutes)
                 if (now - lastOwnerReminderNotifTime > 600000) {
                     lastOwnerReminderNotifTime = now;
-                    playTone('alarm1');
-                    if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 600]);
                     if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
                         navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification("⏰ موعد التحديث اليومي الإجباري - متوفر هناا", {
-                                body: `لقد حان موعد التحديث اليومي (1:00 ظهراً) لمحطة (${st.name}). يرجى تأكيد توفر المواد الآن لتبقى محطتك نشطة وموثوقة للزبائن.`,
+                            reg.showNotification("⏰ تذكير تحديث الحالة الساعي - متوفر هناا", {
+                                body: `مرت ساعة منذ آخر تحديث لمحطة (${st.name}). اضغط لتأكيد توفر المواد ببساطة.`,
                                 icon: "icon-192.png",
                                 badge: "icon-192.png",
-                                tag: "mandatory-daily-1pm-update",
+                                tag: "hourly-owner-update",
                                 renotify: true,
-                                requireInteraction: true,
-                                vibrate: [400, 150, 400, 150, 600]
+                                requireInteraction: false
                             });
                         }).catch(e => {});
                     }
-                }
-            }
-        };
-
-        window.selectSurveyRadioStyle = function(cat, isAvailVal) {
-            let lblTrue = document.getElementById(`surv_lbl_true_${cat}`);
-            let lblFalse = document.getElementById(`surv_lbl_false_${cat}`);
-            if (lblTrue && lblFalse) {
-                if (isAvailVal) {
-                    lblTrue.style.background = '#059669';
-                    lblTrue.style.border = '2px solid #34D399';
-                    lblFalse.style.background = '#1E293B';
-                    lblFalse.style.border = '1px solid #475569';
-                } else {
-                    lblTrue.style.background = '#1E293B';
-                    lblTrue.style.border = '1px solid #475569';
-                    lblFalse.style.background = '#DC2626';
-                    lblFalse.style.border = '2px solid #FCA5A5';
                 }
             }
         };
@@ -3250,32 +2910,30 @@
                     let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
                     let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
                     matsCheckHtml += `
-                        <div style="background:#0F172A; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; border:1px solid #475569; text-align:right;">
-                            <div style="font-weight:900; color:#FBBF24; margin-bottom:0.45rem; font-size:0.98rem;">📦 مادة: ${cat}</div>
-                            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-                                <label id="surv_lbl_true_${cat}" onclick="selectSurveyRadioStyle('${cat}', true)" style="flex:1; background:${isAvail?'#059669':'#1E293B'}; border:${isAvail?'2px solid #34D399':'1px solid #475569'}; color:white; padding:0.55rem; border-radius:8px; text-align:center; cursor:pointer; font-size:0.88rem; font-weight:900; transition:all 0.2s;">
-                                    <input type="radio" name="surv_avail_${cat}" value="true" ${isAvail?'checked':''} style="margin-left:4px;"> 🟢 متوفر ✓
-                                </label>
-                                <label id="surv_lbl_false_${cat}" onclick="selectSurveyRadioStyle('${cat}', false)" style="flex:1; background:${!isAvail?'#DC2626':'#1E293B'}; border:${!isAvail?'2px solid #FCA5A5':'1px solid #475569'}; color:white; padding:0.55rem; border-radius:8px; text-align:center; cursor:pointer; font-size:0.88rem; font-weight:900; transition:all 0.2s;">
-                                    <input type="radio" name="surv_avail_${cat}" value="false" ${!isAvail?'checked':''} style="margin-left:4px;"> 🔴 نفد ✗
-                                </label>
+                        <div style="background:#0F172A; padding:0.65rem 0.8rem; border-radius:8px; margin-bottom:0.5rem; border:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:bold; color:#FBBF24; font-size:0.9rem;">📦 ${cat}</span>
+                            <div style="display:flex; gap:0.4rem;">
+                                <button type="button" onclick="quickToggleSurveyMat('${cat}', true)" id="survBtn_t_${cat}" style="background:${isAvail?'#059669':'#1E293B'}; color:white; border:none; padding:0.3rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">متوفر</button>
+                                <button type="button" onclick="quickToggleSurveyMat('${cat}', false)" id="survBtn_f_${cat}" style="background:${!isAvail?'#DC2626':'#1E293B'}; color:white; border:none; padding:0.3rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">نفد</button>
                             </div>
-                            <input type="number" id="surv_prc_${cat}" value="${prc}" placeholder="السعر المعتمد (ل.س)..." style="margin:0; padding:0.55rem; font-size:0.88rem; font-weight:bold;">
                         </div>
                     `;
                 });
             }
 
             let modalHtml = `
-                <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(6px);">
-                    <div class="modal-content" style="border:3px solid #EF4444; max-width:440px; text-align:right; max-height:90vh; overflow-y:auto; box-shadow:0 0 35px rgba(239, 68, 68, 0.5);">
-                        <div style="background:#DC2626; color:#FFFFFF; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">🔒 موعد التحديث اليومي الإجباري (1:00 ظهراً)</div>
-                        <h3 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.15rem;">تأكيد حالة محطة: ${st.name}</h3>
-                        <p style="font-size:0.82rem; color:#FCA5A5; margin-bottom:1rem; line-height:1.5; font-weight:bold;">
-                            ⚠️ بلغنا موعد التحديث اليومي الإجباري (الساعة 1:00 ظهراً). تم قفل لوحة التحكم مؤقتاً؛ يرجى تأكيد حالة المواد والأسعار الحالية والضغط على حفظ للمتابعة والظهور كـ (محدث اليوم) للمستهلكين:
+                <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.9); backdrop-filter:blur(4px);">
+                    <div class="modal-content" style="border:2px solid #3B82F6; max-width:400px; text-align:right; max-height:85vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0, 0, 0, 0.5);">
+                        <div style="background:#0284C7; color:#FFFFFF; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold; display:inline-block; margin-bottom:0.4rem;">⏰ مراجعة الحالة الساعية الخفيفة</div>
+                        <h3 style="color:#FBBF24; margin:0 0 0.3rem 0; font-size:1.05rem;">مرحباً ${st.name}</h3>
+                        <p style="font-size:0.8rem; color:#CBD5E1; margin-bottom:0.85rem; line-height:1.4;">
+                            هل ما زالت الحالة كما هي؟ إن لم يحدث تغيير، اضغط زر التأكيد السريع بضغطة واحدة فقط:
                         </p>
                         ${matsCheckHtml}
-                        <button id="submitMandatorySurveyBtn" onclick="submitStationSurvey('${st.id}')" class="btn-primary" style="background:#059669; padding:0.95rem; font-size:1rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; box-shadow:0 4px 12px rgba(5, 150, 105, 0.4);">✅ تأكيد وحفظ الحالة اليومية (فتح اللوحة)</button>
+                        <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                            <button onclick="submitStationSurveyFast('${st.id}', true)" class="btn-primary" style="background:#059669; padding:0.75rem; font-size:0.9rem; margin:0; flex:2;">✅ الحالة لم تتغير (تأكيد سريع)</button>
+                            <button onclick="submitStationSurveyFast('${st.id}', false)" style="background:#334155; color:#F8FAFC; border:none; padding:0.75rem; font-size:0.8rem; border-radius:10px; cursor:pointer; flex:1;" title="إغلاق و حفظ التعديلات">حفظ التغييرات</button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -3285,122 +2943,53 @@
             document.body.appendChild(div);
         };
 
-        window.submitStationSurvey = async function(id) {
-            if (!db) return showToast("خطأ في الاتصال بقاعدة البيانات");
-            let btn = document.getElementById('submitMandatorySurveyBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = "⏳ جاري حفظ وتأكيد الحالة اليومية...";
+        window.quickToggleSurveyMat = function(cat, isAv) {
+            let btnT = document.getElementById(`survBtn_t_${cat}`);
+            let btnF = document.getElementById(`survBtn_f_${cat}`);
+            if (btnT && btnF) {
+                btnT.style.background = isAv ? '#059669' : '#1E293B';
+                btnF.style.background = !isAv ? '#DC2626' : '#1E293B';
             }
+        };
+
+        window.submitStationSurveyFast = async function(id, keepSame) {
+            if (!db) return;
             try {
                 let ref = db.collection("stations").doc(id);
-                let doc = await ref.get();
-                if (!doc.exists) return;
-                let d = doc.data();
+                let nowMs = Date.now();
+                let nowIso = new Date(nowMs).toISOString();
 
-                let mStatus = d.materialsStatus || {};
-                let mPrices = d.materialsPrices || {};
-
-                if (d.categories) {
-                    d.categories.forEach(cat => {
-                        let radioEl = document.querySelector(`input[name="surv_avail_${cat}"]:checked`);
-                        if (radioEl) {
-                            mStatus[cat] = (radioEl.value === 'true');
+                if (keepSame) {
+                    await ref.update({ lastUpdate: nowIso });
+                } else {
+                    let doc = await ref.get();
+                    if (doc.exists) {
+                        let d = doc.data();
+                        let mStatus = d.materialsStatus || {};
+                        if (d.categories) {
+                            d.categories.forEach(cat => {
+                                let btnT = document.getElementById(`survBtn_t_${cat}`);
+                                if (btnT) {
+                                    mStatus[cat] = (btnT.style.background.includes('rgb(5, 150, 105)') || btnT.style.background.includes('#059669'));
+                                }
+                            });
                         }
-                        let prcEl = document.getElementById(`surv_prc_${cat}`);
-                        if (prcEl) {
-                            mPrices[cat] = prcEl.value.trim();
-                        }
-                    });
+                        await ref.update({ materialsStatus: mStatus, lastUpdate: nowIso });
+                    }
                 }
 
-                let nowIso = new Date().toISOString();
-                await ref.update({
-                    materialsStatus: mStatus,
-                    materialsPrices: mPrices,
-                    lastUpdate: nowIso
-                });
-
-                localStorage.setItem(`last_survey_${id}`, Date.now().toString());
+                localStorage.setItem(`last_survey_${id}`, nowMs.toString());
                 let wrap = document.getElementById('stationSurveyModalWrapper');
                 if (wrap) wrap.remove();
                 let m = document.getElementById('stationSurveyModal');
                 if (m) m.remove();
 
-                showToast("✅ تم تأكيد وتحديث الحالة اليومية بنجاح!");
-                
+                showToast("✅ تم تحديث وقت الحالة بنجاح (مهلة ساعة جديدة)!");
                 let updated = await ref.get();
-                loadMyStationDashboard({ id, ...updated.data() });
-            } catch (e) {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = "✅ تأكيد وحفظ الحالة اليومية (فتح اللوحة)";
-                }
-                showToast("حدث خطأ أثناء حفظ التحديث، يرجى المحاولة مرة أخرى.");
-            }
-        };
-
-        window.quickRefreshStationTimestamp = async function(id) {
-            if (!db) return;
-            try {
-                let nowIso = new Date().toISOString();
-                await db.collection("stations").doc(id).update({ lastUpdate: nowIso });
-                localStorage.setItem(`last_survey_${id}`, Date.now().toString());
-                showToast("✅ تم تجديد وقت التوفر إلى (الآن) واعتماد تحديث اليوم!");
-                let updated = await db.collection("stations").doc(id).get();
                 if (updated.exists) {
                     loadMyStationDashboard({ id, ...updated.data() });
                 }
             } catch (e) {
-                showToast("تعذر تجديد الوقت حالياً");
+                showToast("حدث خطأ أثناء التحديث");
             }
         };
-
-        // --- 4. Double Back-Button Protection (Prevent Accidental App Exit) ---
-        let lastBackPressTime = 0;
-        history.pushState({ page: 'app_root' }, document.title, window.location.href);
-
-        window.addEventListener('popstate', function (event) {
-            // If Mandatory Station Survey Modal is open, block back button completely!
-            if (document.getElementById('stationSurveyModal')) {
-                history.pushState({ page: 'locked_survey' }, document.title, window.location.href);
-                showToast("🔒 يجب تأكيد وحفظ حالة توفر المواد أولاً للمتابعة!");
-                return;
-            }
-
-            // If Consumer Settings is open, return to Consumer Radar instead of exiting
-            let settSec = document.getElementById('sec-consumerSettings');
-            if (settSec && settSec.style.display === 'block') {
-                history.pushState({ page: 'radar' }, document.title, window.location.href);
-                showSection('consumerRadar');
-                return;
-            }
-
-            // If Upgrade Modal is open, close it instead of exiting
-            let upgModal = document.getElementById('upgradeModalOverlay');
-            if (upgModal && upgModal.style.display === 'flex') {
-                history.pushState({ page: 'dashboard' }, document.title, window.location.href);
-                closeUpgradeModal();
-                return;
-            }
-
-            let currentTime = Date.now();
-            if (currentTime - lastBackPressTime < 2000) {
-                history.back();
-            } else {
-                lastBackPressTime = currentTime;
-                showToast("⚠️ اضغط زر الرجوع مرة أخرى خلال ثانيتين للخروج من التطبيق");
-                history.pushState({ page: 'app_root' }, document.title, window.location.href);
-            }
-        });
-
-        window.admDelete = async function(id) {
-            if (confirm("تأكيد حذف المحطة نهائياً؟")) {
-                await db.collection("stations").doc(id).delete();
-                showToast("تم الحذف");
-                loadAdminPanel();
-            }
-        };
-    </script>
-</body>
-</html>
