@@ -1012,13 +1012,7 @@
                             }
                         });
                     } else {
-                        let defaults = ["بنزين", "مازوت", "غاز منزلي"];
                         availableCategories = [];
-                        for (let cat of defaults) {
-                            let ref = await db.collection("categories").add({ name: cat });
-                            availableCategories.push(cat);
-                            categoryDocs[cat] = ref.id;
-                        }
                     }
                 } catch (err) {}
             }
@@ -2002,7 +1996,7 @@
                     </div>
                     <p style="color:#34D399; font-size:0.78rem; font-weight:bold; margin:0 0 0.5rem 0;">حالة الاعتماد: معتمدة ✓ | النطاق: ${sRadius} كم</p>
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; margin-bottom:1rem; flex-wrap:wrap;">
-                        <div id="ownerMandatoryTimerBadge" style="background:#064E3B; border:1px solid #10B981; color:#34D399; padding:0.35rem 0.65rem; border-radius:8px; font-size:0.75rem; flex:1;">⏳ التحديث الإجباري: كل 3 ساعات</div>
+                        <div id="ownerMandatoryTimerBadge" style="background:#064E3B; border:1px solid #10B981; color:#34D399; padding:0.35rem 0.65rem; border-radius:8px; font-size:0.75rem; flex:1;">⏳ التحديث الإجباري: كل ساعة</div>
                         <button onclick="quickRefreshStationTimestamp('${st.id}')" style="background:#0284C7; color:white; border:none; padding:0.4rem 0.7rem; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap;">🔄 تأكيد الحالة (الآن)</button>
                     </div>
 
@@ -2860,35 +2854,40 @@
 
         window.triggerStationQuickSurveyIfNeeded = function(st) {
             if (!st || !st.id) return;
-            // Use the cloud `lastUpdate` timestamp (or fallback to `createdAt`) so owner cannot bypass by clearing local cache
+            
+            // الأولوية لتاريخ آخر تحديث في السحابة، وإذا لم يتوفر نأخذ المخزن محلياً
             let lastUpdateRaw = st.lastUpdate || st.createdAt || 0;
             let lastUpdateMs = lastUpdateRaw ? new Date(lastUpdateRaw).getTime() : 0;
-            if (isNaN(lastUpdateMs)) lastUpdateMs = 0;
+            let localUpdateMs = parseInt(localStorage.getItem(`last_survey_${st.id}`) || '0');
+            
+            // استخدام التوقيت الأحدث (سواء من السحابة أو محلياً) كمرجعية لبدء العد لتفادي اختلاف توقيت الأجهزة
+            let effectiveLastUpdateMs = Math.max(lastUpdateMs, localUpdateMs);
+            if (isNaN(effectiveLastUpdateMs) || effectiveLastUpdateMs === 0) effectiveLastUpdateMs = Date.now();
 
             let now = Date.now();
-            const THREE_HOURS_MS = 3 * 60 * 60 * 1000; // 10,800,000 ms
+            const ONE_HOUR_MS = 60 * 60 * 1000; // 3,600,000 ms (ساعة واحدة)
 
             // Update countdown indicator on dashboard if present
             let timerBadge = document.getElementById('ownerMandatoryTimerBadge');
-            let remainingMs = THREE_HOURS_MS - (now - lastUpdateMs);
+            let remainingMs = ONE_HOUR_MS - (now - effectiveLastUpdateMs);
+            
             if (timerBadge) {
                 if (remainingMs > 0) {
                     let remMinsTotal = Math.ceil(remainingMs / 60000);
-                    let hrs = Math.floor(remMinsTotal / 60);
                     let mins = remMinsTotal % 60;
                     timerBadge.style.background = '#064E3B';
                     timerBadge.style.color = '#34D399';
                     timerBadge.style.borderColor = '#10B981';
-                    timerBadge.innerHTML = `⏳ التحديث الإجباري القادم بعد: <b>${hrs} س و ${mins} د</b>`;
+                    timerBadge.innerHTML = `⏳ التحديث الإجباري القادم بعد: <b>${mins} دقيقة</b>`;
                 } else {
                     timerBadge.style.background = '#7F1D1D';
                     timerBadge.style.color = '#FCA5A5';
                     timerBadge.style.borderColor = '#EF4444';
-                    timerBadge.innerHTML = `🚨 انتهت مهلة الـ 3 ساعات! يجب تحديث الحالة الآن`;
+                    timerBadge.innerHTML = `🚨 انتهت مهلة الساعة! يجب تحديث الحالة الآن`;
                 }
             }
 
-            if (now - lastUpdateMs >= THREE_HOURS_MS) {
+            if (now - effectiveLastUpdateMs >= ONE_HOUR_MS) {
                 showStationSurveyModal(st);
 
                 // Fire loud alert & dropdown system notification (throttled to once every 10 minutes if ignored in background)
@@ -2899,7 +2898,7 @@
                     if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
                         navigator.serviceWorker.ready.then(reg => {
                             reg.showNotification("⏰ تحديث إجباري لحالة المحطة - متوفر هناا", {
-                                body: `مضى أكثر من 3 ساعات على آخر تحديث لمحطة (${st.name}). يرجى تأكيد توفر المواد الآن لبقاء محطتك نشطة في الرادار.`,
+                                body: `مضت ساعة كاملة على آخر تحديث لمحطة (${st.name}). يرجى تأكيد توفر المواد الآن لبقاء محطتك نشطة في الرادار.`,
                                 icon: "icon-192.png",
                                 badge: "icon-192.png",
                                 tag: "mandatory-owner-update",
@@ -2959,14 +2958,23 @@
 
             let modalHtml = `
                 <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(6px);">
-                    <div class="modal-content" style="border:3px solid #EF4444; max-width:440px; text-align:right; max-height:90vh; overflow-y:auto; box-shadow:0 0 35px rgba(239, 68, 68, 0.5);">
-                        <div style="background:#DC2626; color:#FFFFFF; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">🔒 تحديث إجباري مطلوب (كل 3 ساعات)</div>
-                        <h3 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.15rem;">تأكيد حالة محطة: ${st.name}</h3>
-                        <p style="font-size:0.82rem; color:#FCA5A5; margin-bottom:1rem; line-height:1.5; font-weight:bold;">
-                            ⚠️ مضى أكثر من 3 ساعات على آخر تحديث. تم قفل لوحة التحكم مؤقتاً؛ يرجى تأكيد حالة المواد الحالية والضغط على حفظ للمتابعة والظهور كـ (محدث الآن) للمستهلكين:
+                    <div class="modal-content" style="border:3px solid #F59E0B; max-width:440px; text-align:right; max-height:90vh; overflow-y:auto; box-shadow:0 0 35px rgba(245, 158, 11, 0.5);">
+                        <div style="background:#D97706; color:#FFFFFF; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:900; display:inline-block; margin-bottom:0.5rem;">⏱️ تحديث دوري إجباري (كل ساعة)</div>
+                        <h3 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.15rem;">تحديث سريع لمحطة: ${st.name}</h3>
+                        <p style="font-size:0.82rem; color:#E2E8F0; margin-bottom:1rem; line-height:1.5;">
+                            مضت ساعة على آخر تحديث لحالة محطتك. لضمان مصداقية الرادار للمستهلكين، يرجى تأكيد الحالة الحالية:
                         </p>
+                        
+                        <!-- 1-Click Fast Confirm Button (If nothing changed) -->
+                        <button onclick="quickRefreshStationTimestamp('${st.id}')" class="btn-primary" style="background:#059669; width:100%; padding:1rem; font-size:1rem; font-weight:900; margin-bottom:1rem; box-shadow:0 4px 12px rgba(5, 150, 105, 0.5); border:2px solid #34D399; cursor:pointer;">✅ الحالة مطابقة للواقع (تأكيد بضغطة واحدة)</button>
+                        
+                        <div style="text-align:center; color:#94A3B8; font-size:0.8rem; margin-bottom:1rem; position:relative;">
+                            <hr style="border-color:#334155; position:absolute; width:100%; top:50%; z-index:-1; margin:0;">
+                            <span style="background:#1E293B; padding:0 10px;">أو تعديل التوفر والأسعار يدوياً</span>
+                        </div>
+
                         ${matsCheckHtml}
-                        <button id="submitMandatorySurveyBtn" onclick="submitStationSurvey('${st.id}')" class="btn-primary" style="background:#059669; padding:0.95rem; font-size:1rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; box-shadow:0 4px 12px rgba(5, 150, 105, 0.4);">✅ تأكيد وحفظ الحالة الآن (فتح اللوحة)</button>
+                        <button id="submitMandatorySurveyBtn" onclick="submitStationSurvey('${st.id}')" class="btn-secondary" style="background:#0284C7; padding:0.85rem; font-size:0.95rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; cursor:pointer;">💾 حفظ التعديلات الجديدة</button>
                     </div>
                 </div>
             `;
@@ -2981,7 +2989,7 @@
             let btn = document.getElementById('submitMandatorySurveyBtn');
             if (btn) {
                 btn.disabled = true;
-                btn.textContent = "⏳ جاري حفظ وتأكيد الحالة...";
+                btn.textContent = "⏳ جاري حفظ التعديلات...";
             }
             try {
                 let ref = db.collection("stations").doc(id);
@@ -3006,44 +3014,54 @@
                 }
 
                 let nowIso = new Date().toISOString();
+                let nowMs = Date.now();
                 await ref.update({
                     materialsStatus: mStatus,
                     materialsPrices: mPrices,
                     lastUpdate: nowIso
                 });
 
-                localStorage.setItem(`last_survey_${id}`, Date.now().toString());
+                localStorage.setItem(`last_survey_${id}`, nowMs.toString());
                 let wrap = document.getElementById('stationSurveyModalWrapper');
                 if (wrap) wrap.remove();
                 let m = document.getElementById('stationSurveyModal');
                 if (m) m.remove();
 
-                showToast("✅ تم تأكيد وتحديث حالة المحطة لمدة 3 ساعات قادمة!");
+                showToast("✅ تم تحديث بيانات المحطة وتمديد المهلة لمدة ساعة قادمة!");
                 
                 let updated = await ref.get();
                 loadMyStationDashboard({ id, ...updated.data() });
             } catch (e) {
                 if (btn) {
                     btn.disabled = false;
-                    btn.textContent = "✅ تأكيد وحفظ الحالة الآن (فتح اللوحة)";
+                    btn.textContent = "💾 حفظ التعديلات الجديدة";
                 }
                 showToast("حدث خطأ أثناء حفظ التحديث، يرجى المحاولة مرة أخرى.");
             }
         };
 
         window.quickRefreshStationTimestamp = async function(id) {
-            if (!db) return;
+            if (!db) return showToast("خطأ في الاتصال");
+            
+            // Fast UI resolution to prevent user waiting
+            let wrap = document.getElementById('stationSurveyModalWrapper');
+            if (wrap) wrap.remove();
+            let m = document.getElementById('stationSurveyModal');
+            if (m) m.remove();
+            showToast("✅ تم تأكيد الحالة (لا يوجد تغيير) وتجديد الوقت بنجاح!");
+
             try {
                 let nowIso = new Date().toISOString();
+                let nowMs = Date.now();
                 await db.collection("stations").doc(id).update({ lastUpdate: nowIso });
-                localStorage.setItem(`last_survey_${id}`, Date.now().toString());
-                showToast("✅ تم تجديد وقت التوفر إلى (الآن) وتمديد المهلة 3 ساعات!");
+                localStorage.setItem(`last_survey_${id}`, nowMs.toString());
+                
                 let updated = await db.collection("stations").doc(id).get();
                 if (updated.exists) {
                     loadMyStationDashboard({ id, ...updated.data() });
                 }
             } catch (e) {
-                showToast("تعذر تجديد الوقت حالياً");
+                showToast("تعذر تجديد الوقت السحابي، تحقق من الإنترنت.");
             }
         };
 
