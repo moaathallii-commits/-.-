@@ -1,4 +1,4 @@
-const CACHE_NAME = 'motofer-hna-v3';
+const CACHE_NAME = 'motaofer-hina-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -7,7 +7,6 @@ const ASSETS_TO_CACHE = [
     './firebase-config.js'
 ];
 
-// تثبيت مسجل الخدمة وحفظ الملفات الأساسية
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -17,7 +16,6 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// تفعيل وتحديث الكاش القديم
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -33,7 +31,6 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// هذا الحدث (fetch) إجباري جداً لظهور زر التثبيت PWA في كروم
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(event.request).catch(() => {
