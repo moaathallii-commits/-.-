@@ -1,4 +1,4 @@
-const CACHE_NAME = 'motofer-hna-v2';
+const CACHE_NAME = 'motofer-hna-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
