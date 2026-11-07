@@ -1,8 +1,23 @@
-const firebaseConfig = {
-  apiKey: "AIzaSyCGbp7GwcE1ELk3PH2FMpvMQJ_KLliZg2s",
-  authDomain: "motaofer.firebaseapp.com",
-  projectId: "motaofer",
-  storageBucket: "motaofer.firebasestorage.app",
-  messagingSenderId: "59793803045",
-  appId: "1:59793803045:web:2ab6c2c2091568bbc83ccc"
-};
+{
+  "name": "متوفر هناا",
+  "short_name": "متوفر هناا",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#1E293B",
+  "orientation": "portrait",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
