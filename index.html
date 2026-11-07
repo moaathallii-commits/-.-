@@ -8,16 +8,12 @@
     <link rel="manifest" href="manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js')
-                .then(function(registration) {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
                     registration.update();
-                })
-                .catch(function(err) {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
+                }
             });
+            navigator.serviceWorker.register('sw.js').catch(function(e){});
         }
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -410,4 +406,6 @@
 
         <!-- 3. Consumer Settings -->
         <section id="sec-consumerSettings" class="app-section">
-            <h2 style="margin-top:0; color:
+            <h2 style="margin-top:0; color:#FBBF24;">⚙️ إعدادات الرادار والتنبيه</h2>
+            
+            <div id="notifPermissionBox" style="background:#451A03; border:1px solid #D97706; padding:0.85rem; border-radius:10px; ma
