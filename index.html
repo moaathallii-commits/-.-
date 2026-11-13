@@ -674,6 +674,45 @@
 
             <input type="text" id="adminSearchInput" oninput="filterAdminList()" placeholder="🔍 ابحث عن محطة بالاسم، المنطقة أو الهاتف...">
 
+            
+            <div style="background:#1E293B; border:1px solid #38BDF8; padding:1.25rem; border-radius:12px; margin-bottom:1.5rem;">
+                <h3 style="color:#38BDF8; margin-top:0; font-size:1.05rem;">➕ إضافة واعتماد محطة جديدة (صلاحية الإدارة)</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                    <div>
+                        <label style="font-size:0.75rem; color:#94A3B8;">اسم المحطة:</label>
+                        <input type="text" id="admNewStName" placeholder="مثال: الأمان" style="margin-bottom:0;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:#94A3B8;">المنطقة:</label>
+                        <input type="text" id="admNewStRegion" placeholder="المنطقة..." style="margin-bottom:0;">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                    <div>
+                        <label style="font-size:0.75rem; color:#94A3B8;">رقم الدخول (09...):</label>
+                        <input type="text" id="admNewStPhone" placeholder="09..." maxlength="10" style="margin-bottom:0;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:#94A3B8;">الرمز السري:</label>
+                        <input type="text" id="admNewStPin" placeholder="الرمز..." style="margin-bottom:0;">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
+                    <div>
+                        <label style="font-size:0.75rem; color:#34D399; font-weight:bold;">خط العرض (Latitude) - اختياري:</label>
+                        <input type="number" id="admNewStLat" placeholder="مثال: 35.123456" step="any" style="margin-bottom:0;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:#34D399; font-weight:bold;">خط الطول (Longitude) - اختياري:</label>
+                        <input type="number" id="admNewStLon" placeholder="مثال: 36.123456" step="any" style="margin-bottom:0;">
+                    </div>
+                </div>
+                <label style="font-size:0.75rem; color:#94A3B8; display:block; margin-bottom:0.4rem;">اختر الفئات للمحطة الجديدة:</label>
+                <div id="admNewStCatsContainer" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; background:#0F172A; padding:0.6rem; border-radius:8px; border:1px solid #475569;">
+                </div>
+                <button onclick="adminAddNewStationAction()" style="background:#0284C7; color:white; border:none; width:100%; padding:0.85rem; border-radius:10px; font-weight:900; cursor:pointer; font-size:0.9rem;">➕ إضافة المحطة واعتمادها فوراً</button>
+            </div>
+
             <h3 style="font-size: 1rem; color:#FBBF24; margin-bottom:0.5rem;">إدارة طلبات ومحطات السحابة</h3>
             <div id="adminCloudList"></div>
         </section>
@@ -727,22 +766,117 @@
             showToast("⚠️ انقطع الاتصال بالإنترنت - وضع التصفح المحلي");
         });
 
-        // --- PWA Install Prompt ---
-        let deferredPrompt;
+        // --- PWA Install Prompt & First-Launch Popup ---
+        let deferredPrompt = null;
+
+        function isAppRunningStandalone() {
+            return (window.matchMedia('(display-mode: standalone)').matches) || (window.navigator.standalone === true);
+        }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             const installBtn = document.getElementById('installBtn');
-            if (installBtn) {
+            if (installBtn && !isAppRunningStandalone()) {
                 installBtn.style.display = 'block';
-                installBtn.onclick = async () => {
-                    installBtn.style.display = 'none';
-                    deferredPrompt.prompt();
-                    await deferredPrompt.userChoice;
-                    deferredPrompt = null;
-                };
+                installBtn.onclick = () => triggerPwaInstallAction();
+            }
+            // If the first-launch install popup is already open, update its button state
+            const popupActionBtn = document.getElementById('pwaModalInstallNowBtn');
+            if (popupActionBtn) {
+                popupActionBtn.textContent = "📲 تثبيت التطبيق الآن (بضغطة واحدة)";
             }
         });
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            localStorage.setItem('pwa_installed_done', 'true');
+            const installBtn = document.getElementById('installBtn');
+            if (installBtn) installBtn.style.display = 'none';
+            let m = document.getElementById('firstLaunchInstallModal');
+            if (m) m.remove();
+            showToast("✅ تم تثبيت تطبيق (متوفر هناا) على شاشتك الرئيسية بنجاح!");
+        });
+
+        window.triggerPwaInstallAction = async function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const choiceResult = await deferredPrompt.userChoice;
+                if (choiceResult.outcome === 'accepted') {
+                    localStorage.setItem('pwa_installed_done', 'true');
+                    let m = document.getElementById('firstLaunchInstallModal');
+                    if (m) m.remove();
+                    checkAndRequestAllPermissionsOnFirstLaunch();
+                }
+                deferredPrompt = null;
+            } else {
+                // Fallback instructions if browser hasn't fired beforeinstallprompt yet or on iOS/Safari
+                let helpBox = document.getElementById('manualInstallGuideBox');
+                if (helpBox) {
+                    helpBox.style.display = 'block';
+                } else {
+                    showToast("📲 للتثبيت: افتح قائمة المتصفح (⋮) في الأعلى واختر (تثبيت التطبيق / الإضافة إلى الشاشة الرئيسية)");
+                }
+            }
+        };
+
+        window.dismissPwaInstallModal = function() {
+            localStorage.setItem('pwa_install_popup_seen', 'true');
+            let m = document.getElementById('firstLaunchInstallModal');
+            if (m) m.remove();
+            checkAndRequestAllPermissionsOnFirstLaunch();
+        };
+
+        function showFirstLaunchPwaInstallModalIfNeeded() {
+            // Do not show if already running as installed standalone app
+            if (isAppRunningStandalone() || localStorage.getItem('pwa_installed_done') === 'true') {
+                checkAndRequestAllPermissionsOnFirstLaunch();
+                return;
+            }
+
+            let hasSeenInstallPopup = localStorage.getItem('pwa_install_popup_seen');
+            if (!hasSeenInstallPopup) {
+                let existing = document.getElementById('firstLaunchInstallModal');
+                if (existing) return;
+
+                let isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+                let guideText = isIos
+                    ? `اضغط على زر المشاركة <b>(Share ⬆️)</b> في أسفل المتصفح ثم اختر <b>"إضافة إلى الصفحة الرئيسية" (Add to Home Screen ➕)</b>.`
+                    : `اضغط على زر خيارات المتصفح <b>(⋮)</b> في أعلى الشاشة ثم اختر <b>"تثبيت التطبيق" (Install App)</b> أو <b>"الإضافة إلى الشاشة الرئيسية"</b>.`;
+
+                let modalHtml = `
+                    <div id="firstLaunchInstallModal" class="modal-overlay" style="display:flex; z-index:26000; background:rgba(15, 23, 42, 0.92); backdrop-filter:blur(5px);">
+                        <div class="modal-content" style="border:2px solid #8B5CF6; max-width:420px; text-align:center; box-shadow:0 0 30px rgba(139, 92, 246, 0.4);">
+                            <div style="font-size:3rem; margin-bottom:0.3rem;">📲⛽</div>
+                            <h3 style="color:#FBBF24; margin:0 0 0.5rem 0; font-size:1.25rem;">تثبيت تطبيق "متوفر هناا"</h3>
+                            <p style="font-size:0.86rem; color:#CBD5E1; line-height:1.6; margin-bottom:1rem;">
+                                قم بتثبيت المنصة كتطبيق رسمي على شاشة هاتفك الرئيسية للوصول السريع الفوري، وتلقي إشعارات توفر المحروقات والغاز وصافرات الإنذار بالخلفية:
+                            </p>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.75rem; border-radius:10px; margin-bottom:1rem; text-align:right; font-size:0.8rem; color:#A7F3D0; line-height:1.7;">
+                                ✓ يفتح فوراً بضغطة واحدة بدون متصفح.<br>
+                                ✓ يعمل حتى عند ضعف الشبكة ويحفظ آخر البيانات.<br>
+                                ✓ يدعم إشعارات البث العاجل المنسدلة في الهاتف.
+                            </div>
+                            <div id="manualInstallGuideBox" style="display:${isIos ? 'block' : 'none'}; background:#451A03; border:1px solid #F59E0B; color:#FDE68A; padding:0.75rem; border-radius:10px; margin-bottom:1rem; font-size:0.8rem; line-height:1.6; text-align:right;">
+                                💡 <b>طريقة التثبيت السريع:</b><br>${guideText}
+                            </div>
+                            ${!isIos ? `
+                            <button id="pwaModalInstallNowBtn" onclick="triggerPwaInstallAction()" class="btn-primary" style="background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0.6rem; box-shadow:0 4px 14px rgba(139, 92, 246, 0.5);">
+                                📲 تثبيت التطبيق على الهاتف الآن
+                            </button>` : ''}
+                            <button onclick="dismissPwaInstallModal()" style="background:transparent; border:1px solid #475569; color:#94A3B8; width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.82rem; font-weight:bold;">
+                                المتابعة عبر المتصفح (تثبيت لاحقاً)
+                            </button>
+                        </div>
+                    </div>
+                `;
+                let div = document.createElement('div');
+                div.innerHTML = modalHtml;
+                document.body.appendChild(div.firstElementChild);
+            } else {
+                checkAndRequestAllPermissionsOnFirstLaunch();
+            }
+        }
 
         // --- Core Helpers ---
         function showToast(msg, duration = 3000) {
@@ -813,6 +947,19 @@
                 showToast("تعذر النسخ تلقائياً.");
             }
             document.body.removeChild(textArea);
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.toString().replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
         }
 
         function timeSince(dateString) {
@@ -943,7 +1090,7 @@
         // --- Initial Boot ---
         window.addEventListener('DOMContentLoaded', () => {
             updateNetworkStatusBar();
-            checkAndRequestAllPermissionsOnFirstLaunch();
+            showFirstLaunchPwaInstallModalIfNeeded();
 
             // 1. Show correct route immediately so screen is never blank
             let route = localStorage.getItem('app_route');
@@ -998,13 +1145,12 @@
 
         // --- Categories & Settings ---
         async function loadCategoriesAndInit() {
-            availableCategories = ["بنزين", "مازوت", "غاز منزلي"];
-            categoryDocs = {};
             if (db) {
                 try {
                     const snap = await db.collection("categories").get();
                     if (!snap.empty) {
                         availableCategories = [];
+                        categoryDocs = {};
                         snap.forEach(doc => {
                             let cName = doc.data().name;
                             if (cName) {
@@ -1012,6 +1158,14 @@
                                 categoryDocs[cName] = doc.id;
                             }
                         });
+                    } else {
+                        let defaults = ["بنزين", "مازوت", "غاز منزلي"];
+                        availableCategories = [];
+                        for (let cat of defaults) {
+                            let ref = await db.collection("categories").add({ name: cat });
+                            availableCategories.push(cat);
+                            categoryDocs[cat] = ref.id;
+                        }
                     }
                 } catch (err) {}
             }
@@ -1090,9 +1244,14 @@
                 if (!db) return [];
             }
             try {
-                const snap = await db.collection("stations").get();
+                const snap = await db.collection("stations").where("status", "==", "approved").get();
                 allStations = [];
-                snap.forEach(doc => allStations.push({ id: doc.id, ...doc.data() }));
+                snap.forEach(doc => {
+                    let d = doc.data();
+                    // Security: Do not store pinCodes in global array
+                    delete d.pinCode;
+                    allStations.push({ id: doc.id, ...d });
+                });
                 try { localStorage.setItem('cached_stations_list', JSON.stringify(allStations)); } catch(e) {}
                 return allStations;
             } catch (e) {
@@ -1158,7 +1317,7 @@
 
         async function initConsumerSettingsState() {
             if (localStorage.getItem('bg_alarm_active') === null) {
-                localStorage.setItem('bg_alarm_active', 'true');
+                localStorage.setItem('bg_alarm_active', 'false');
             }
             let isBg = localStorage.getItem('bg_alarm_active') === 'true';
             let bgToggle = document.getElementById('bgAlarmToggle');
@@ -1219,7 +1378,29 @@
             showToast("تم حفظ الإعدادات");
         };
 
+                window.playRadarSearchSound = function() {
+            try {
+                let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                let now = ctx.currentTime;
+                // Radar sonar sweeps
+                for (let i = 0; i < 4; i++) {
+                    let osc = ctx.createOscillator();
+                    let gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450 + i * 180, now + i * 0.32);
+                    osc.frequency.exponentialRampToValueAtTime(1400, now + i * 0.32 + 0.28);
+                    gain.gain.setValueAtTime(0.25, now + i * 0.32);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.32 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + i * 0.32);
+                    osc.stop(now + i * 0.32 + 0.3);
+                }
+            } catch(e) {}
+        };
+
         window.activateRadar = async function() {
+            playRadarSearchSound();
             const btn = document.getElementById('radarBtn');
             const sweep = document.getElementById('radarSweep');
             const status = document.getElementById('radarStatusMsg');
@@ -1281,7 +1462,7 @@
             return 0;
         }
 
-        function renderConsumerStations(stations) {
+                        function renderConsumerStations(stations) {
             const list = document.getElementById('consumerStationsList');
             const dotsCont = document.getElementById('radarDotsContainer');
             if (!list || !dotsCont) return;
@@ -1324,7 +1505,7 @@
             let dotsHtml = '';
 
             if (topResults.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1rem; border-radius:12px;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
+                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.25rem; border-radius:14px; font-size:0.9rem;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
                 dotsCont.innerHTML = '';
                 return;
             }
@@ -1334,36 +1515,50 @@
                 let tierLevel = getStationTierLevel(st);
                 let isVipPlus = (tierLevel === 2);
                 let isVip = (tierLevel >= 1);
+                
+                // Security: Escape user inputs to prevent XSS
+                let safeName = escapeHTML(st.name);
+                let safeRegion = escapeHTML(st.region);
+                let safeBroadcast = escapeHTML(st.broadcastMsg);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
-                let vipBadge = isVipPlus ? `<div class="vip-plus-badge">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge">⭐ موزع معتمد VIP</div>` : '');
-                let distText = st.distance !== undefined ? `<p style="font-size:0.8rem; color:#38BDF8; margin: 0.25rem 0; font-weight:bold;">📍 المسافة: ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</p>` : '';
+                let vipBadge = isVipPlus ? `<div class="vip-plus-badge" style="margin-bottom:0.5rem;">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge" style="margin-bottom:0.5rem;">⭐ موزع معتمد VIP</div>` : '');
+                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.25rem 0.65rem; border-radius:8px; font-size:0.78rem; font-weight:bold; border:1px solid #334155; white-space:nowrap;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 let ratingCount = st.ratingCount || 1;
 
                 let broadcastHtml = '';
-                if (isVip && st.broadcastMsg) {
-                    let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
-                    let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
-                    broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${st.broadcastMsg}</span></div>`;
+                if (isVip && st.broadcastMsg && st.broadcastMsg.trim() !== '') {
+                    let updateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
+                    if (Date.now() - updateTime <= 10800000) {
+                        let bannerClass = isVipPlus ? 'vip-plus-broadcast-banner' : 'vip-broadcast-banner';
+                        let bannerIcon = isVipPlus ? '👑🚨 بث ملكي عاجل من المالك:' : '🚨📢 بث عاجل من المالك:';
+                        broadcastHtml = `<div class="${bannerClass}">${bannerIcon}<br><span style="color:#FFFFFF; font-size:0.95rem;">${safeBroadcast}</span></div>`;
+                    }
                 }
 
-                let locationCoordsHtml = '';
+                let locationNavBtn = '';
                 if (st.lat && st.lon) {
-                    locationCoordsHtml = `
-                        <div style="margin: 0.5rem 0;">
-                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:#0284C7; color:white; text-decoration:none; padding:0.6rem; border-radius:8px; font-weight:bold; font-size:0.85rem; box-shadow:0 2px 6px rgba(2,132,199,0.3);">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
+                    locationNavBtn = `
+                        <div style="margin: 0.75rem 0 0.5rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:white; text-decoration:none; padding:0.75rem; border-radius:12px; font-weight:900; font-size:0.92rem; box-shadow:0 4px 12px rgba(2,132,199,0.4); transition:transform 0.1s;">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
                         </div>`;
                 }
 
                 let matsHtml = '';
                 if (st.materialsStatus) {
                     for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
-                        let bBg = isAvail ? '#064E3B' : '#991B1B';
-                        let bCol = isAvail ? '#34D399' : '#FEE2E2';
-                        let txt = isAvail ? '🟢 متوفر الآن ✓' : '🔴 نفدت الكمية ✗';
-                        let prc = st.materialsPrices && st.materialsPrices[mat] ? ` | السعر: <b>${st.materialsPrices[mat]} ل.س</b>` : '';
-                        let ts = st.lastUpdate ? `<span style="font-size:0.7rem; opacity:0.85;">(${timeSince(st.lastUpdate)})</span>` : '';
-                        matsHtml += `<div style="background:${bBg}; color:${bCol}; padding:0.75rem 1rem; border-radius:10px; font-size:1.05rem; font-weight:900; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid ${isAvail?'#10B981':'#EF4444'};"><span>📦 ${mat}: <span style="font-size:1.15rem; letter-spacing:0.5px;">${txt}</span>${prc}</span> ${ts}</div>`;
+                        let safeMat = escapeHTML(mat);
+                        let safePrc = escapeHTML(st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] : '');
+                        let prcText = safePrc ? ` <span style="font-size:0.85rem; color:#FDE68A; font-weight:normal;">(${safePrc} ل.س)</span>` : '';
+                        let ts = st.lastUpdate ? `<span style="font-size:0.68rem; opacity:0.8; margin-right:auto;">(${timeSince(st.lastUpdate)})</span>` : '';
+
+                        if (isAvail) {
+                            // Available item: prominent green bar
+                            matsHtml += `<div style="background:linear-gradient(135deg, #064E3B 0%, #022C22 100%); color:#34D399; padding:0.75rem 1rem; border-radius:10px; font-size:1.02rem; font-weight:900; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #10B981; box-shadow:0 2px 6px rgba(16, 185, 129, 0.2);"><span>🟢 ${safeMat}: <b style="color:#FFFFFF;">متوفر</b>${prcText}</span> ${ts}</div>`;
+                        } else {
+                            // Unavailable item: subtle faded bar or hidden/compact
+                            matsHtml += `<div style="background:#172033; color:#94A3B8; padding:0.5rem 0.85rem; border-radius:10px; font-size:0.85rem; font-weight:600; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #334155; opacity:0.65;"><span>🔴 ${safeMat}: <span style="color:#EF4444;">نفد</span></span></div>`;
+                        }
                     }
                 }
 
@@ -1371,32 +1566,25 @@
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + st.name + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="flex:2; text-align:center; background:#25D366; color:white; padding:0.7rem; border-radius:10px; text-decoration:none; font-weight:bold; font-size:0.85rem;">💬 تواصل واتساب</a>`;
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="background:#25D366; color:white; padding:0.45rem 0.85rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.78rem; display:inline-flex; align-items:center; gap:0.3rem;">💬 تواصل</a>`;
                 }
-                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="flex:1; background:#334155; color:#F8FAFC; border:1px solid #475569; padding:0.7rem; border-radius:10px; font-weight:bold; font-size:0.82rem; cursor:pointer; white-space:nowrap;">📤 مشاركة التوفر</button>`;
-                let actionsRowHtml = `<div style="display:flex; gap:0.5rem; margin-top:0.75rem; align-items:center;">${waBtn}${shareBtn}</div>`;
+                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="background:#334155; color:#CBD5E1; border:1px solid #475569; padding:0.45rem 0.85rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📤 مشاركة</button>`;
+                let rateStarsHtml = `<span style="display:inline-flex; gap:0.15rem; margin-right:0.35rem;">${[1,2,3,4,5].map(n => `<button onclick="rateStation('${st.id}', ${n})" title="تقييم ${n}" style="background:#0F172A; color:#FBBF24; border:1px solid #334155; border-radius:4px; padding:0.1rem 0.3rem; font-size:0.68rem; cursor:pointer;">${n}★</button>`).join('')}</span>`;
+                let footerBarHtml = `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.08);"><div style="font-size:0.75rem; color:#F59E0B; display:flex; align-items:center;">⭐ <b>${currentRating}</b> (${ratingCount}) ${rateStarsHtml}</div><div style="display:flex; gap:0.4rem;">${waBtn}${shareBtn}</div></div>`;
 
                 html += `
-                    <div class="app-section ${cardClass}" style="display:block; padding:1.25rem; margin: 0 0 1rem 0;">
+                    <div class="app-section ${cardClass}" style="display:block; padding:1.15rem; margin: 0 0 1rem 0;">
                         ${vipBadge}
-                        <h4 style="color:#FBBF24; font-size:1.1rem; margin:0 0 0.2rem 0;">${st.name}</h4>
-                        <p style="font-size:0.8rem; color:#94A3B8; margin:0 0 0.25rem 0;">المنطقة: ${st.region}</p>
-                        ${distText}
-                        ${locationCoordsHtml}
-                        ${broadcastHtml}
-                        <div style="margin: 0.6rem 0;">${matsHtml}</div>
-                        <p style="font-size:0.8rem; color:#F59E0B; margin: 0.4rem 0;">⭐ التقييم العام: <b>${currentRating} / 5</b> (${ratingCount} تقييم)</p>
-                        <div style="background:#0F172A; padding:0.5rem; border-radius:8px; text-align:center;">
-                            <span style="font-size:0.75rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">قيّم هذه المحطة:</span>
-                            <div style="display:flex; justify-content:center; gap:0.3rem;">
-                                <button onclick="rateStation('${st.id}', 1)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐1</button>
-                                <button onclick="rateStation('${st.id}', 2)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐2</button>
-                                <button onclick="rateStation('${st.id}', 3)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐3</button>
-                                <button onclick="rateStation('${st.id}', 4)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐4</button>
-                                <button onclick="rateStation('${st.id}', 5)" style="background:#334155; color:white; border:none; padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer;">⭐5</button>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.2rem;">
+                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0; font-weight:900; letter-spacing:0.3px;">${safeName}</h4>
+                            ${distText}
                         </div>
-                        ${actionsRowHtml}
+                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.65rem 0;">📍 المنطقة: <b style="color:#E2E8F0;">${safeRegion}</b></p>
+                        
+                        ${broadcastHtml}
+                        <div style="margin: 0.5rem 0;">${matsHtml}</div>
+                        ${locationNavBtn}
+                        ${footerBarHtml}
                     </div>`;
 
                 // Plot Radar Dot
@@ -1407,7 +1595,7 @@
                 let top = 50 - (Math.cos(rad) * radiusPercent);
                 let left = 50 + (Math.sin(rad) * radiusPercent);
                 let dotColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#10B981');
-                dotsHtml += `<div class="station-dot" title="${st.name}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
+                dotsHtml += `<div class="station-dot" title="${safeName}" style="display:block; top:${top}%; left:${left}%; background:${dotColor}; box-shadow:0 0 10px ${dotColor};"></div>`;
             });
 
             list.innerHTML = html;
@@ -1519,7 +1707,7 @@
                             lastBroadcasts[bKey] = currentBcSignature;
                             broadcastChanged = true;
                             let distLabel = (uLat !== null && uLon !== null) ? ` (تبعد ${dist.toFixed(1)} كم)` : '';
-                            vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${st.name} - ${st.region}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${st.broadcastMsg}"</span>`);
+                            vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${escapeHTML(st.name)} - ${escapeHTML(st.region)}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${escapeHTML(st.broadcastMsg)}"</span>`);
                             batchUpdateIds.add(st.id);
                         }
                     }
@@ -1539,7 +1727,7 @@
                                         lastAlerts[stateKey] = isAvail;
                                         stateChanged = true;
                                         let statusMsg = isAvail ? "متوفرة الآن ✓" : "نفدت كميتها ✗";
-                                        alertsList.push(`⛽ محطة (${st.name}): مادة [${mat}] (${statusMsg}) - تبعد ${dist.toFixed(1)} كم`);
+                                        alertsList.push(`⛽ محطة (${escapeHTML(st.name)}): مادة [${escapeHTML(mat)}] (${statusMsg}) - تبعد ${dist.toFixed(1)} كم`);
                                         batchUpdateIds.add(st.id);
                                     }
                                 }
@@ -1831,7 +2019,8 @@
                     return;
                 }
                 if (stDoc.status === 'approved') {
-                    await loadMyStationDashboard(stDoc);
+                    hasShownWelcomeThisSession = false;
+                loadMyStationDashboard(stDoc);
                 } else if (stDoc.status === 'pending') {
                     currentStationIdForPending = stDoc.id;
                     showSection('stationPending');
@@ -1839,7 +2028,12 @@
             } catch (e) {}
         };
 
+        let hasShownWelcomeThisSession = false;
+
         window.logoutStationOwner = function() {
+            hasShownWelcomeThisSession = false;
+            let wrap = document.getElementById('stationWelcomeModalWrapper');
+            if (wrap) wrap.remove();
             localStorage.removeItem('saved_station_phone');
             localStorage.removeItem('saved_station_pin');
             document.getElementById('loginPhone').value = '';
@@ -1852,8 +2046,8 @@
             let p = document.getElementById('loginPhone').value.trim();
             let pin = document.getElementById('loginPin').value.trim();
 
-            // Secret Admin Login
-            if (p === "0965461504" && pin === "MHA@1997//MOAATHS") {
+            // Secret Admin Login (Obfuscated)
+            if (btoa(p) === "MDk2NTQ2MTUwNA==" && btoa(pin) === "TUhBQDE5OTcvL01PQUFUSFM=") {
                 showSection('admin');
                 return;
             }
@@ -1885,7 +2079,8 @@
                 localStorage.setItem('saved_station_pin', pin);
                 localStorage.removeItem('pending_station_id');
 
-                await loadMyStationDashboard(stDoc);
+                hasShownWelcomeThisSession = false;
+                loadMyStationDashboard(stDoc);
             } catch (e) {
                 showToast("خطأ في الاتصال بالسحابة");
             }
@@ -1972,9 +2167,20 @@
             window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
-                        async function loadMyStationDashboard(st) {
-            await loadCategoriesAndInit();
-            startStationOwnerSurveyChecker(st);
+                        let currentOwnerActiveTab = 'materials';
+
+        function loadMyStationDashboard(st, activeTab = currentOwnerActiveTab) {
+            currentOwnerActiveTab = activeTab || 'materials';
+            let safeName = escapeHTML(st.name);
+            let safeRegion = escapeHTML(st.region);
+            let safeBroadcast = escapeHTML(st.broadcastMsg || '');
+            let lastUpdText = st.lastUpdate ? timeSince(st.lastUpdate) : 'الآن';
+
+            if (!hasShownWelcomeThisSession) {
+                hasShownWelcomeThisSession = true;
+                showStationWelcomeUpdateModal(st);
+            }
+
             let avgRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
             let tierLevel = getStationTierLevel(st);
             let isVipPlus = (tierLevel === 2);
@@ -1982,30 +2188,62 @@
             let sRadius = getStationDefaultSearchRadius(st);
             let aRadius = getStationDefaultAlertRadius(st);
             let borderColor = isVipPlus ? '#C084FC' : (isVip ? '#FBBF24' : '#334155');
-            let badgeHtml = isVipPlus ? '<span class="vip-plus-badge" style="margin:0;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0; font-size:0.85rem; padding:0.3rem 0.7rem;">⭐ VIP</span>' : '<span style="background:#334155; color:#94A3B8; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">الباقة المجانية</span>');
+            let badgeHtml = isVipPlus
+                ? '<span class="vip-plus-badge" style="margin:0;">👑 باقة VIP+ الملكية</span>'
+                : (isVip
+                    ? '<span class="vip-badge" style="margin:0; font-size:0.8rem; padding:0.25rem 0.65rem;">⭐ باقة VIP</span>'
+                    : '<span style="background:#334155; color:#CBD5E1; padding:0.25rem 0.65rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">الباقة المجانية</span>');
+
+            let catsCount = (st.categories && st.categories.length) ? st.categories.length : 0;
+            let availCount = 0;
+            if (st.categories && st.materialsStatus) {
+                st.categories.forEach(c => { if (st.materialsStatus[c] === true) availCount++; });
+            }
 
             let html = `
-                <div style="background:#0F172A; padding:1.25rem; border-radius:16px; border:2px solid ${borderColor};">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                        <h3 style="color:#FBBF24; margin:0; font-size:1.2rem;">${st.name} (${st.region})</h3>
-                        ${badgeHtml}
-                    </div>
-                    <p style="color:#34D399; font-size:0.78rem; font-weight:bold; margin:0 0 1rem 0;">حالة الاعتماد: معتمدة ✓ | النطاق: ${sRadius} كم</p>
+                <div style="background:#0F172A; padding:1.15rem; border-radius:18px; border:2px solid ${borderColor}; box-shadow:0 10px 25px rgba(0,0,0,0.4);">
+                    
+                    <!-- 1. EXECUTIVE STATION HEADER -->
+                    <div style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1px solid #334155; padding:0.9rem; border-radius:14px; margin-bottom:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
+                            <div>
+                                <h3 style="color:#FBBF24; margin:0 0 0.2rem 0; font-size:1.2rem;">⛽ ${safeName}</h3>
+                                <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
+                            </div>
+                            ${badgeHtml}
+                        </div>
 
-                    <!-- TAB NAVIGATION BUTTONS (5 Clean Tabs) -->
-                    <div style="display:flex; gap:0.2rem; margin-bottom:1.25rem; background:#1E293B; padding:0.3rem; border-radius:10px; overflow-x:auto;">
-                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="flex:1; background:#0284C7; color:white; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📦 المواد</button>
-                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">➕ إضافة</button>
-                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📢 البث</button>
-                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">📊 النشاط</button>
-                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="flex:1; background:transparent; color:#94A3B8; border:none; padding:0.55rem 0.2rem; border-radius:8px; font-weight:bold; font-size:0.75rem; cursor:pointer; white-space:nowrap;">⚙️ التواصل</button>
+                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; background:#0F172A; padding:0.5rem; border-radius:10px; border:1px solid #1E293B; text-align:center; font-size:0.74rem; margin-bottom:0.65rem;">
+                            <div><span style="color:#94A3B8; display:block;">المواد المتوفرة</span><b style="color:#34D399; font-size:0.9rem;">${availCount} / ${catsCount}</b></div>
+                            <div style="border-right:1px solid #1E293B; border-left:1px solid #1E293B;"><span style="color:#94A3B8; display:block;">نطاق البحث</span><b style="color:#38BDF8; font-size:0.9rem;">${sRadius} كم</b></div>
+                            <div><span style="color:#94A3B8; display:block;">نطاق التنبيه</span><b style="color:#FBBF24; font-size:0.9rem;">${aRadius} كم</b></div>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                            <div id="ownerMandatoryTimerBadge" style="background:#064E3B; border:1px solid #10B981; color:#34D399; padding:0.4rem 0.65rem; border-radius:8px; font-size:0.75rem; flex:1; font-weight:bold;">✅ آخر تحديث للحالة: <b>${lastUpdText}</b></div>
+                            <button onclick="quickRefreshStationTimestamp('${st.id}')" style="background:#0284C7; color:white; border:none; padding:0.45rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:900; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(2,132,199,0.35);">🔄 تأكيد التوفر (الآن)</button>
+                        </div>
                     </div>
 
-                    <!-- TAB 1: MATERIALS (Clean One-Tap Toggles & Emergency Buttons) -->
+                    <!-- 2. PROFESSIONAL GRID NAVIGATION TABS -->
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; margin-bottom:0.4rem;">
+                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="background:#0284C7; color:white; border:1px solid #38BDF8; padding:0.65rem 0.25rem; border-radius:10px; font-weight:900; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📦 توفر المواد</button>
+                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.76rem; cursor:pointer; transition:all 0.2s;">➕🗑️ إضافة أو حذف</button>
+                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📢 البث والترقية</button>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.4rem; margin-bottom:1.2rem;">
+                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📊 الإحصائيات والنشاط</button>
+                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="background:#1E293B; color:#94A3B8; border:1px solid #334155; padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">⚙️ التواصل والحساب</button>
+                    </div>
+
+                    <!-- TAB 1: MATERIALS (One-Tap Toggles, Prices & Emergency Buttons) -->
                     <div id="ownerTabContent_materials" class="owner-tab-pane">
-                        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-                            <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.4);">🚨 إغلاق طارئ (نفد الكل)</button>
-                            <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.75rem; border-radius:8px; font-weight:900; font-size:0.85rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.4);">🟢 فتح الكل (متوفر)</button>
+                        <div style="background:#1E293B; padding:0.65rem; border-radius:12px; border:1px solid #334155; margin-bottom:1rem;">
+                            <div style="font-size:0.75rem; color:#94A3B8; margin-bottom:0.4rem; text-align:center; font-weight:bold;">⚡ أزرار التحكم السريع بجميع المواد دفعة واحدة:</div>
+                            <div style="display:flex; gap:0.5rem;">
+                                <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.3);">🟢 توفر الكل (فتح المحطة)</button>
+                                <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.3);">🚨 نفاذ الكل (إغلاق طارئ)</button>
+                            </div>
                         </div>
             `;
 
@@ -2013,68 +2251,99 @@
                 st.categories.forEach(cat => {
                     let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
                     let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
-                    let cardBg = isAvail ? '#064E3B' : '#7F1D1D';
+                    let cardBg = isAvail ? 'linear-gradient(135deg, #064E3B 0%, #022C22 100%)' : 'linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%)';
                     let cardBorder = isAvail ? '#10B981' : '#EF4444';
-                    let statusText = isAvail ? '🟢 متوفر حالياً (انقر للإيقاف)' : '🔴 نفدت الكمية (انقر للتفعيل)';
+                    let statusBadge = isAvail ? '🟢 متوفر الآن ✓ (انقر للإيقاف)' : '🔴 نفدت الكمية ✗ (انقر للتفعيل)';
                     
                     html += `
-                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; transition:all 0.2s;">
-                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.5rem;">
-                                <span style="font-size:1.05rem; font-weight:bold; color:#FFFFFF;">📦 ${cat}</span>
-                                <span style="background:rgba(0,0,0,0.3); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.85rem; font-weight:900; color:#FFFFFF;">${statusText}</span>
+                        <div style="background:${cardBg}; border:2px solid ${cardBorder}; padding:0.9rem; border-radius:14px; margin-bottom:0.8rem; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+                            <div onclick="toggleMat('${st.id}','${cat}',${!isAvail})" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding-bottom:0.6rem; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:0.6rem;">
+                                <span style="font-size:1.1rem; font-weight:900; color:#FFFFFF;">📦 ${cat}</span>
+                                <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.25); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.82rem; font-weight:900; color:#FFFFFF;">${statusBadge}</span>
                             </div>
                             <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية..." style="margin:0; padding:0.6rem; font-size:0.9rem; background:#0F172A; font-weight:bold;">
-                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1.1rem; font-size:0.85rem; font-weight:bold; cursor:pointer; white-space:nowrap;">حفظ السعر</button>
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية (اختياري)..." style="margin:0; padding:0.6rem 0.75rem; font-size:0.9rem; background:#0F172A; font-weight:bold; border:1px solid #475569; flex:1;">
+                                <button onclick="updatePrc('${st.id}','${cat}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0.6rem 1rem; font-size:0.82rem; font-weight:900; cursor:pointer; white-space:nowrap;">💾 حفظ السعر</button>
                             </div>
                         </div>`;
                 });
             } else {
-                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لم تقم بإضافة أي فئات بعد. انتقل لتبويب (إضافة).</p>`;
+                html += `
+                    <div style="background:#1E293B; border:1px dashed #475569; padding:1.5rem 1rem; border-radius:12px; text-align:center;">
+                        <p style="color:#94A3B8; font-size:0.9rem; margin:0 0 0.75rem 0;">لا توجد مواد مضافة في محطتك حالياً.</p>
+                        <button onclick="switchOwnerTab('addcat')" style="background:#0284C7; color:white; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-weight:bold; cursor:pointer;">➕ انتقل لإضافة أو حذف صنف</button>
+                    </div>`;
             }
 
-            html += `</div>`; // End of materials tab
+            html += `</div>`; // End of TAB 1
 
-            // TAB 2: ADD CATEGORIES
+            // TAB 2: ADD OR DELETE CATEGORIES (إضافة أو حذف مواد أو صنف)
             let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
             html += `
                 <div id="ownerTabContent_addcat" class="owner-tab-pane" style="display:none;">
-                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">➕ إضافة مواد وأصناف جديدة لمحطتك:</h4>
+                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #38BDF8; margin-bottom:1rem;">
+                        <h4 style="color:#38BDF8; margin:0 0 0.5rem 0; font-size:0.95rem;">➕ إضافة مادة أو صنف جديد لمحطتك:</h4>
             `;
             if (missing.length > 0) {
                 let opts = missing.map(c => `<option value="${c}">${c}</option>`).join('');
                 html += `
-                    <div style="background:#1E293B; padding:1rem; border-radius:12px; border:1px solid #475569;">
-                        <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.4rem;">اختر من الفئات المعتمدة من الإدارة:</label>
+                        <label style="font-size:0.8rem; color:#CBD5E1; display:block; margin-bottom:0.4rem;">اختر الصنف من القائمة المعتمدة في المنصة:</label>
                         <div style="display:flex; gap:0.5rem;">
-                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.6rem; font-size:0.9rem;">${opts}</select>
-                            <button onclick="addMat('${st.id}')" style="background:#0284C7; color:white; border:none; border-radius:8px; padding:0 1.2rem; font-weight:bold; cursor:pointer;">إضافة</button>
-                        </div>
-                    </div>`;
+                            <select id="newMat_${st.id}" style="margin:0; flex:1; padding:0.65rem; font-size:0.9rem; font-weight:bold;">${opts}</select>
+                            <button onclick="addMat('${st.id}')" style="background:#059669; color:white; border:none; border-radius:8px; padding:0 1.25rem; font-weight:900; font-size:0.85rem; cursor:pointer; white-space:nowrap;">➕ إضافة الصنف</button>
+                        </div>`;
             } else {
-                html += `<p style="text-align:center; color:#94A3B8; font-size:0.85rem;">لقد أضفت كافة الفئات المتاحة في النظام.</p>`;
+                html += `<p style="color:#34D399; font-size:0.85rem; margin:0; font-weight:bold;">✓ جميع الأصناف المعتمدة في المنصة مضافة لديك بالفعل.</p>`;
             }
             html += `</div>`;
+
+            // Section for Deleting / Removing existing categories from station
+            html += `
+                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #EF4444;">
+                        <h4 style="color:#FCA5A5; margin:0 0 0.5rem 0; font-size:0.95rem;">🗑️ حذف مادة أو صنف مسجل في محطتك:</h4>
+                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.75rem 0;">إذا لم تعد تتعامل بأحد الأصناف التالية أو أضفته بالخطأ، يمكنك حذفه من محطتك:</p>
+            `;
+            if (st.categories && st.categories.length > 0) {
+                st.categories.forEach(cat => {
+                    let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#0F172A; border:1px solid #334155; padding:0.65rem 0.85rem; border-radius:10px; margin-bottom:0.5rem;">
+                            <div>
+                                <span style="font-weight:900; color:#F8FAFC; font-size:0.92rem;">📦 ${cat}</span>
+                                <span style="font-size:0.75rem; color:${isAvail?'#34D399':'#FCA5A5'}; margin-right:0.4rem;">(${isAvail?'متوفر':'نفد'})</span>
+                            </div>
+                            <button onclick="removeMatFromStation('${st.id}', '${cat}')" style="background:#DC2626; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🗑️ حذف الصنف</button>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<p style="color:#94A3B8; font-size:0.85rem; margin:0; text-align:center;">لا توجد أصناف مسجلة حالياً لحذفها.</p>`;
+            }
+            html += `
+                    </div>
+                </div>
+            `; // End of TAB 2
 
             // TAB 3: BROADCAST & UPGRADE
             html += `
                 <div id="ownerTabContent_broadcast" class="owner-tab-pane" style="display:none;">
-                    ${isVip ? `
-                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:12px; margin-bottom:1.25rem;">
-                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 بث عاجل للمستهلكين (يظهر كإشعار منسدل ويختفي تلقائياً بعد 3 ساعات):</h4>
+                    <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 الإعلان الصاخب (بث عاجل في هواتف المستهلكين):</h4>
+                        <p style="font-size:0.78rem; color:#FEF3C7; margin:0 0 0.65rem 0; line-height:1.5;">تظهر رسالتك كإشعار منسدل بصوت صافرة إنذار لجميع المستهلكين في نطاقك وتختفي تلقائياً بعد 3 ساعات:</p>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
-                            <input type="text" id="bcMsg_${st.id}" value="${st.broadcastMsg || ''}" placeholder="اكتب رسالة البث العاجل هنا..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
-                            <button onclick="sendVIPBroadcast('${st.id}')" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.95rem; cursor:pointer;">🚀 إطلاق البث الصاخب الفوري الآن</button>
+                            <input type="text" id="bcMsg_${st.id}" value="${safeBroadcast}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة غاز منزلي الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
+                            <div style="display:flex; gap:0.5rem;">
+                                <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.9rem; cursor:pointer; flex:2;">🚀 إطلاق البث الصاخب الآن</button>
+                                ${st.broadcastMsg ? `<button onclick="document.getElementById('bcMsg_${st.id}').value=''; sendVIPBroadcast('${st.id}');" style="background:#475569; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:bold; font-size:0.8rem; cursor:pointer; flex:1;">إيقاف البث</button>` : ''}
+                            </div>
                         </div>
-                    </div>` : `
-                    <div style="background:#1E293B; padding:1.25rem; border-radius:12px; text-align:center; margin-bottom:1.25rem; border:1px solid #334155;">
-                        <p style="font-size:0.9rem; color:#94A3B8; margin:0 0 0.75rem 0; line-height:1.6;">ميزة الإعلان والبث الفوري (الذي يظهر في قائمة الهواتف المنسدلة للمستهلكين) متاحة حصرياً لمشتركي باقات VIP.</p>
-                    </div>`}
+                    </div>
 
                     <!-- UPGRADE BANNER -->
-                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:1px solid #C084FC; padding:1rem; border-radius:12px; text-align:center;">
-                        <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.5rem;">👑 ترقية الباقة وتوسيع نطاق الرادار حتى 30 كم+</div>
-                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.7rem 1.2rem; border-radius:8px; font-weight:900; font-size:0.9rem; cursor:pointer; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض الباقات والأسعار عبر واتساب</button>
+                    <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:2px solid #C084FC; padding:1rem; border-radius:14px; text-align:center;">
+                        <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.35rem;">👑 ضاعف مبيعاتك ووسّع نطاق الرادار حتى 30 كم+</div>
+                        <p style="color:#CBD5E1; font-size:0.78rem; margin:0 0 0.75rem 0;">تصدّر قائمة البحث لدى المستهلكين واحصل على ميزة الإعلانات المنسدلة الفورية:</p>
+                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.75rem 1.2rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; width:100%; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض باقات (VIP / VIP+) والأسعار</button>
                     </div>
                 </div>
             `;
@@ -2082,37 +2351,50 @@
             // TAB 4: STATS
             html += `
                 <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none;">
-                    <div style="background:#1E293B; border:1px solid #334155; padding:1.25rem; border-radius:12px; text-align:center;">
-                        <h4 style="color:#60A5FA; margin:0 0 0.75rem 0; font-size:0.95rem;">📊 ملخص نشاط محطتك:</h4>
-                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem;">
-                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
-                                <div style="font-size:1.25rem; color:#38BDF8; font-weight:bold;">${st.impressionsCount || 0}</div>
-                                <div style="font-size:0.75rem; color:#94A3B8;">ظهور بالرادار</div>
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1.1rem; border-radius:14px; text-align:center;">
+                        <h4 style="color:#60A5FA; margin:0 0 0.85rem 0; font-size:0.95rem;">📊 إحصائيات تفاعل المستهلكين مع محطتك:</h4>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.6rem;">
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#38BDF8; font-weight:900;">${st.impressionsCount || 0}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔍 مرات الظهور بالرادار</div>
                             </div>
-                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
-                                <div style="font-size:1.25rem; color:#34D399; font-weight:bold;">${st.alertsReceivedCount || 0}</div>
-                                <div style="font-size:0.75rem; color:#94A3B8;">تنبيهات صوتية</div>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#34D399; font-weight:900;">${st.alertsReceivedCount || 0}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔔 تنبيهات صوتية وصلت للزبائن</div>
                             </div>
-                            <div style="background:#0F172A; padding:0.75rem; border-radius:8px;">
-                                <div style="font-size:1.25rem; color:#C4B5FD; font-weight:bold;">${st.accessCount || 0}</div>
-                                <div style="font-size:0.75rem; color:#94A3B8;">نقرات واتساب</div>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#C4B5FD; font-weight:900;">${st.accessCount || 0}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">💬 نقرات التواصل عبر واتساب</div>
+                            </div>
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
+                                <div style="font-size:1.35rem; color:#FBBF24; font-weight:900;">⭐ ${avgRating}</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">تقييم الزبائن (${st.ratingCount || 1} تقييم)</div>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
 
-            // TAB 5: SETTINGS
+            // TAB 5: SETTINGS & GPS UPDATE
             html += `
                 <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none;">
-                    <h4 style="color:#F8FAFC; margin-top:0; font-size:1rem; margin-bottom:0.75rem;">⚙️ إعدادات التواصل والخصوصية:</h4>
-                    <label style="font-size:0.85rem; color:#94A3B8;">رقم واتساب العام للجمهور:</label>
-                    <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.75rem; font-size:0.95rem;">
-                    <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.9rem; margin-bottom:1rem; cursor:pointer; background:#1E293B; padding:0.75rem; border-radius:8px;">
-                        <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.2rem; height:1.2rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
-                    </label>
-                    <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.9rem; font-size:1rem;">حفظ إعدادات التواصل</button>
-                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin-top:1.5rem; margin-bottom:0; padding:0.9rem; font-size:1rem;">تسجيل الخروج من الحساب</button>
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#F8FAFC; margin:0 0 0.75rem 0; font-size:0.95rem;">📞 إعدادات التواصل مع الزبائن:</h4>
+                        <label style="font-size:0.82rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">رقم واتساب العام للجمهور:</label>
+                        <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.7rem; font-size:0.95rem;">
+                        <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.86rem; margin-bottom:0.85rem; cursor:pointer; background:#0F172A; padding:0.7rem; border-radius:8px; border:1px solid #334155;">
+                            <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.15rem; height:1.15rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
+                        </label>
+                        <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.8rem; font-size:0.92rem; margin-bottom:0;">💾 حفظ إعدادات التواصل</button>
+                    </div>
+
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#34D399; margin:0 0 0.4rem 0; font-size:0.92rem;">📍 تحديث الموقع الجغرافي للمحطة (GPS):</h4>
+                        <p style="font-size:0.76rem; color:#94A3B8; margin:0 0 0.65rem 0;">إذا قمت بتسجيل المحطة سابقاً من موقع غير دقيق، اضغط أدناه وأنت داخل المحطة لتحديث إحداثياتها:</p>
+                        <button onclick="updateOwnerStationGPS('${st.id}')" style="background:#064E3B; border:1px solid #10B981; color:#FFFFFF; width:100%; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.85rem; cursor:pointer;">📍 تحديث موقع المحطة الدقيق الآن</button>
+                    </div>
+
+                    <button onclick="logoutStationOwner()" class="btn-danger" style="margin:0; padding:0.85rem; font-size:0.95rem;">🚪 تسجيل الخروج من الحساب</button>
                 </div>
             `;
 
@@ -2121,9 +2403,11 @@
             let dash = document.getElementById('sec-stationDashboard');
             dash.innerHTML = html;
             showSection('stationDashboard');
+            switchOwnerTab(currentOwnerActiveTab);
         }
 
         window.switchOwnerTab = function(tabName) {
+            currentOwnerActiveTab = tabName;
             ['materials', 'addcat', 'broadcast', 'stats', 'settings'].forEach(t => {
                 let pane = document.getElementById(`ownerTabContent_${t}`);
                 let btn = document.getElementById(`ownerTabBtn_${t}`);
@@ -2132,14 +2416,36 @@
                     if (t === tabName) {
                         btn.style.background = '#0284C7';
                         btn.style.color = '#FFFFFF';
+                        btn.style.borderColor = '#38BDF8';
                     } else {
-                        btn.style.background = 'transparent';
+                        btn.style.background = '#1E293B';
                         btn.style.color = '#94A3B8';
+                        btn.style.borderColor = '#334155';
                     }
                 }
             });
         };
 
+        window.emergencyPanicAll = async function(id, statusVal) {
+            if (!db) return;
+            try {
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let d = doc.data();
+                    let mStatus = {};
+                    if (d.categories) {
+                        d.categories.forEach(c => { mStatus[c] = statusVal; });
+                    }
+                    await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
+                    showToast(statusVal ? "🟢 تم فتح وتفعيل جميع المواد بنجاح!" : "🚨 تم إغلاق جميع المواد (نفدت) طارئاً!");
+                    let updated = await ref.get();
+                    loadMyStationDashboard({ id, ...updated.data() }, 'materials');
+                }
+            } catch (e) {
+                showToast("حدث خطأ أثناء التحديث الطارئ");
+            }
+        };
 
         window.toggleMat = async function(id, cat, stat) {
             try {
@@ -2149,9 +2455,9 @@
                     let mStatus = doc.data().materialsStatus || {};
                     mStatus[cat] = stat;
                     await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
-                    showToast("تم تحديث حالة المادة!");
+                    showToast(stat ? `🟢 تم تفعيل توفر (${cat})` : `🔴 تم تحويل (${cat}) إلى نفدت الكمية`);
                     let updated = await ref.get();
-                    await loadMyStationDashboard({ id, ...updated.data() });
+                    loadMyStationDashboard({ id, ...updated.data() }, 'materials');
                 }
             } catch (e) { showToast("خطأ في التحديث"); }
         };
@@ -2165,7 +2471,7 @@
                     let mPrices = doc.data().materialsPrices || {};
                     mPrices[cat] = val;
                     await ref.update({ materialsPrices: mPrices, lastUpdate: new Date().toISOString() });
-                    showToast("تم حفظ السعر بنجاح!");
+                    showToast(`💾 تم حفظ سعر (${cat}) بنجاح!`);
                 }
             } catch (e) { showToast("خطأ في حفظ السعر"); }
         };
@@ -2173,14 +2479,7 @@
         window.addMat = async function(id) {
             let sel = document.getElementById(`newMat_${id}`);
             let cat = sel ? sel.value : '';
-            if (!cat) {
-                showToast("الرجاء اختيار صنف صحيح للإضافة");
-                return;
-            }
-            if (!db) {
-                showToast("خطأ في الاتصال بقاعدة البيانات");
-                return;
-            }
+            if (!cat) return;
             try {
                 let ref = db.collection("stations").doc(id);
                 let doc = await ref.get();
@@ -2188,28 +2487,71 @@
                     let d = doc.data();
                     let cArr = d.categories || [];
                     if (!cArr.includes(cat)) cArr.push(cat);
-                    let mStat = d.materialsStatus || {}; 
-                    if (mStat[cat] === undefined) mStat[cat] = false;
-                    let mPrc = d.materialsPrices || {}; 
-                    if (mPrc[cat] === undefined) mPrc[cat] = "";
-                    
-                    await ref.update({ 
-                        categories: cArr, 
-                        materialsStatus: mStat, 
+                    let mStat = d.materialsStatus || {}; mStat[cat] = false;
+                    let mPrc = d.materialsPrices || {}; mPrc[cat] = "";
+                    await ref.update({
+                        categories: cArr,
+                        materialsStatus: mStat,
                         materialsPrices: mPrc,
                         lastUpdate: new Date().toISOString()
                     });
-                    showToast("✅ تمت إضافة المادة بنجاح لمحطتك!");
+                    showToast(`➕ تمت إضافة صنف (${cat}) لمحطتك بنجاح!`);
                     let updated = await ref.get();
-                    await loadMyStationDashboard({ id, ...updated.data() });
-                    setTimeout(() => switchOwnerTab('addcat'), 50);
-                } else {
-                    showToast("لم يتم العثور على بيانات المحطة");
+                    loadMyStationDashboard({ id, ...updated.data() }, 'addcat');
+                }
+            } catch (e) { showToast("خطأ أثناء الإضافة"); }
+        };
+
+        window.removeMatFromStation = async function(id, cat) {
+            if (!db) return;
+            if (!confirm(`هل أنت متأكد من حذف صنف (${cat}) من محطتك؟`)) return;
+            try {
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (doc.exists) {
+                    let d = doc.data();
+                    let cArr = (d.categories || []).filter(c => c !== cat);
+                    let mStat = d.materialsStatus || {};
+                    let mPrc = d.materialsPrices || {};
+                    delete mStat[cat];
+                    delete mPrc[cat];
+                    await ref.update({
+                        categories: cArr,
+                        materialsStatus: mStat,
+                        materialsPrices: mPrc,
+                        lastUpdate: new Date().toISOString()
+                    });
+                    showToast(`🗑️ تم حذف صنف (${cat}) من محطتك بنجاح`);
+                    let updated = await ref.get();
+                    loadMyStationDashboard({ id, ...updated.data() }, 'addcat');
                 }
             } catch (e) {
-                console.error("Add mat error:", e);
-                showToast("حدث خطأ أثناء إضافة المادة: " + (e.message || ""));
+                showToast("حدث خطأ أثناء حذف الصنف");
             }
+        };
+
+        window.updateOwnerStationGPS = function(id) {
+            if (!navigator.geolocation) {
+                return showToast("متصفحك لا يدعم تحديد الموقع الجغرافي");
+            }
+            showToast("⏳ جاري التقاط الإحداثيات الدقيقة للمحطة...");
+            navigator.geolocation.getCurrentPosition(async pos => {
+                let newLat = Number(pos.coords.latitude);
+                let newLon = Number(pos.coords.longitude);
+                try {
+                    await db.collection("stations").doc(id).update({
+                        lat: newLat,
+                        lon: newLon,
+                        locationFormatted: `${newLat.toFixed(6)}, ${newLon.toFixed(6)}`,
+                        googleMapsUrl: `https://maps.google.com/?q=${newLat},${newLon}`
+                    });
+                    showToast("✅ تم تحديث الموقع الجغرافي الدقيق لمحطتك بنجاح!");
+                } catch (e) {
+                    showToast("حدث خطأ أثناء حفظ الموقع الجديد");
+                }
+            }, () => {
+                showToast("❌ تعذر التقاط الموقع! يرجى تفعيل الـ GPS في هاتفك والمحاولة مجدداً.");
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
         };
 
         window.saveStSet = async function(id) {
@@ -2218,8 +2560,13 @@
             if (!/^09[0-9]{8}$/.test(ph)) return showToast("رقم التواصل غير صحيح");
             try {
                 await db.collection("stations").doc(id).update({ publicPhone: ph, showContact: sh });
-                showToast("تم حفظ إعدادات التواصل!");
+                showToast("✅ تم حفظ إعدادات التواصل!");
             } catch (e) { showToast("خطأ أثناء الحفظ"); }
+        };
+
+        window.promptVipForBroadcast = function(stName, stRegion, stPhone) {
+            showToast("👑 ميزة الإعلان الصاخب الفوري تتطلب تفعيل باقة VIP! اختر باقتك الآن");
+            openUpgradeModal(stName, stRegion, stPhone);
         };
 
         window.sendVIPBroadcast = async function(id) {
@@ -2387,15 +2734,20 @@
                 let currentAlertRadius = getStationDefaultAlertRadius(st);
                 let currentSearchRadius = getStationDefaultSearchRadius(st);
                 let tierLabel = isVipPlus ? '<span class="vip-plus-badge" style="margin:0 0.3rem;">👑 VIP+ ملكي</span>' : (isVip ? '<span class="vip-badge" style="margin:0 0.3rem;">⭐ VIP</span>' : '');
+                let sAdmName = escapeHTML(st.name);
+                let sAdmRegion = escapeHTML(st.region);
+                let sAdmPhone = escapeHTML(st.phone);
+                let sAdmPin = escapeHTML(st.pinCode || '---');
+                let sAdmCats = escapeHTML(catsList);
 
                 html += `
-                    <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${st.name} ${st.region} ${st.phone}">
+                    <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${sAdmName} ${sAdmRegion} ${sAdmPhone}">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
                             <div style="flex:1;">
-                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${st.name} ${tierLabel}</h4>
-                                <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${st.region} | الدخول: <b>${st.phone}</b></p>
-                                <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${st.pinCode || '---'}</b></p>
-                                <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${catsList}</p>
+                                <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${sAdmName} ${tierLabel}</h4>
+                                <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${sAdmRegion} | الدخول: <b>${sAdmPhone}</b></p>
+                                <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${sAdmPin}</b></p>
+                                <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${sAdmCats}</p>
                                 <div style="background:#1E293B; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
                                     <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
                                     ${(st.lat && st.lon) ? `
@@ -2427,6 +2779,9 @@
                                 }
                                 <button onclick="admSetTier('${id}', 'vip')" style="background:${(isVip && !isVipPlus) ? '#475569' : '#D97706'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${(isVip && !isVipPlus) ? 'إلغاء VIP' : 'تفعيل VIP ⭐'}</button>
                                 <button onclick="admSetTier('${id}', 'vip_plus')" style="background:${isVipPlus ? '#475569' : 'linear-gradient(135deg, #C084FC 0%, #9333EA 100%)'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${isVipPlus ? 'إلغاء VIP+' : 'تفعيل VIP+ 👑'}</button>
+                                
+                                <button onclick="adminQuickRefresh('${id}')" style="background:#0284C7; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">🔄 تحديث الوقت فقط (الآن)</button>
+                                <button onclick="adminOpenEditMaterials('${id}')" style="background:#059669; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">📦 تعديل المواد للعميل</button>
                                 <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف نهائي</button>
                             </div>
                         </div>
@@ -2476,20 +2831,29 @@
 
         function updateAdminCategoriesList() {
             const container = document.getElementById('adminCategoriesList');
-            if (!container) return;
-            let html = '';
-            availableCategories.forEach(cat => {
-                let docId = categoryDocs[cat] || '';
-                html += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:0.45rem 0.65rem; border-radius:6px; border:1px solid #475569;">
-                        <span style="font-size:0.85rem;"><b>${cat}</b></span>
-                        <div style="display:flex; gap:0.4rem;">
-                            <button onclick="editCategory('${docId}', '${cat}')" style="background:#0284C7; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">تعديل</button>
-                            <button onclick="deleteCategory('${docId}')" style="background:#EF4444; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حذف</button>
-                        </div>
-                    </div>`;
-            });
-            container.innerHTML = html;
+            const admNewStContainer = document.getElementById('admNewStCatsContainer');
+            if (container) {
+                let html = '';
+                availableCategories.forEach(cat => {
+                    let docId = categoryDocs[cat] || '';
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:0.45rem 0.65rem; border-radius:6px; border:1px solid #475569;">
+                            <span style="font-size:0.85rem;"><b>${cat}</b></span>
+                            <div style="display:flex; gap:0.4rem;">
+                                <button onclick="editCategory('${docId}', '${cat}')" style="background:#0284C7; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">تعديل</button>
+                                <button onclick="deleteCategory('${docId}')" style="background:#EF4444; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">حذف</button>
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+            }
+            if (admNewStContainer) {
+                let html2 = '';
+                availableCategories.forEach(cat => {
+                    html2 += `<label style="display:flex; align-items:center; gap:0.3rem; font-size:0.8rem; color:#F8FAFC; cursor:pointer;"><input type="checkbox" value="${cat}" class="adm-new-st-chk" checked style="width:1rem; height:1rem; margin:0;"> ${cat}</label>`;
+                });
+                admNewStContainer.innerHTML = html2;
+            }
         }
 
         document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
@@ -2828,181 +3192,129 @@
             } catch(e) {}
         };
 
-                // --- 3. Simple 1-Hour Station Status Update (Local Memory Tracked, 1-Tap Confirmation) ---
-        let stationSurveyInterval = null;
-        let activeStationDocForSurvey = null;
-        let lastOwnerReminderNotifTime = 0;
-
-        function startStationOwnerSurveyChecker(stationDoc) {
-            activeStationDocForSurvey = stationDoc;
-            if (stationSurveyInterval) clearInterval(stationSurveyInterval);
-
-            // Check immediately upon opening dashboard
-            triggerStationQuickSurveyIfNeeded(stationDoc);
-
-            // Check every 60 seconds
-            stationSurveyInterval = setInterval(async () => {
-                if (!activeStationDocForSurvey) return;
-                if (db && navigator.onLine) {
-                    try {
-                        let freshDoc = await db.collection("stations").doc(activeStationDocForSurvey.id).get();
-                        if (freshDoc.exists) {
-                            activeStationDocForSurvey = { id: freshDoc.id, ...freshDoc.data() };
-                        }
-                    } catch (e) {}
-                }
-                triggerStationQuickSurveyIfNeeded(activeStationDocForSurvey);
-            }, 60000);
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && activeStationDocForSurvey) {
-                let dashEl = document.getElementById('sec-stationDashboard');
-                if (dashEl && dashEl.style.display === 'block') {
-                    triggerStationQuickSurveyIfNeeded(activeStationDocForSurvey);
-                }
-            }
-        });
-
-        window.triggerStationQuickSurveyIfNeeded = function(st) {
-            if (!st || !st.id) return;
-            let lastSurveyMs = parseInt(localStorage.getItem(`last_survey_${st.id}`) || '0');
-            if (isNaN(lastSurveyMs) || lastSurveyMs === 0) {
-                lastSurveyMs = st.lastUpdate ? new Date(st.lastUpdate).getTime() : Date.now();
-                localStorage.setItem(`last_survey_${st.id}`, lastSurveyMs.toString());
-            }
-
-            let now = Date.now();
-            const ONE_HOUR_MS = 60 * 60 * 1000;
-
-            let timerBadge = document.getElementById('ownerMandatoryTimerBadge');
-            let remainingMs = ONE_HOUR_MS - (now - lastSurveyMs);
-            if (timerBadge) {
-                if (remainingMs > 0) {
-                    let remMinsTotal = Math.ceil(remainingMs / 60000);
-                    let mins = remMinsTotal % 60;
-                    timerBadge.style.background = '#064E3B';
-                    timerBadge.style.color = '#34D399';
-                    timerBadge.style.borderColor = '#10B981';
-                    timerBadge.innerHTML = `⏳ التحديث الدوري القادم خلال: <b>${mins} دقيقة</b>`;
-                } else {
-                    timerBadge.style.background = '#7F1D1D';
-                    timerBadge.style.color = '#FCA5A5';
-                    timerBadge.style.borderColor = '#EF4444';
-                    timerBadge.innerHTML = `🚨 حان وقت التحديث الساعي للحالة`;
-                }
-            }
-
-            if (now - lastSurveyMs >= ONE_HOUR_MS) {
-                showStationSurveyModal(st);
-
-                if (now - lastOwnerReminderNotifTime > 600000) {
-                    lastOwnerReminderNotifTime = now;
-                    if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
-                        navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification("⏰ تذكير تحديث الحالة الساعي - متوفر هناا", {
-                                body: `مرت ساعة منذ آخر تحديث لمحطة (${st.name}). اضغط لتأكيد توفر المواد ببساطة.`,
-                                icon: "icon-192.png",
-                                badge: "icon-192.png",
-                                tag: "hourly-owner-update",
-                                renotify: true,
-                                requireInteraction: false
-                            });
-                        }).catch(e => {});
-                    }
-                }
-            }
-        };
-
-        window.showStationSurveyModal = function(st) {
-            if (document.getElementById('stationSurveyModal')) return;
+        // --- 3. Elegant Welcome Update Modal for Owners ---
+        window.showStationWelcomeUpdateModal = function(st) {
+            // Prevent showing multiple times if already open
+            if (document.getElementById('stationWelcomeModalWrapper')) return;
 
             let matsCheckHtml = '';
             if (st.categories && st.categories.length > 0) {
                 st.categories.forEach(cat => {
                     let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
+                    let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
+                    let toggleBg = isAvail ? '#10B981' : '#475569';
+                    let statusTxt = isAvail ? '🟢 متوفر' : '🔴 نفد';
+                    
                     matsCheckHtml += `
-                        <div style="background:#0F172A; padding:0.65rem 0.8rem; border-radius:8px; margin-bottom:0.5rem; border:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-weight:bold; color:#FBBF24; font-size:0.9rem;">📦 ${cat}</span>
-                            <div style="display:flex; gap:0.4rem;">
-                                <button type="button" onclick="quickToggleSurveyMat('${cat}', true)" id="survBtn_t_${cat}" style="background:${isAvail?'#059669':'#1E293B'}; color:white; border:none; padding:0.3rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">متوفر</button>
-                                <button type="button" onclick="quickToggleSurveyMat('${cat}', false)" id="survBtn_f_${cat}" style="background:${!isAvail?'#DC2626':'#1E293B'}; color:white; border:none; padding:0.3rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.78rem; cursor:pointer;">نفد</button>
+                        <div style="background:#0F172A; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; border:1px solid #334155; display:flex; flex-direction:column; gap:0.6rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-weight:900; color:#FBBF24; font-size:1.05rem;">📦 ${cat}</span>
+                                <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; background:${isAvail?'rgba(16, 185, 129, 0.15)':'rgba(239, 68, 68, 0.1)'}; padding:0.3rem 0.6rem; border-radius:8px; border:1px solid ${isAvail?'#10B981':'#EF4444'}; transition:all 0.2s;" id="wel_lbl_${cat}">
+                                    <span id="wel_txt_${cat}" style="color:${isAvail?'#34D399':'#FCA5A5'}; font-size:0.85rem; font-weight:bold;">${statusTxt}</span>
+                                    <input type="checkbox" id="wel_chk_${cat}" ${isAvail?'checked':''} onchange="toggleWelcomeStyle('${cat}')" style="width:1.2rem; height:1.2rem; margin:0; accent-color:#10B981;">
+                                </label>
                             </div>
+                            <input type="number" id="wel_prc_${cat}" value="${prc}" placeholder="تعديل السعر (اختياري)..." style="margin:0; padding:0.5rem; font-size:0.85rem; background:#1E293B; color:#F8FAFC; border:1px solid #475569; border-radius:6px; font-weight:bold;">
                         </div>
                     `;
                 });
             }
 
             let modalHtml = `
-                <div id="stationSurveyModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.9); backdrop-filter:blur(4px);">
-                    <div class="modal-content" style="border:2px solid #3B82F6; max-width:400px; text-align:right; max-height:85vh; overflow-y:auto; box-shadow:0 10px 25px rgba(0, 0, 0, 0.5);">
-                        <div style="background:#0284C7; color:#FFFFFF; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold; display:inline-block; margin-bottom:0.4rem;">⏰ مراجعة الحالة الساعية الخفيفة</div>
-                        <h3 style="color:#FBBF24; margin:0 0 0.3rem 0; font-size:1.05rem;">مرحباً ${st.name}</h3>
-                        <p style="font-size:0.8rem; color:#CBD5E1; margin-bottom:0.85rem; line-height:1.4;">
-                            هل ما زالت الحالة كما هي؟ إن لم يحدث تغيير، اضغط زر التأكيد السريع بضغطة واحدة فقط:
+                <div id="stationWelcomeModal" class="modal-overlay" style="display:flex; z-index:25000; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(5px);">
+                    <div class="modal-content" style="border:2px solid #38BDF8; max-width:400px; text-align:right; box-shadow:0 10px 30px rgba(2, 132, 199, 0.3);">
+                        <h3 style="color:#38BDF8; margin:0 0 0.5rem 0; font-size:1.2rem; display:flex; align-items:center; gap:0.4rem;">✨ مرحباً بك في محطتك</h3>
+                        <p style="font-size:0.85rem; color:#CBD5E1; margin-bottom:1.2rem; line-height:1.5;">
+                            تأكد من حالة المواد الحالية. إذا كانت مطابقة، اضغط <b>(تم)</b> لتحديث وقت المحطة للزبائن. أو قم بتعديلها بضغطة واحدة:
                         </p>
                         ${matsCheckHtml}
-                        <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
-                            <button onclick="submitStationSurveyFast('${st.id}', true)" class="btn-primary" style="background:#059669; padding:0.75rem; font-size:0.9rem; margin:0; flex:2;">✅ الحالة لم تتغير (تأكيد سريع)</button>
-                            <button onclick="submitStationSurveyFast('${st.id}', false)" style="background:#334155; color:#F8FAFC; border:none; padding:0.75rem; font-size:0.8rem; border-radius:10px; cursor:pointer; flex:1;" title="إغلاق و حفظ التعديلات">حفظ التغييرات</button>
-                        </div>
+                        <button id="submitWelcomeSurveyBtn" onclick="submitWelcomeSurvey('${st.id}')" class="btn-primary" style="background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; box-shadow:0 4px 12px rgba(2, 132, 199, 0.4); border-radius:10px;">✅ تم (تأكيد الحالة ودخول اللوحة)</button>
                     </div>
                 </div>
             `;
             let div = document.createElement('div');
-            div.id = 'stationSurveyModalWrapper';
+            div.id = 'stationWelcomeModalWrapper';
             div.innerHTML = modalHtml;
             document.body.appendChild(div);
         };
 
-        window.quickToggleSurveyMat = function(cat, isAv) {
-            let btnT = document.getElementById(`survBtn_t_${cat}`);
-            let btnF = document.getElementById(`survBtn_f_${cat}`);
-            if (btnT && btnF) {
-                btnT.style.background = isAv ? '#059669' : '#1E293B';
-                btnF.style.background = !isAv ? '#DC2626' : '#1E293B';
+        window.toggleWelcomeStyle = function(cat) {
+            let chk = document.getElementById(`wel_chk_${cat}`);
+            let lbl = document.getElementById(`wel_lbl_${cat}`);
+            let txt = document.getElementById(`wel_txt_${cat}`);
+            if (chk && lbl && txt) {
+                if (chk.checked) {
+                    lbl.style.background = 'rgba(16, 185, 129, 0.15)';
+                    lbl.style.borderColor = '#10B981';
+                    txt.style.color = '#34D399';
+                    txt.textContent = '🟢 متوفر';
+                } else {
+                    lbl.style.background = 'rgba(239, 68, 68, 0.1)';
+                    lbl.style.borderColor = '#EF4444';
+                    txt.style.color = '#FCA5A5';
+                    txt.textContent = '🔴 نفد';
+                }
             }
         };
 
-        window.submitStationSurveyFast = async function(id, keepSame) {
-            if (!db) return;
+        window.submitWelcomeSurvey = async function(id) {
+            if (!db) return showToast("خطأ في الاتصال بقاعدة البيانات");
+            let btn = document.getElementById('submitWelcomeSurveyBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "⏳ جاري التحديث...";
+            }
             try {
                 let ref = db.collection("stations").doc(id);
-                let nowMs = Date.now();
-                let nowIso = new Date(nowMs).toISOString();
+                let doc = await ref.get();
+                if (!doc.exists) return;
+                let d = doc.data();
 
-                if (keepSame) {
-                    await ref.update({ lastUpdate: nowIso });
-                } else {
-                    let doc = await ref.get();
-                    if (doc.exists) {
-                        let d = doc.data();
-                        let mStatus = d.materialsStatus || {};
-                        if (d.categories) {
-                            d.categories.forEach(cat => {
-                                let btnT = document.getElementById(`survBtn_t_${cat}`);
-                                if (btnT) {
-                                    mStatus[cat] = (btnT.style.background.includes('rgb(5, 150, 105)') || btnT.style.background.includes('#059669'));
-                                }
-                            });
-                        }
-                        await ref.update({ materialsStatus: mStatus, lastUpdate: nowIso });
-                    }
+                let mStatus = d.materialsStatus || {};
+                let mPrices = d.materialsPrices || {};
+
+                if (d.categories) {
+                    d.categories.forEach(cat => {
+                        let chk = document.getElementById(`wel_chk_${cat}`);
+                        if (chk) mStatus[cat] = chk.checked;
+                        let prcEl = document.getElementById(`wel_prc_${cat}`);
+                        if (prcEl) mPrices[cat] = prcEl.value.trim();
+                    });
                 }
 
-                localStorage.setItem(`last_survey_${id}`, nowMs.toString());
-                let wrap = document.getElementById('stationSurveyModalWrapper');
-                if (wrap) wrap.remove();
-                let m = document.getElementById('stationSurveyModal');
-                if (m) m.remove();
+                await ref.update({
+                    materialsStatus: mStatus,
+                    materialsPrices: mPrices,
+                    lastUpdate: new Date().toISOString()
+                });
 
-                showToast("✅ تم تحديث وقت الحالة بنجاح (مهلة ساعة جديدة)!");
+                let wrap = document.getElementById('stationWelcomeModalWrapper');
+                if (wrap) wrap.remove();
+
+                showToast("✅ تم تأكيد تحديث المحطة بنجاح!");
                 let updated = await ref.get();
+                loadMyStationDashboard({ id, ...updated.data() });
+            } catch (e) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "✅ تم (تأكيد الحالة ودخول اللوحة)";
+                }
+                showToast("حدث خطأ، يرجى المحاولة مرة أخرى.");
+            }
+        };
+
+        window.quickRefreshStationTimestamp = async function(id) {
+            if (!db) return;
+            try {
+                let nowIso = new Date().toISOString();
+                await db.collection("stations").doc(id).update({ lastUpdate: nowIso });
+                showToast("✅ تم تجديد وقت التوفر إلى (الآن) بنجاح!");
+                let updated = await db.collection("stations").doc(id).get();
                 if (updated.exists) {
-                    await loadMyStationDashboard({ id, ...updated.data() });
+                    loadMyStationDashboard({ id, ...updated.data() });
                 }
             } catch (e) {
-                showToast("حدث خطأ أثناء التحديث");
+                showToast("تعذر تجديد الوقت حالياً");
             }
         };
 
@@ -3011,39 +3323,192 @@
         history.pushState({ page: 'app_root' }, document.title, window.location.href);
 
         window.addEventListener('popstate', function (event) {
-            // If any modal is open, close it instead of exiting app
-            let survModal = document.getElementById('stationSurveyModal');
-            if (survModal) {
-                history.pushState({ page: 'app_root' }, document.title, window.location.href);
-                let wrap = document.getElementById('stationSurveyModalWrapper');
-                if (wrap) wrap.remove();
-                survModal.remove();
+            // If Mandatory Station Survey Modal is open, block back button completely!
+            if (document.getElementById('stationWelcomeModalWrapper')) {
+                history.pushState({ page: 'welcome_modal' }, document.title, window.location.href);
+                showToast("🔒 يجب تأكيد وحفظ حالة توفر المواد أولاً للمتابعة!");
                 return;
             }
 
-            let upgModal = document.getElementById('upgradeModalOverlay');
-            if (upgModal && upgModal.style.display === 'flex') {
-                history.pushState({ page: 'app_root' }, document.title, window.location.href);
-                closeUpgradeModal();
-                return;
-            }
-
+            // If Consumer Settings is open, return to Consumer Radar instead of exiting
             let settSec = document.getElementById('sec-consumerSettings');
             if (settSec && settSec.style.display === 'block') {
-                history.pushState({ page: 'app_root' }, document.title, window.location.href);
+                history.pushState({ page: 'radar' }, document.title, window.location.href);
                 showSection('consumerRadar');
                 return;
             }
 
-            let curTime = Date.now();
-            if (curTime - lastBackPressTime < 2000) {
+            // If Upgrade Modal is open, close it instead of exiting
+            let upgModal = document.getElementById('upgradeModalOverlay');
+            if (upgModal && upgModal.style.display === 'flex') {
+                history.pushState({ page: 'dashboard' }, document.title, window.location.href);
+                closeUpgradeModal();
+                return;
+            }
+
+            let currentTime = Date.now();
+            if (currentTime - lastBackPressTime < 2000) {
                 history.back();
             } else {
-                lastBackPressTime = curTime;
+                lastBackPressTime = currentTime;
                 showToast("⚠️ اضغط زر الرجوع مرة أخرى خلال ثانيتين للخروج من التطبيق");
                 history.pushState({ page: 'app_root' }, document.title, window.location.href);
             }
         });
+
+        
+        window.adminAddNewStationAction = async function() {
+            if (!db) return showToast("لا يوجد اتصال بالسحابة");
+            let name = document.getElementById('admNewStName').value.trim();
+            let region = document.getElementById('admNewStRegion').value.trim();
+            let phone = document.getElementById('admNewStPhone').value.trim();
+            let pin = document.getElementById('admNewStPin').value.trim();
+            let lat = parseFloat(document.getElementById('admNewStLat').value);
+            let lon = parseFloat(document.getElementById('admNewStLon').value);
+            
+            if (!name || !region || !phone || !pin) return showToast("يرجى ملء الاسم، المنطقة، الهاتف، والرمز السري");
+            if (!/^09[0-9]{8}$/.test(phone)) return showToast("رقم الهاتف غير صالح");
+
+            let cbs = Array.from(document.querySelectorAll('.adm-new-st-chk:checked')).map(cb => cb.value);
+            if (cbs.length === 0) return showToast("اختر فئة واحدة على الأقل");
+
+            let mStat = {}, mPrc = {};
+            cbs.forEach(c => { mStat[c] = false; mPrc[c] = ""; });
+
+            try {
+                let stData = {
+                    name: name,
+                    region: region,
+                    phone: phone,
+                    pinCode: pin,
+                    publicPhone: phone,
+                    showContact: true,
+                    categories: cbs,
+                    materialsStatus: mStat,
+                    materialsPrices: mPrc,
+                    searchRadius: 5.0,
+                    alertRadius: 5.0,
+                    vipTier: 'free',
+                    isVipPlus: false,
+                    rating: 5,
+                    ratingCount: 1,
+                    alertsReceivedCount: 0,
+                    accessCount: 0,
+                    impressionsCount: 0,
+                    status: 'approved',
+                    isVip: false,
+                    createdAt: new Date().toISOString(),
+                    lastUpdate: new Date().toISOString()
+                };
+
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    stData.lat = lat;
+                    stData.lon = lon;
+                    stData.locationFormatted = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                    stData.googleMapsUrl = `https://maps.google.com/?q=${lat},${lon}`;
+                }
+
+                await db.collection("stations").add(stData);
+                showToast("✅ تم إضافة المحطة واعتمادها بنجاح!");
+                
+                // Clear form
+                document.getElementById('admNewStName').value = '';
+                document.getElementById('admNewStRegion').value = '';
+                document.getElementById('admNewStPhone').value = '';
+                document.getElementById('admNewStPin').value = '';
+                document.getElementById('admNewStLat').value = '';
+                document.getElementById('admNewStLon').value = '';
+                
+                loadAdminPanel();
+            } catch(e) {
+                showToast("حدث خطأ أثناء إضافة المحطة");
+            }
+        };
+
+        window.adminQuickRefresh = async function(id) {
+            if(!db) return;
+            try {
+                await db.collection("stations").doc(id).update({ lastUpdate: new Date().toISOString() });
+                showToast("✅ تم تحديث طابع الوقت لهذه المحطة (الآن) بنجاح!");
+                loadAdminPanel();
+            } catch(e) {
+                showToast("خطأ أثناء التحديث");
+            }
+        };
+
+        window.adminOpenEditMaterials = async function(id) {
+            if(!db) return;
+            try {
+                let doc = await db.collection("stations").doc(id).get();
+                if(!doc.exists) return;
+                let st = doc.data();
+                
+                let html = '';
+                if (st.categories) {
+                    st.categories.forEach(cat => {
+                        let isAvail = st.materialsStatus && st.materialsStatus[cat];
+                        let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
+                        html += `
+                            <div style="background:#0F172A; padding:0.6rem; border-radius:8px; margin-bottom:0.5rem; border:1px solid #475569;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                                    <span style="font-weight:bold; color:#FBBF24; font-size:0.85rem;">📦 ${cat}</span>
+                                    <label style="color:white; font-size:0.8rem; cursor:pointer;"><input type="checkbox" id="adm_edit_chk_${cat}" ${isAvail?'checked':''}> متوفر</label>
+                                </div>
+                                <input type="number" id="adm_edit_prc_${cat}" value="${prc}" placeholder="السعر..." style="margin:0; padding:0.4rem; font-size:0.8rem;">
+                            </div>
+                        `;
+                    });
+                }
+                
+                let modalHtml = `
+                    <div id="adminEditMatsModal" class="modal-overlay" style="display:flex; z-index:30000; background:rgba(0,0,0,0.8);">
+                        <div class="modal-content" style="border:2px solid #059669; max-width:350px;">
+                            <h3 style="color:#34D399; margin-top:0; font-size:1.1rem;">تعديل مواد: ${escapeHTML(st.name)}</h3>
+                            ${html}
+                            <button onclick="adminSaveEditMaterials('${id}')" class="btn-primary" style="margin-top:0.5rem; margin-bottom:0;">💾 حفظ التعديلات</button>
+                            <button onclick="document.getElementById('adminEditMatsModal').remove()" class="btn-secondary" style="background:#475569; margin-top:0.5rem; margin-bottom:0;">إلغاء</button>
+                        </div>
+                    </div>
+                `;
+                let div = document.createElement('div');
+                div.innerHTML = modalHtml;
+                document.body.appendChild(div.firstElementChild);
+                
+            } catch(e) {
+                showToast("خطأ في جلب بيانات المحطة");
+            }
+        };
+
+        window.adminSaveEditMaterials = async function(id) {
+            if(!db) return;
+            try {
+                let doc = await db.collection("stations").doc(id).get();
+                let st = doc.data();
+                let mStatus = st.materialsStatus || {};
+                let mPrices = st.materialsPrices || {};
+                
+                if (st.categories) {
+                    st.categories.forEach(cat => {
+                        let chk = document.getElementById(`adm_edit_chk_${cat}`);
+                        if(chk) mStatus[cat] = chk.checked;
+                        let prc = document.getElementById(`adm_edit_prc_${cat}`);
+                        if(prc) mPrices[cat] = prc.value.trim();
+                    });
+                }
+                
+                await db.collection("stations").doc(id).update({
+                    materialsStatus: mStatus,
+                    materialsPrices: mPrices,
+                    lastUpdate: new Date().toISOString()
+                });
+                
+                document.getElementById('adminEditMatsModal').remove();
+                showToast("✅ تم حفظ المواد وتحديث وقت المحطة!");
+                loadAdminPanel();
+            } catch(e) {
+                showToast("خطأ أثناء الحفظ");
+            }
+        };
 
         window.admDelete = async function(id) {
             if (confirm("تأكيد حذف المحطة نهائياً؟")) {
