@@ -20,133 +20,132 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <style>
-        
         :root {
-            --bg-main: #0F172A;
-            --bg-card: #1E293B;
-            --text-primary: #F8FAFC;
-            --text-muted: #94A3B8;
-            --border-color: #334155;
-            --accent-gold: #FBBF24;
-            --primary-blue: #0284C7;
-        }
-        [data-theme="light"] {
-            --bg-main: #F1F5F9;
-            --bg-card: #FFFFFF;
-            --text-primary: #0F172A;
-            --text-muted: #475569;
-            --border-color: #CBD5E1;
-            --accent-gold: #D97706;
-            --primary-blue: #0284C7;
-        }
-        
-        body {
-            font-family: 'Tajawal', Tahoma, sans-serif;
-            background: var(--bg-main);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            transition: background 0.3s, color 0.3s;
-        }
-        header {
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
-            color: var(--accent-gold);
-            padding: 1rem;
-            text-align: center;
-            position: relative;
-            transition: background 0.3s, border-color 0.3s;
-        }
-        
-        .app-section {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin: 1rem auto;
-            max-width: 600px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            display: none;
-            transition: background 0.3s, border-color 0.3s;
-        }
+        --bg-body: #f1f5f9;
+        --bg-card: #ffffff;
+        --bg-inner: #f8fafc;
+        --border-color: #cbd5e1;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --gold-text: #d97706;
+        --radar-bg: #e2e8f0;
+    }
+    [data-theme="dark"] {
+        --bg-body: #0F172A;
+        --bg-card: #1E293B;
+        --bg-inner: #0F172A;
+        --border-color: #334155;
+        --text-main: #F8FAFC;
+        --text-muted: #94A3B8;
+        --gold-text: #FBBF24;
+        --radar-bg: #0F172A;
+    }
+    body {
+        font-family: 'Tajawal', Tahoma, sans-serif;
+        background: var(--bg-body);
+        color: var(--text-main);
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        transition: background 0.3s, color 0.3s;
+    }
+    header {
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--gold-text);
+        padding: 1rem;
+        text-align: center;
+        position: relative;
+        transition: background 0.3s;
+    }
+    .app-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin: 1rem auto;
+        max-width: 600px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        display: none;
+        transition: background 0.3s, border 0.3s;
+    }
+    /* Skeleton Loader */
+    .skeleton-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1.15rem;
+        margin-bottom: 1rem;
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+    .skel-line { height: 20px; background: var(--border-color); border-radius: 6px; margin-bottom: 10px; }
+    .skel-box { height: 60px; background: var(--border-color); border-radius: 10px; margin-bottom: 10px; }
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 0.3; }
+        100% { opacity: 0.6; }
+    }
+    
+    /* Owner Bottom Nav */
+    .owner-bottom-nav {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: var(--bg-card);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-around;
+        padding: 0.5rem 0;
+        z-index: 1000;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+        padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+    }
+    .nav-btn {
+        flex: 1; text-align: center; color: var(--text-muted);
+        font-size: 0.75rem; font-weight: bold;
+        display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+        cursor: pointer; transition: color 0.2s; background: none; border: none;
+    }
+    .nav-btn.active { color: #0284C7; }
+    .nav-btn span { font-size: 1.2rem; }
+    
+    /* Star Rating SVG */
+    .star-btn { cursor: pointer; transition: transform 0.1s; display:inline-block; }
+    .star-btn:active { transform: scale(0.8); }
+    .star-btn svg { width: 22px; height: 22px; fill: none; stroke: #FBBF24; stroke-width: 2; }
+    .star-btn:hover svg { fill: #FDE68A; }
+
+    /* Sticky Search Header */
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        background: var(--bg-body);
+        z-index: 99;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    
+    .theme-toggle {
+        position: absolute; right: 1rem; top: 1.1rem; font-size: 1.5rem; cursor: pointer; background:none; border:none;
+    }
         
         /* Inputs & Buttons */
         input, select {
-            background: var(--bg-main);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
+            background: #0F172A;
+            color: #F8FAFC;
+            border: 1px solid #475569;
             padding: 0.75rem;
             border-radius: 8px;
             box-sizing: border-box;
             width: 100%;
             margin-bottom: 0.75rem;
-            transition: background 0.3s, color 0.3s, border-color 0.3s;
         }
         input:focus, select:focus {
-            border-color: var(--primary-blue);
+            border-color: #FBBF24;
             outline: none;
         }
-
-        /* Owner Bottom Navigation */
-        .owner-bottom-nav {
-            position: fixed;
-            bottom: 0; left: 0; width: 100%;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            padding: 0.6rem 0;
-            z-index: 2000;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-            transition: background 0.3s;
-        }
-        .owner-bottom-nav button {
-            background: transparent; border: none; color: var(--text-muted);
-            display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-            font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: color 0.2s;
-            flex: 1;
-        }
-        .owner-bottom-nav button.active { color: var(--primary-blue); }
-        .owner-bottom-nav button span { font-size: 1.3rem; transition: transform 0.2s; }
-        .owner-bottom-nav button.active span { transform: scale(1.15); }
         
-        /* Skeleton Loading Cards */
-        .skeleton-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
-            animation: pulse-skel 1.5s infinite ease-in-out;
-        }
-        .skel-line { background: var(--border-color); border-radius: 4px; height: 14px; margin-bottom: 10px; }
-        @keyframes pulse-skel { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        /* Interactive SVG Stars */
-        .star-rating svg {
-            width: 26px; height: 26px;
-            fill: var(--border-color);
-            cursor: pointer;
-            transition: fill 0.2s, transform 0.1s;
-        }
-        .star-rating svg:hover, .star-rating svg:active {
-            fill: var(--accent-gold);
-            transform: scale(1.15);
-        }
-
-        /* Sticky Search Filter */
-        .sticky-filters {
-            position: sticky; top: 0; z-index: 100;
-            background: var(--bg-main);
-            padding: 10px 0 5px 0;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 1rem;
-            transition: background 0.3s;
-        }
-        
-        /* Carousel Onboarding */
-        .onboarding-carousel { display: flex; gap: 1rem; overflow-x: auto; padding: 1rem 0; scroll-snap-type: x mandatory; margin-bottom:1.5rem; }
-        .onboarding-card { scroll-snap-align: start; min-width: 80%; background: var(--bg-card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; }
-.btn-primary { background: #059669; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; }
+        .btn-primary { background: #059669; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; }
         .btn-secondary { background: #0284C7; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; }
         .btn-danger { background: #DC2626; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; }
         
@@ -395,7 +394,7 @@
         <div class="modal-content" style="max-width: 440px; border-color: #C084FC; text-align: right; max-height: 90vh; overflow-y: auto;">
             <h3 style="color: #FBBF24; margin-top: 0; text-align: center;">👑 ترقية حساب المحطة (باقات التميز)</h3>
             <p style="font-size: 0.82rem; color: #94A3B8; text-align: center; margin-bottom: 0.75rem;">ضاعف مبيعاتك واجعل محطتك الخيار الأول للمستهلكين في منطقتك والقرى المجاورة:</p>
-            <div id="upgradeShamCashBox" style="background:var(--bg-main); border:1px solid #3B82F6; padding:0.6rem 0.8rem; border-radius:8px; margin-bottom:1rem; text-align:center; font-size:0.82rem; color:#60A5FA;">
+            <div id="upgradeShamCashBox" style="background:#0F172A; border:1px solid #3B82F6; padding:0.6rem 0.8rem; border-radius:8px; margin-bottom:1rem; text-align:center; font-size:0.82rem; color:#60A5FA;">
                 💳 شام كاش للتحويل: <span id="upgradeShamCashSpan" style="font-family:monospace; color:#FDE68A; font-weight:bold;">جاري التحميل...</span> 
                 <button type="button" onclick="copyShamCashToClipboard(window.currentGlobalShamCashId || 'غير محدد')" style="background:#2563EB; color:white; border:none; padding:0.2rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.75rem; margin-right:6px; font-weight:bold;">📋 نسخ</button>
             </div>
@@ -434,9 +433,9 @@
 
     <!-- Header (Dynamic) -->
     <header id="mainHeader">
-        <div id="themeToggleBtn" class="settings-icon" style="left:auto; right:1rem;" onclick="toggleTheme()" title="تبديل المظهر">🌓</div>
         <h1 style="margin: 0; font-size: 1.5rem; letter-spacing: 1px;">متوفر هناا</h1>
         <p style="font-size: 0.8rem; margin: 0.3rem 0 0 0; color: #94A3B8;">المنصة السحابية الموحدة للمحروقات والغاز</p>
+        <button class="theme-toggle" onclick="toggleTheme()" title="تبديل المظهر">🌓</button>
         <div id="consumerSettingsBtn" class="settings-icon" style="display:none;" onclick="showSection('consumerSettings')" title="الإعدادات">⚙️</div>
     </header>
 
@@ -446,38 +445,23 @@
     <main style="padding: 0.5rem; max-width: 600px; margin: auto;">
 
         <!-- 1. Onboarding (Routing) - Shown by default so screen is NEVER blank -->
-        
-        <section id="sec-onboarding" class="app-section" style="display: block; max-width: 800px;">
-            <h2 style="text-align: center; color: var(--accent-gold); margin-top: 0;">مرحباً بك في متوفر هناا ⛽</h2>
-            
-            <div class="onboarding-carousel">
-                <div class="onboarding-card">
-                    <div style="font-size:3rem; margin-bottom:0.5rem;">🔍</div>
-                    <h3 style="color:var(--text-primary); margin:0 0 0.5rem 0;">ابحث بذكاء</h3>
-                    <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">رادار ذكي يحدد أقرب المحطات الجغرافية لك بدقة.</p>
-                </div>
-                <div class="onboarding-card">
-                    <div style="font-size:3rem; margin-bottom:0.5rem;">✅</div>
-                    <h3 style="color:var(--text-primary); margin:0 0 0.5rem 0;">دقة التوفر</h3>
-                    <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">معلومات توفر البنزين، المازوت، والغاز تحدث يومياً من المالك.</p>
-                </div>
-                <div class="onboarding-card">
-                    <div style="font-size:3rem; margin-bottom:0.5rem;">🗺️</div>
-                    <h3 style="color:var(--text-primary); margin:0 0 0.5rem 0;">انطلق فوراً</h3>
-                    <p style="color:var(--text-muted); font-size:0.85rem; margin:0;">خرائط جوجل مدمجة لتوجيهك مباشرة وبضغطة زر واحدة.</p>
-                </div>
+        <section id="sec-onboarding" class="app-section" style="display: block; text-align:center;">
+            <div style="font-size:3.5rem; margin-bottom:0.5rem; display:flex; justify-content:center; gap:0.5rem;">⛽📍</div>
+            <h2 style="color: var(--gold-text); margin-top: 0; font-size:1.6rem;">متوفر هناا</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height:1.6;">المنصة الأسرع للبحث عن المحروقات والغاز.<br>حدد مسارك لننطلق:</p>
+            <div style="background:var(--bg-inner); border:1px solid var(--border-color); border-radius:12px; padding:1rem; margin-bottom:1.5rem; text-align:right; font-size:0.85rem; color:var(--text-main); line-height:1.7;">
+                ✅ ابحث عن أقرب محطة متوفرة.<br>
+                ✅ احصل على إشعارات التوفر الفورية.<br>
+                ✅ توجه للموقع الجغرافي الدقيق بضغطة واحدة.
             </div>
-            
-            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">حدد هويتك للبدء:</p>
             
             <button id="installBtn" style="display: none; background: #8B5CF6; color: white; padding: 0.85rem; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem;">
                 📲 تثبيت التطبيق على الشاشة الرئيسية
             </button>
 
-            <button onclick="setUserRoute('consumer')" class="btn-primary" style="background:var(--primary-blue); font-size:1.05rem; padding: 1.2rem; box-shadow:0 4px 10px rgba(2,132,199,0.3);">🔍 مستخدم عادي (أبحث عن المحروقات)</button>
-            <button onclick="setUserRoute('station')" class="btn-secondary" style="background:var(--bg-card); color:var(--text-primary); border:2px solid var(--border-color); font-size:1.05rem; padding: 1.2rem; margin-bottom:0;">⛽ صاحب محطة أو موزع معتمد</button>
+            <button onclick="setUserRoute('consumer')" class="btn-primary" style="font-size:1.05rem; padding: 1.2rem;">🔍 مستخدم عادي (أبحث عن المحروقات)</button>
+            <button onclick="setUserRoute('station')" class="btn-secondary" style="background:#334155; font-size:1.05rem; padding: 1.2rem; margin-bottom:0;">⛽ صاحب محطة أو موزع معتمد</button>
         </section>
-
 
         <!-- 2. Consumer UI - Radar -->
         <section id="sec-consumerRadar" class="app-section" style="background:transparent; border:none; box-shadow:none; padding:0.5rem 0;">
@@ -489,13 +473,19 @@
                 <div id="radarDotsContainer"></div>
             </div>
             
-            <p id="radarStatusMsg" style="text-align:center; color:var(--text-muted); font-size:0.85rem; min-height:22px; margin: 0.5rem 0;">اضغط على دائرة الرادار لفحص أقرب المحطات</p>
+            <p id="radarStatusMsg" style="text-align:center; color:#94A3B8; font-size:0.85rem; min-height:22px; margin: 0.5rem 0;">اضغط على دائرة الرادار لفحص أقرب المحطات</p>
             
-            <div class="sticky-filters">
-                <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem; overflow-x: auto; padding-bottom: 0.4rem;">
-                    <button onclick="filterConsumerStations('all')" style="background: var(--primary-blue); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
+            <div class="sticky-header">
+                <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom:0.5rem; padding: 0 0.5rem;">
+                    <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
                 </div>
-                <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية / المنطقة..." style="margin-bottom:0; padding:0.65rem 0.85rem; font-size:0.85rem; background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border-color);">
+                <div style="padding: 0 0.5rem;">
+                    <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية / المنطقة..." style="margin-bottom:0; padding:0.65rem 0.85rem; font-size:0.85rem; background:var(--bg-inner); color:var(--text-main); border:1px solid var(--border-color);">
+                </div>
+            </div>
+            
+            <div id="radarRestartBtnCont" style="display:none; text-align:center; margin:1rem 0;">
+                <button onclick="expandRadar()" style="background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-color); padding:0.5rem 1.5rem; border-radius:20px; font-weight:bold; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.1);">🔄 إعادة فحص الرادار</button>
             </div>
 
             <!-- Local Sponsor / Promotional Banner (Top of Search Results) -->
@@ -516,20 +506,20 @@
                 <button onclick="requestSystemNotificationPermission()" style="background:#D97706; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:bold; cursor:pointer; font-size:0.85rem;">🔑 منح إذن الإشعارات والصوت الآن</button>
             </div>
             
-            <div style="background:var(--bg-main); padding:0.85rem; border-radius:10px; border:1px solid var(--border-color); margin-bottom:1rem;">
+            <div style="background:#0F172A; padding:0.85rem; border-radius:10px; border:1px solid #334155; margin-bottom:1rem;">
                 <label style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; font-weight: bold; color: #34D399; cursor:pointer;">
                     <input type="checkbox" id="bgAlarmToggle" onchange="toggleBackgroundAlarm()" style="width: 1.2rem; height: 1.2rem; margin:0;"> 🔔 تفعيل التنبيه الصاخب بالخلفية (كل 60 ثانية)
                 </label>
             </div>
             
-            <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">شرط إطلاق التنبيه:</label>
+            <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">شرط إطلاق التنبيه:</label>
             <select id="alertTriggerMode" onchange="saveConsumerPrefs()">
                 <option value="both">التوفر والنفاذ معاً</option>
                 <option value="available_only">عند توفر المادة فقط</option>
                 <option value="out_only">عند نفاذ المادة فقط</option>
             </select>
 
-            <label style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">نغمة التنبيه:</label>
+            <label style="font-size:0.85rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">نغمة التنبيه:</label>
             <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
                 <select id="userRingtoneSelect" onchange="saveConsumerPrefs()" style="margin-bottom:0; flex:1;">
                     <option value="alarm1">نغمة الإنذار السريع (صاخب)</option>
@@ -558,7 +548,7 @@
             <p style="text-align:center; font-size:0.85rem; color:#F8FAFC; margin-bottom:0.75rem;">ليس لديك حساب محطة أو موزع معتمد؟</p>
             <button onclick="showSection('stationRegister')" class="btn-primary">⛽ بدء تسجيل محطة جديدة</button>
             
-            <button onclick="resetRouting('consumer')" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.8rem; margin-top:0.5rem;">↩️ اخترت محطة بالخطأ؟ العودة لواجهة المستهلك</button>
+            <button onclick="resetRouting('consumer')" style="background:transparent; border:1px solid #475569; color:#94A3B8; width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.8rem; margin-top:0.5rem;">↩️ اخترت محطة بالخطأ؟ العودة لواجهة المستهلك</button>
         </section>
 
         <!-- 5. Station Register -->
@@ -572,26 +562,26 @@
             </div>
             
             <form id="cloudStationForm">
-                <label style="font-size:0.8rem; color:var(--text-muted);">اسم المحطة أو الموزع:</label>
+                <label style="font-size:0.8rem; color:#94A3B8;">اسم المحطة أو الموزع:</label>
                 <input type="text" id="stName" placeholder="مثال: محطة الأمان" required>
                 
-                <label style="font-size:0.8rem; color:var(--text-muted);">المنطقة / القرية:</label>
+                <label style="font-size:0.8rem; color:#94A3B8;">المنطقة / القرية:</label>
                 <input type="text" id="stRegion" placeholder="مثال: العوينة" required>
                 
-                <label style="font-size:0.8rem; color:var(--text-muted);">رقم هاتف تسجيل الدخول (10 خانات يبدأ بـ 09):</label>
+                <label style="font-size:0.8rem; color:#94A3B8;">رقم هاتف تسجيل الدخول (10 خانات يبدأ بـ 09):</label>
                 <input type="tel" id="stPhone" placeholder="09xxxxxxxx" pattern="^09[0-9]{8}$" maxlength="10" required>
                 
-                <label style="font-size:0.8rem; color:var(--text-muted);">الرمز السري الخاص بك:</label>
+                <label style="font-size:0.8rem; color:#94A3B8;">الرمز السري الخاص بك:</label>
                 <input type="password" id="stPin" placeholder="اختر رمزاً سرياً..." required>
                 
                 <label style="font-size:0.85rem; margin-bottom:0.3rem; display:block;">اختر الفئات المتوفرة لديك:</label>
-                <div id="checkboxCategoriesContainer" style="background:var(--bg-main); border:1px solid var(--border-color); padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;"></div>
+                <div id="checkboxCategoriesContainer" style="background:#0F172A; border:1px solid #475569; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;"></div>
 
                 <button type="button" id="captureGpsBtn" onclick="getStationGPS()" class="btn-secondary" style="background:#DC2626; border:2px dashed #FCA5A5; padding:0.85rem;">📍 التقاط الموقع الدقيق للمحطة (إجباري *)</button>
                 <p id="stationGpsStatus" style="font-size: 0.8rem; color: #FCA5A5; margin: 0 0 1rem 0; text-align:center; font-weight:bold;">⚠️ يجب التقاط الموقع الجغرافي الدقيق لتفعيل إرسال الطلب</p>
 
                 <button type="submit" class="btn-primary">إرسال طلب الاعتماد للإدارة</button>
-                <button type="button" onclick="showSection('stationPortal')" class="btn-secondary" style="background:transparent; color:var(--text-muted); border:1px solid var(--border-color); margin-bottom:0;">رجوع لبوابة الدخول</button>
+                <button type="button" onclick="showSection('stationPortal')" class="btn-secondary" style="background:transparent; color:#94A3B8; border:1px solid #475569; margin-bottom:0;">رجوع لبوابة الدخول</button>
             </form>
         </section>
 
@@ -679,35 +669,35 @@
             <div style="background: #0F172A; border: 1px solid #C084FC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <h3 style="font-size: 0.95rem; color: #E9D5FF; margin-top: 0;">⭐👑 إدارة باقات وتكلفة اشتراكات (VIP و VIP+)</h3>
                 
-                <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; border:1px solid #FBBF24;">
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; border:1px solid #FBBF24;">
                     <strong style="font-size:0.85rem; color:#FBBF24; display:block; margin-bottom:0.4rem;">باقة VIP الأساسية:</strong>
                     <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
                         <div style="flex:1;">
-                            <label style="font-size:0.72rem; color:var(--text-muted);">التكلفة ($):</label>
+                            <label style="font-size:0.72rem; color:#94A3B8;">التكلفة ($):</label>
                             <input type="number" id="settingVipPrice" placeholder="10" style="margin:0; padding:0.5rem; font-size:0.85rem;">
                         </div>
                         <div style="flex:1;">
-                            <label style="font-size:0.72rem; color:var(--text-muted);">النطاق (كم):</label>
+                            <label style="font-size:0.72rem; color:#94A3B8;">النطاق (كم):</label>
                             <input type="number" id="settingVipRadius" placeholder="15" style="margin:0; padding:0.5rem; font-size:0.85rem;">
                         </div>
                     </div>
-                    <label style="font-size:0.72rem; color:var(--text-muted);">وصف المميزات (تظهر للمالك في نافذة الترقية):</label>
+                    <label style="font-size:0.72rem; color:#94A3B8;">وصف المميزات (تظهر للمالك في نافذة الترقية):</label>
                     <input type="text" id="settingVipPerks" placeholder="مثال: نطاق 15 كم + إشعارات بث يومية..." style="margin-bottom:0.4rem; padding:0.5rem; font-size:0.85rem;">
                 </div>
 
-                <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; border:1px solid #C084FC;">
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; border:1px solid #C084FC;">
                     <strong style="font-size:0.85rem; color:#C084FC; display:block; margin-bottom:0.4rem;">باقة VIP+ الملكية الفاخرة:</strong>
                     <div style="display:flex; gap:0.5rem; margin-bottom:0.4rem;">
                         <div style="flex:1;">
-                            <label style="font-size:0.72rem; color:var(--text-muted);">التكلفة ($):</label>
+                            <label style="font-size:0.72rem; color:#94A3B8;">التكلفة ($):</label>
                             <input type="number" id="settingVipPlusPrice" placeholder="25" style="margin:0; padding:0.5rem; font-size:0.85rem;">
                         </div>
                         <div style="flex:1;">
-                            <label style="font-size:0.72rem; color:var(--text-muted);">النطاق (كم):</label>
+                            <label style="font-size:0.72rem; color:#94A3B8;">النطاق (كم):</label>
                             <input type="number" id="settingVipPlusRadius" placeholder="30" style="margin:0; padding:0.5rem; font-size:0.85rem;">
                         </div>
                     </div>
-                    <label style="font-size:0.72rem; color:var(--text-muted);">وصف المميزات (تظهر للمالك في نافذة الترقية):</label>
+                    <label style="font-size:0.72rem; color:#94A3B8;">وصف المميزات (تظهر للمالك في نافذة الترقية):</label>
                     <input type="text" id="settingVipPlusPerks" placeholder="مثال: نطاق 30 كم + تاج ملكي وتصدر مطلق..." style="margin-bottom:0.4rem; padding:0.5rem; font-size:0.85rem;">
                 </div>
 
@@ -718,17 +708,17 @@
             <div style="background: #0F172A; border: 1px solid #C084FC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <h3 style="font-size: 0.95rem; color: #E9D5FF; margin-top: 0;">📢 إدارة الإعلانات والرعاية المحلية (بانر ترويجي + Google AdSense)</h3>
                 
-                <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; margin-bottom:0.85rem; border:1px solid var(--border-color);">
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; margin-bottom:0.85rem; border:1px solid #334155;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap; gap:0.4rem;">
                         <strong style="font-size:0.85rem; color:#FBBF24;">1. الإعلان الخاص (رعاية محلية أعلى البحث):</strong>
                         <div style="display:flex; align-items:center; gap:0.6rem;">
-                            <span style="background:var(--bg-main); border:1px solid #FBBF24; color:#FDE68A; padding:0.15rem 0.5rem; border-radius:6px; font-size:0.75rem;">👆 النقرات: <b id="admSponsorClicksCount">0</b></span>
+                            <span style="background:#0F172A; border:1px solid #FBBF24; color:#FDE68A; padding:0.15rem 0.5rem; border-radius:6px; font-size:0.75rem;">👆 النقرات: <b id="admSponsorClicksCount">0</b></span>
                             <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; color:#34D399; cursor:pointer;">
                                 <input type="checkbox" id="settingSponsorActive" style="width:1.1rem; height:1.1rem; margin:0;"> تفعيل الإعلان
                             </label>
                         </div>
                     </div>
-                    <label style="font-size:0.78rem; color:var(--text-muted);">عنوان الإعلان أو النص الترويجي:</label>
+                    <label style="font-size:0.78rem; color:#94A3B8;">عنوان الإعلان أو النص الترويجي:</label>
                     <input type="text" id="settingSponsorTitle" placeholder="مثال: برعاية شركة الأمان للمحروقات - خدمة التوصيل متوفرة..." style="margin-bottom:0.5rem;">
                     
                     <label style="font-size:0.78rem; color:#38BDF8; font-weight:bold;">🖼️ رفع صورة البانر مباشرة من جهازك (يتم ضغطها تلقائياً):</label>
@@ -736,7 +726,7 @@
                         <input type="file" id="sponsorImageFileInput" accept="image/*" onchange="handleSponsorImageUpload(event)" style="margin:0; padding:0.4rem; font-size:0.78rem; flex:1;">
                         <button type="button" onclick="clearSponsorUploadedImage()" style="background:#DC2626; color:white; border:none; padding:0.45rem 0.65rem; border-radius:6px; cursor:pointer; font-size:0.75rem; white-space:nowrap;">🗑️ مسح الصورة</button>
                     </div>
-                    <div id="sponsorImgPreviewContainer" style="display:none; text-align:center; margin-bottom:0.5rem; background:var(--bg-main); padding:0.4rem; border-radius:8px; border:1px dashed #475569;">
+                    <div id="sponsorImgPreviewContainer" style="display:none; text-align:center; margin-bottom:0.5rem; background:#0F172A; padding:0.4rem; border-radius:8px; border:1px dashed #475569;">
                         <img id="sponsorImgPreview" src="" alt="معاينة البانر" style="max-width:100%; max-height:110px; border-radius:6px;">
                         <div id="sponsorImgUploadStatus" style="font-size:0.7rem; color:#34D399; margin-top:0.2rem;">✓ الصورة جاهزة للحفظ</div>
                     </div>
@@ -744,7 +734,7 @@
                     <label style="font-size:0.75rem; color:#64748B;">أو ضع رابط صورة خارجي (اختياري إذا لم ترفع صورة):</label>
                     <input type="url" id="settingSponsorImg" placeholder="https://example.com/banner.jpg" style="margin-bottom:0.4rem;">
 
-                    <label style="font-size:0.78rem; color:var(--text-muted);">رابط الانتقال عند النقر (رابط واتساب أو موقع إلكتروني):</label>
+                    <label style="font-size:0.78rem; color:#94A3B8;">رابط الانتقال عند النقر (رابط واتساب أو موقع إلكتروني):</label>
                     <input type="url" id="settingSponsorLink" placeholder="https://wa.me/9639xxxxxxxx" style="margin-bottom:0.5rem;">
                     <div style="display:flex; gap:0.4rem;">
                         <button onclick="saveSponsorAdSettings()" style="background:#9333EA; color:white; border:none; padding:0.55rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; flex:1; font-size:0.85rem;">💾 حفظ وتحديث الإعلان المحلي فوراً</button>
@@ -752,15 +742,15 @@
                     </div>
                 </div>
 
-                <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; border:1px solid var(--border-color);">
+                <div style="background:#1E293B; padding:0.75rem; border-radius:8px; border:1px solid #334155;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                         <strong style="font-size:0.85rem; color:#60A5FA;">2. شفرة إعلانات قوقل أدسنس (أسفل شاشة المستهلك):</strong>
                         <label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; color:#34D399; cursor:pointer;">
                             <input type="checkbox" id="settingAdsenseActive" style="width:1.1rem; height:1.1rem; margin:0;"> تفعيل AdSense
                         </label>
                     </div>
-                    <label style="font-size:0.78rem; color:var(--text-muted);">الصق كود الإعلان (HTML / Script):</label>
-                    <textarea id="settingAdsenseCode" rows="3" placeholder="<ins class='adsbygoogle' ...></ins>" style="background:var(--bg-main); color:#F8FAFC; border:1px solid var(--border-color); padding:0.6rem; border-radius:8px; width:100%; box-sizing:border-box; font-family:monospace; font-size:0.78rem; margin-bottom:0.5rem;"></textarea>
+                    <label style="font-size:0.78rem; color:#94A3B8;">الصق كود الإعلان (HTML / Script):</label>
+                    <textarea id="settingAdsenseCode" rows="3" placeholder="<ins class='adsbygoogle' ...></ins>" style="background:#0F172A; color:#F8FAFC; border:1px solid #475569; padding:0.6rem; border-radius:8px; width:100%; box-sizing:border-box; font-family:monospace; font-size:0.78rem; margin-bottom:0.5rem;"></textarea>
                     <button onclick="saveAdsenseSettings()" style="background:#0284C7; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:bold; width:100%; font-size:0.85rem;">💾 حفظ إعدادات قوقل أدسنس</button>
                 </div>
             </div>
@@ -778,25 +768,25 @@
             <input type="text" id="adminSearchInput" oninput="filterAdminList()" placeholder="🔍 ابحث عن محطة بالاسم، المنطقة أو الهاتف...">
 
             
-            <div style="background:var(--bg-card); border:1px solid #38BDF8; padding:1.25rem; border-radius:12px; margin-bottom:1.5rem;">
+            <div style="background:#1E293B; border:1px solid #38BDF8; padding:1.25rem; border-radius:12px; margin-bottom:1.5rem;">
                 <h3 style="color:#38BDF8; margin-top:0; font-size:1.05rem;">➕ إضافة واعتماد محطة جديدة (صلاحية الإدارة)</h3>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                     <div>
-                        <label style="font-size:0.75rem; color:var(--text-muted);">اسم المحطة:</label>
+                        <label style="font-size:0.75rem; color:#94A3B8;">اسم المحطة:</label>
                         <input type="text" id="admNewStName" placeholder="مثال: الأمان" style="margin-bottom:0;">
                     </div>
                     <div>
-                        <label style="font-size:0.75rem; color:var(--text-muted);">المنطقة:</label>
+                        <label style="font-size:0.75rem; color:#94A3B8;">المنطقة:</label>
                         <input type="text" id="admNewStRegion" placeholder="المنطقة..." style="margin-bottom:0;">
                     </div>
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                     <div>
-                        <label style="font-size:0.75rem; color:var(--text-muted);">رقم الدخول (09...):</label>
+                        <label style="font-size:0.75rem; color:#94A3B8;">رقم الدخول (09...):</label>
                         <input type="text" id="admNewStPhone" placeholder="09..." maxlength="10" style="margin-bottom:0;">
                     </div>
                     <div>
-                        <label style="font-size:0.75rem; color:var(--text-muted);">الرمز السري:</label>
+                        <label style="font-size:0.75rem; color:#94A3B8;">الرمز السري:</label>
                         <input type="text" id="admNewStPin" placeholder="الرمز..." style="margin-bottom:0;">
                     </div>
                 </div>
@@ -810,8 +800,8 @@
                         <input type="number" id="admNewStLon" placeholder="مثال: 36.123456" step="any" style="margin-bottom:0;">
                     </div>
                 </div>
-                <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.4rem;">اختر الفئات للمحطة الجديدة:</label>
-                <div id="admNewStCatsContainer" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; background:var(--bg-main); padding:0.6rem; border-radius:8px; border:1px solid var(--border-color);">
+                <label style="font-size:0.75rem; color:#94A3B8; display:block; margin-bottom:0.4rem;">اختر الفئات للمحطة الجديدة:</label>
+                <div id="admNewStCatsContainer" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem; background:#0F172A; padding:0.6rem; border-radius:8px; border:1px solid #475569;">
                 </div>
                 <button onclick="adminAddNewStationAction()" style="background:#0284C7; color:white; border:none; width:100%; padding:0.85rem; border-radius:10px; font-weight:900; cursor:pointer; font-size:0.9rem;">➕ إضافة المحطة واعتمادها فوراً</button>
             </div>
@@ -823,6 +813,19 @@
     </main>
 
     <script>
+        
+        function toggleTheme() {
+            let current = document.documentElement.getAttribute('data-theme') || 'dark';
+            let next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('app_theme', next);
+            if(navigator.vibrate) navigator.vibrate(40);
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            let savedTheme = localStorage.getItem('app_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        });
+
         // --- Safe Firebase Initialization ---
         let db = null;
         try {
@@ -955,7 +958,7 @@
                             <p style="font-size:0.86rem; color:#CBD5E1; line-height:1.6; margin-bottom:1rem;">
                                 قم بتثبيت المنصة كتطبيق رسمي على شاشة هاتفك الرئيسية للوصول السريع الفوري، وتلقي إشعارات توفر المحروقات والغاز وصافرات الإنذار بالخلفية:
                             </p>
-                            <div style="background:var(--bg-main); border:1px solid var(--border-color); padding:0.75rem; border-radius:10px; margin-bottom:1rem; text-align:right; font-size:0.8rem; color:#A7F3D0; line-height:1.7;">
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.75rem; border-radius:10px; margin-bottom:1rem; text-align:right; font-size:0.8rem; color:#A7F3D0; line-height:1.7;">
                                 ✓ يفتح فوراً بضغطة واحدة بدون متصفح.<br>
                                 ✓ يعمل حتى عند ضعف الشبكة ويحفظ آخر البيانات.<br>
                                 ✓ يدعم إشعارات البث العاجل المنسدلة في الهاتف.
@@ -967,7 +970,7 @@
                             <button id="pwaModalInstallNowBtn" onclick="triggerPwaInstallAction()" class="btn-primary" style="background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0.6rem; box-shadow:0 4px 14px rgba(139, 92, 246, 0.5);">
                                 📲 تثبيت التطبيق على الهاتف الآن
                             </button>` : ''}
-                            <button onclick="dismissPwaInstallModal()" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.82rem; font-weight:bold;">
+                            <button onclick="dismissPwaInstallModal()" style="background:transparent; border:1px solid #475569; color:#94A3B8; width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.82rem; font-weight:bold;">
                                 المتابعة عبر المتصفح (تثبيت لاحقاً)
                             </button>
                         </div>
@@ -1153,9 +1156,6 @@
         };
 
         window.resetRouting = function(targetRoute) {
-            let bNav = document.getElementById('ownerBottomNav');
-            if(bNav) bNav.style.display = 'none';
-
             if (targetRoute === 'station') {
                 localStorage.setItem('app_route', 'station');
                 let bgToggle = document.getElementById('bgAlarmToggle');
@@ -1194,17 +1194,7 @@
         }
 
         // --- Initial Boot ---
-        
-        function toggleTheme() {
-            let current = document.documentElement.getAttribute('data-theme');
-            let next = current === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('app_theme', next);
-        }
-        if(localStorage.getItem('app_theme') === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-        }
-window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', () => {
             updateNetworkStatusBar();
             showFirstLaunchPwaInstallModalIfNeeded();
 
@@ -1294,27 +1284,9 @@ window.addEventListener('DOMContentLoaded', () => {
         function updateConsumerFilterButtons() {
             const filterEl = document.getElementById('consumerCategoriesFilter');
             if (!filterEl) return;
-            
-            // Ensure Bottom Nav exists
-            let bNav = document.getElementById('ownerBottomNav');
-            if(!bNav) {
-                bNav = document.createElement('nav');
-                bNav.id = 'ownerBottomNav';
-                bNav.className = 'owner-bottom-nav';
-                bNav.innerHTML = `
-                    <button id="ownerTabBtn_materials" onclick="switchOwnerTab('materials')"><span>📦</span>المواد</button>
-                    <button id="ownerTabBtn_addcat" onclick="switchOwnerTab('addcat')"><span>➕</span>الأصناف</button>
-                    <button id="ownerTabBtn_broadcast" onclick="switchOwnerTab('broadcast')"><span>📢</span>الإعلان</button>
-                    <button id="ownerTabBtn_stats" onclick="switchOwnerTab('stats')"><span>📊</span>النشاط</button>
-                    <button id="ownerTabBtn_settings" onclick="switchOwnerTab('settings')"><span>⚙️</span>حسابي</button>
-                `;
-                document.body.appendChild(bNav);
-            }
-            bNav.style.display = 'flex';
-
-            let html = `<button onclick="filterConsumerStations('all')" style="background: ${currentCategoryFilter==='all'?'var(--primary-blue)':'var(--btn-bg)'}; color: var(--text-primary); border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>`;
+            let html = `<button onclick="filterConsumerStations('all')" style="background: ${currentCategoryFilter==='all'?'#0284C7':'#334155'}; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>`;
             availableCategories.forEach(cat => {
-                let bg = (currentCategoryFilter === cat) ? 'var(--primary-blue)' : 'var(--btn-bg)';
+                let bg = (currentCategoryFilter === cat) ? '#0284C7' : '#334155';
                 html += `<button onclick="filterConsumerStations('${cat}')" style="background: ${bg}; color: #F8FAFC; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">${cat}</button>`;
             });
             filterEl.innerHTML = html;
@@ -1486,7 +1458,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
             let stations = await loadCloudStationsData();
             if (stations.length > 0) {
-                renderConsumerStations(stations);
+                document.getElementById('radarContainer').style.display = 'none'; document.getElementById('radarStatusMsg').style.display = 'none'; document.getElementById('radarRestartBtnCont').style.display = 'block'; renderConsumerStations(stations);
             }
         }
 
@@ -1534,19 +1506,20 @@ window.addEventListener('DOMContentLoaded', () => {
         };
 
         
-        window.resetRadarUI = function() {
+        window.expandRadar = function() {
             document.getElementById('radarContainer').style.display = 'flex';
-            document.getElementById('radarBtn').style.display = 'flex';
-            document.getElementById('radarSweep').style.display = 'none';
-            document.getElementById('radarDotsContainer').innerHTML = '';
-            document.getElementById('radarStatusMsg').textContent = "اضغط على دائرة الرادار لفحص أقرب المحطات";
+            document.getElementById('radarStatusMsg').style.display = 'block';
+            document.getElementById('radarRestartBtnCont').style.display = 'none';
             document.getElementById('consumerStationsList').innerHTML = '';
+            activateRadar();
         };
+        
+        function generateSkeletonCards(n) {
+            return Array(n).fill(`<div class="skeleton-card"><div class="skel-line" style="width:60%;"></div><div class="skel-line" style="width:40%;"></div><div class="skel-box"></div><div class="skel-box"></div></div>`).join('');
+        }
 
         window.activateRadar = async function() {
-            if(navigator.vibrate) navigator.vibrate(50);
             playRadarSearchSound();
-            document.getElementById('radarContainer').style.display = 'flex';
             const btn = document.getElementById('radarBtn');
             const sweep = document.getElementById('radarSweep');
             const status = document.getElementById('radarStatusMsg');
@@ -1556,9 +1529,7 @@ window.addEventListener('DOMContentLoaded', () => {
             sweep.style.display = 'block';
             status.textContent = "جاري مسح النطاق وتحديد الموقع الجغرافي (GPS)...";
             dotsCont.innerHTML = '';
-            // UX: Skeleton Loading
-            list.innerHTML = Array(3).fill('<div class="skeleton-card"><div class="skel-line" style="width:50%; height:20px; background:var(--accent-gold); margin-bottom:15px;"></div><div class="skel-line" style="width:100%;"></div><div class="skel-line" style="width:80%;"></div><div class="skel-line" style="width:100%; height:45px; margin-top:20px; background:var(--primary-blue);"></div></div>').join('');
-            
+            document.getElementById('consumerStationsList').innerHTML = generateSkeletonCards(3);
 
             const finishRadarScan = async () => {
                 status.textContent = "جاري جلب بيانات المحطات القريبة...";
@@ -1567,10 +1538,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     sweep.style.display = 'none';
                     btn.style.display = 'flex';
                     btn.textContent = "تحديث الرادار";
-                    status.innerHTML = userLat ? "تم التحديد ✓ <button onclick='resetRadarUI()' style='background:transparent; border:1px solid var(--border-color); color:var(--text-primary); padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer; font-size:0.75rem;'>إعادة الرادار</button>" : "بدون GPS ✓ <button onclick='resetRadarUI()' style='background:transparent; border:1px solid var(--border-color); color:var(--text-primary); padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer; font-size:0.75rem;'>إعادة الرادار</button>";
-                    document.getElementById('radarContainer').style.display = 'none'; // UX: Collapse radar to save space!
-
-                    renderConsumerStations(stations);
+                    status.textContent = userLat ? "تم تحديد موقعك وعرض أقرب المحطات المعتمدة." : "تم عرض المحطات المعتمدة (يرجى تفعيل GPS لحساب المسافة).";
+                    document.getElementById('radarContainer').style.display = 'none'; document.getElementById('radarStatusMsg').style.display = 'none'; document.getElementById('radarRestartBtnCont').style.display = 'block'; renderConsumerStations(stations);
                 }, 1200);
             };
 
@@ -1656,18 +1625,9 @@ window.addEventListener('DOMContentLoaded', () => {
             let dotsHtml = '';
 
             if (topResults.length === 0) {
-                list.innerHTML = `
-                <div style="text-align:center; padding:3rem 1rem; background:var(--bg-card); border-radius:16px; border:1px solid var(--border-color);">
-                    <div style="font-size:4rem; margin-bottom:1rem;">🏜️</div>
-                    <h3 style="color:var(--text-primary); margin-bottom:0.5rem;">لا توجد محطات في هذا النطاق</h3>
-                    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.6;">حاول توسيع نطاق البحث أو تفعيل (GPS) لتحديث موقعك الدقيق.</p>
-                    <button onclick="resetRadarUI()" style="background:var(--primary-blue); color:white; border:none; padding:0.8rem 1.5rem; border-radius:8px; font-weight:bold; cursor:pointer;">🔍 إعادة فحص الرادار</button>
-                </div>
-            `;
+                list.innerHTML = '<div style="text-align:center; padding:3rem 1rem;"><div style="font-size:4rem; margin-bottom:1rem;">🏜️⛽</div><h3 style="color:var(--gold-text); margin-bottom:0.5rem;">لا توجد محطات قريبة</h3><p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">لم يتم العثور على محطات معتمدة متوفرة ضمن نطاقك الحالي، جرب توسيع النطاق أو اختيار فئة أخرى.</p><button onclick="expandRadar()" style="background:#0284C7; color:white; border:none; padding:0.8rem 1.5rem; border-radius:10px; font-weight:bold; cursor:pointer;">🔄 تحديث الفحص</button></div>';
                 dotsCont.innerHTML = '';
-            // UX: Skeleton Loading
-            list.innerHTML = Array(3).fill('<div class="skeleton-card"><div class="skel-line" style="width:50%; height:20px; background:var(--accent-gold); margin-bottom:15px;"></div><div class="skel-line" style="width:100%;"></div><div class="skel-line" style="width:80%;"></div><div class="skel-line" style="width:100%; height:45px; margin-top:20px; background:var(--primary-blue);"></div></div>').join('');
-            
+            document.getElementById('consumerStationsList').innerHTML = generateSkeletonCards(3);
                 return;
             }
 
@@ -1683,7 +1643,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 let safeBroadcast = escapeHTML(st.broadcastMsg);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
                 let vipBadge = isVipPlus ? `<div class="vip-plus-badge" style="margin-bottom:0.5rem;">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge" style="margin-bottom:0.5rem;">⭐ موزع معتمد VIP</div>` : '');
-                let distText = st.distance !== undefined ? `<span style="background:var(--bg-main); color:#38BDF8; padding:0.25rem 0.65rem; border-radius:8px; font-size:0.78rem; font-weight:bold; border:1px solid var(--border-color); white-space:nowrap;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
+                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.25rem 0.65rem; border-radius:8px; font-size:0.78rem; font-weight:bold; border:1px solid #334155; white-space:nowrap;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 let ratingCount = st.ratingCount || 1;
 
@@ -1718,7 +1678,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             matsHtml += `<div style="background:linear-gradient(135deg, #064E3B 0%, #022C22 100%); color:#34D399; padding:0.75rem 1rem; border-radius:10px; font-size:1.02rem; font-weight:900; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #10B981; box-shadow:0 2px 6px rgba(16, 185, 129, 0.2);"><span>🟢 ${safeMat}: <b style="color:#FFFFFF;">متوفر</b>${prcText}</span> ${ts}</div>`;
                         } else {
                             // Unavailable item: subtle faded bar or hidden/compact
-                            matsHtml += `<div style="background:var(--bg-main); color:var(--text-muted); padding:0.5rem 0.85rem; border-radius:10px; font-size:0.85rem; font-weight:600; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); opacity:0.65;"><span>🔴 ${safeMat}: <span style="color:#EF4444;">نفد</span></span></div>`;
+                            matsHtml += `<div style="background:#172033; color:#94A3B8; padding:0.5rem 0.85rem; border-radius:10px; font-size:0.85rem; font-weight:600; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #334155; opacity:0.65;"><span>🔴 ${safeMat}: <span style="color:#EF4444;">نفد</span></span></div>`;
                         }
                     }
                 }
@@ -1729,9 +1689,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
                     waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="background:#25D366; color:white; padding:0.45rem 0.85rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.78rem; display:inline-flex; align-items:center; gap:0.3rem;">💬 تواصل</a>`;
                 }
-                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="background:var(--btn-bg); color:var(--text-primary); border:1px solid var(--border-color); padding:0.45rem 0.85rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📤 مشاركة</button>`;
-                let rateStarsHtml = `<div class="star-rating" style="display:inline-flex; align-items:center; gap:0.2rem; margin-right:0.35rem;" dir="ltr">${[1,2,3,4,5].map(n => `<svg onclick="rateStation('${st.id}', ${n})" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`).join('')}</div>`;
-                let footerBarHtml = `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid var(--border-color);"><div style="font-size:0.75rem; color:#F59E0B; display:flex; align-items:center;">⭐ <b>${currentRating}</b> (${ratingCount}) ${rateStarsHtml}</div><div style="display:flex; gap:0.4rem;">${waBtn}${shareBtn}</div></div>`;
+                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="background:#334155; color:#CBD5E1; border:1px solid #475569; padding:0.45rem 0.85rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📤 مشاركة</button>`;
+                let rateStarsHtml = `<span style="display:inline-flex; gap:0.25rem; margin-right:0.35rem; align-items:center;">${[1,2,3,4,5].map(n => `<div onclick="rateStation('${st.id}', ${n})" class="star-btn" title="تقييم ${n}"><svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg></div>`).join('')}</span>`;
+                let footerBarHtml = `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.08);"><div style="font-size:0.75rem; color:#F59E0B; display:flex; align-items:center;">⭐ <b>${currentRating}</b> (${ratingCount}) ${rateStarsHtml}</div><div style="display:flex; gap:0.4rem;">${waBtn}${shareBtn}</div></div>`;
 
                 html += `
                     <div class="app-section ${cardClass}" style="display:block; padding:1.15rem; margin: 0 0 1rem 0;">
@@ -1740,7 +1700,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             <h4 style="color:#FBBF24; font-size:1.15rem; margin:0; font-weight:900; letter-spacing:0.3px;">${safeName}</h4>
                             ${distText}
                         </div>
-                        <p style="font-size:0.78rem; color:var(--text-muted); margin:0 0 0.65rem 0;">📍 المنطقة: <b style="color:var(--text-primary);">${safeRegion}</b></p>
+                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.65rem 0;">📍 المنطقة: <b style="color:#E2E8F0;">${safeRegion}</b></p>
                         
                         ${broadcastHtml}
                         <div style="margin: 0.5rem 0;">${matsHtml}</div>
@@ -1790,7 +1750,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('rated_stations', JSON.stringify(rated));
                     showToast(`شكراً لك! تم تسجيل تقييمك بـ ${score} نجوم.`);
                     let stations = await loadCloudStationsData();
-                    renderConsumerStations(stations);
+                    document.getElementById('radarContainer').style.display = 'none'; document.getElementById('radarStatusMsg').style.display = 'none'; document.getElementById('radarRestartBtnCont').style.display = 'block'; renderConsumerStations(stations);
                 }
             } catch (e) {
                 showToast("حدث خطأ أثناء التقييم.");
@@ -2192,9 +2152,6 @@ window.addEventListener('DOMContentLoaded', () => {
         let hasShownWelcomeThisSession = false;
 
         window.logoutStationOwner = function() {
-            let bNav = document.getElementById('ownerBottomNav');
-            if(bNav) bNav.style.display = 'none';
-
             hasShownWelcomeThisSession = false;
             let wrap = document.getElementById('stationWelcomeModalWrapper');
             if (wrap) wrap.remove();
@@ -2364,41 +2321,23 @@ window.addEventListener('DOMContentLoaded', () => {
                 st.categories.forEach(c => { if (st.materialsStatus[c] === true) availCount++; });
             }
 
-            
-            // Ensure Bottom Nav exists
-            let bNav = document.getElementById('ownerBottomNav');
-            if(!bNav) {
-                bNav = document.createElement('nav');
-                bNav.id = 'ownerBottomNav';
-                bNav.className = 'owner-bottom-nav';
-                bNav.innerHTML = `
-                    <button id="ownerTabBtn_materials" onclick="switchOwnerTab('materials')"><span>📦</span>المواد</button>
-                    <button id="ownerTabBtn_addcat" onclick="switchOwnerTab('addcat')"><span>➕</span>الأصناف</button>
-                    <button id="ownerTabBtn_broadcast" onclick="switchOwnerTab('broadcast')"><span>📢</span>الإعلان</button>
-                    <button id="ownerTabBtn_stats" onclick="switchOwnerTab('stats')"><span>📊</span>النشاط</button>
-                    <button id="ownerTabBtn_settings" onclick="switchOwnerTab('settings')"><span>⚙️</span>حسابي</button>
-                `;
-                document.body.appendChild(bNav);
-            }
-            bNav.style.display = 'flex';
-
             let html = `
-                <div style="background:var(--bg-main); padding:1.15rem; border-radius:18px; border:2px solid ${borderColor}; box-shadow:0 10px 25px rgba(0,0,0,0.4);">
+                <div style="background:var(--bg-inner); padding:1.15rem; border-radius:18px; margin-bottom: 3rem; border:2px solid ${borderColor}; box-shadow:0 10px 25px rgba(0,0,0,0.4);">
                     
                     <!-- 1. EXECUTIVE STATION HEADER -->
-                    <div style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1px solid var(--border-color); padding:0.9rem; border-radius:14px; margin-bottom:1rem;">
+                    <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:0.9rem; border-radius:14px; margin-bottom:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
                             <div>
                                 <h3 style="color:#FBBF24; margin:0 0 0.2rem 0; font-size:1.2rem;">⛽ ${safeName}</h3>
-                                <div style="color:var(--text-muted); font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
+                                <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
                             </div>
                             ${badgeHtml}
                         </div>
 
-                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; background:var(--bg-main); padding:0.5rem; border-radius:10px; border:1px solid #1E293B; text-align:center; font-size:0.74rem; margin-bottom:0.65rem;">
-                            <div><span style="color:var(--text-muted); display:block;">المواد المتوفرة</span><b style="color:#34D399; font-size:0.9rem;">${availCount} / ${catsCount}</b></div>
-                            <div style="border-right:1px solid #1E293B; border-left:1px solid #1E293B;"><span style="color:var(--text-muted); display:block;">نطاق البحث</span><b style="color:#38BDF8; font-size:0.9rem;">${sRadius} كم</b></div>
-                            <div><span style="color:var(--text-muted); display:block;">نطاق التنبيه</span><b style="color:#FBBF24; font-size:0.9rem;">${aRadius} كم</b></div>
+                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; background:#0F172A; padding:0.5rem; border-radius:10px; border:1px solid #1E293B; text-align:center; font-size:0.74rem; margin-bottom:0.65rem;">
+                            <div><span style="color:#94A3B8; display:block;">المواد المتوفرة</span><b style="color:#34D399; font-size:0.9rem;">${availCount} / ${catsCount}</b></div>
+                            <div style="border-right:1px solid #1E293B; border-left:1px solid #1E293B;"><span style="color:#94A3B8; display:block;">نطاق البحث</span><b style="color:#38BDF8; font-size:0.9rem;">${sRadius} كم</b></div>
+                            <div><span style="color:#94A3B8; display:block;">نطاق التنبيه</span><b style="color:#FBBF24; font-size:0.9rem;">${aRadius} كم</b></div>
                         </div>
 
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:0.4rem; flex-wrap:wrap;">
@@ -2407,21 +2346,12 @@ window.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
 
-                    <!-- 2. PROFESSIONAL GRID NAVIGATION TABS -->
-                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; margin-bottom:0.4rem;">
-                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" style="background:#0284C7; color:white; border:1px solid #38BDF8; padding:0.65rem 0.25rem; border-radius:10px; font-weight:900; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📦 توفر المواد</button>
-                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" style="background:var(--bg-card); color:var(--text-muted); border:1px solid var(--border-color); padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.76rem; cursor:pointer; transition:all 0.2s;">➕🗑️ إضافة أو حذف</button>
-                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" style="background:var(--bg-card); color:var(--text-muted); border:1px solid var(--border-color); padding:0.65rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📢 البث والترقية</button>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.4rem; margin-bottom:1.2rem;">
-                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" style="background:var(--bg-card); color:var(--text-muted); border:1px solid var(--border-color); padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">📊 الإحصائيات والنشاط</button>
-                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" style="background:var(--bg-card); color:var(--text-muted); border:1px solid var(--border-color); padding:0.55rem 0.25rem; border-radius:10px; font-weight:bold; font-size:0.78rem; cursor:pointer; transition:all 0.2s;">⚙️ التواصل والحساب</button>
-                    </div>
+                    
 
                     <!-- TAB 1: MATERIALS (One-Tap Toggles, Prices & Emergency Buttons) -->
                     <div id="ownerTabContent_materials" class="owner-tab-pane">
                         <div style="background:var(--bg-card); padding:0.65rem; border-radius:12px; border:1px solid var(--border-color); margin-bottom:1rem;">
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.4rem; text-align:center; font-weight:bold;">⚡ أزرار التحكم السريع بجميع المواد دفعة واحدة:</div>
+                            <div style="font-size:0.75rem; color:#94A3B8; margin-bottom:0.4rem; text-align:center; font-weight:bold;">⚡ أزرار التحكم السريع بجميع المواد دفعة واحدة:</div>
                             <div style="display:flex; gap:0.5rem;">
                                 <button onclick="emergencyPanicAll('${st.id}', true)" style="background:#059669; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.3);">🟢 توفر الكل (فتح المحطة)</button>
                                 <button onclick="emergencyPanicAll('${st.id}', false)" style="background:#DC2626; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:900; font-size:0.82rem; flex:1; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.3);">🚨 نفاذ الكل (إغلاق طارئ)</button>
@@ -2444,15 +2374,15 @@ window.addEventListener('DOMContentLoaded', () => {
                                 <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.25); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.82rem; font-weight:900; color:#FFFFFF;">${statusBadge}</span>
                             </div>
                             <div style="display:flex; gap:0.5rem; align-items:center; position:relative;">
-                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" onblur="updatePrc('${st.id}','${cat}')" placeholder="السعر (يُحفظ تلقائياً)..." style="margin:0; padding:0.6rem 0.75rem; font-size:0.9rem; background:var(--bg-main); font-weight:bold; border:1px solid var(--border-color); flex:1; width:100%;">
-                                <span id="prc_check_${st.id}_${cat}" style="position:absolute; left:10px; opacity:0; color:var(--success, #10B981); transition:opacity 0.3s; font-size:1.1rem; pointer-events:none;">✅</span>
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" onblur="updatePrc('${st.id}','${cat}')" placeholder="أدخل السعر هنا (يُحفظ تلقائياً)..." style="margin:0; padding:0.6rem 0.75rem; font-size:0.9rem; background:var(--bg-inner); color:var(--text-main); font-weight:bold; border:1px solid var(--border-color); flex:1; transition:border 0.3s;">
+                                <span id="prc_ok_${cat}" style="position:absolute; left:10px; font-size:1.1rem; opacity:0; transition:opacity 0.3s;">✅</span>
                             </div>
                         </div>`;
                 });
             } else {
                 html += `
-                    <div style="background:var(--bg-card); border:1px dashed #475569; padding:1.5rem 1rem; border-radius:12px; text-align:center;">
-                        <p style="color:var(--text-muted); font-size:0.9rem; margin:0 0 0.75rem 0;">لا توجد مواد مضافة في محطتك حالياً.</p>
+                    <div style="background:#1E293B; border:1px dashed #475569; padding:1.5rem 1rem; border-radius:12px; text-align:center;">
+                        <p style="color:#94A3B8; font-size:0.9rem; margin:0 0 0.75rem 0;">لا توجد مواد مضافة في محطتك حالياً.</p>
                         <button onclick="switchOwnerTab('addcat')" style="background:#0284C7; color:white; border:none; padding:0.6rem 1.2rem; border-radius:8px; font-weight:bold; cursor:pointer;">➕ انتقل لإضافة أو حذف صنف</button>
                     </div>`;
             }
@@ -2463,7 +2393,7 @@ window.addEventListener('DOMContentLoaded', () => {
             let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
             html += `
                 <div id="ownerTabContent_addcat" class="owner-tab-pane" style="display:none;">
-                    <div style="background:var(--bg-card); padding:1rem; border-radius:14px; border:1px solid #38BDF8; margin-bottom:1rem;">
+                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #38BDF8; margin-bottom:1rem;">
                         <h4 style="color:#38BDF8; margin:0 0 0.5rem 0; font-size:0.95rem;">➕ إضافة مادة أو صنف جديد لمحطتك:</h4>
             `;
             if (missing.length > 0) {
@@ -2481,15 +2411,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
             // Section for Deleting / Removing existing categories from station
             html += `
-                    <div style="background:var(--bg-card); padding:1rem; border-radius:14px; border:1px solid #EF4444;">
+                    <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #EF4444;">
                         <h4 style="color:#FCA5A5; margin:0 0 0.5rem 0; font-size:0.95rem;">🗑️ حذف مادة أو صنف مسجل في محطتك:</h4>
-                        <p style="font-size:0.78rem; color:var(--text-muted); margin:0 0 0.75rem 0;">إذا لم تعد تتعامل بأحد الأصناف التالية أو أضفته بالخطأ، يمكنك حذفه من محطتك:</p>
+                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.75rem 0;">إذا لم تعد تتعامل بأحد الأصناف التالية أو أضفته بالخطأ، يمكنك حذفه من محطتك:</p>
             `;
             if (st.categories && st.categories.length > 0) {
                 st.categories.forEach(cat => {
                     let isAvail = st.materialsStatus && st.materialsStatus[cat] === true;
                     html += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-main); border:1px solid var(--border-color); padding:0.65rem 0.85rem; border-radius:10px; margin-bottom:0.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#0F172A; border:1px solid #334155; padding:0.65rem 0.85rem; border-radius:10px; margin-bottom:0.5rem;">
                             <div>
                                 <span style="font-weight:900; color:#F8FAFC; font-size:0.92rem;">📦 ${cat}</span>
                                 <span style="font-size:0.75rem; color:${isAvail?'#34D399':'#FCA5A5'}; margin-right:0.4rem;">(${isAvail?'متوفر':'نفد'})</span>
@@ -2499,7 +2429,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     `;
                 });
             } else {
-                html += `<p style="color:var(--text-muted); font-size:0.85rem; margin:0; text-align:center;">لا توجد أصناف مسجلة حالياً لحذفها.</p>`;
+                html += `<p style="color:#94A3B8; font-size:0.85rem; margin:0; text-align:center;">لا توجد أصناف مسجلة حالياً لحذفها.</p>`;
             }
             html += `
                     </div>
@@ -2513,7 +2443,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 الإعلان الصاخب (بث عاجل في هواتف المستهلكين):</h4>
                         <p style="font-size:0.78rem; color:#FEF3C7; margin:0 0 0.65rem 0; line-height:1.5;">تظهر رسالتك كإشعار منسدل بصوت صافرة إنذار لجميع المستهلكين في نطاقك وتختفي تلقائياً بعد 3 ساعات:</p>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
-                            <input type="text" id="bcMsg_${st.id}" value="${safeBroadcast}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة غاز منزلي الآن)..." style="margin:0; background:var(--bg-main); font-weight:bold; font-size:0.9rem;">
+                            <input type="text" id="bcMsg_${st.id}" value="${safeBroadcast}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة غاز منزلي الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
                             <div style="display:flex; gap:0.5rem;">
                                 <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.9rem; cursor:pointer; flex:2;">🚀 إطلاق البث الصاخب الآن</button>
                                 ${st.broadcastMsg ? `<button onclick="document.getElementById('bcMsg_${st.id}').value=''; sendVIPBroadcast('${st.id}');" style="background:#475569; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:bold; font-size:0.8rem; cursor:pointer; flex:1;">إيقاف البث</button>` : ''}
@@ -2533,24 +2463,24 @@ window.addEventListener('DOMContentLoaded', () => {
             // TAB 4: STATS
             html += `
                 <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none;">
-                    <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:1.1rem; border-radius:14px; text-align:center;">
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1.1rem; border-radius:14px; text-align:center;">
                         <h4 style="color:#60A5FA; margin:0 0 0.85rem 0; font-size:0.95rem;">📊 إحصائيات تفاعل المستهلكين مع محطتك:</h4>
                         <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.6rem;">
-                            <div style="background:var(--bg-main); border:1px solid var(--border-color); padding:0.85rem; border-radius:10px;">
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
                                 <div style="font-size:1.35rem; color:#38BDF8; font-weight:900;">${st.impressionsCount || 0}</div>
-                                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">🔍 مرات الظهور بالرادار</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔍 مرات الظهور بالرادار</div>
                             </div>
-                            <div style="background:var(--bg-main); border:1px solid var(--border-color); padding:0.85rem; border-radius:10px;">
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
                                 <div style="font-size:1.35rem; color:#34D399; font-weight:900;">${st.alertsReceivedCount || 0}</div>
-                                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">🔔 تنبيهات صوتية وصلت للزبائن</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">🔔 تنبيهات صوتية وصلت للزبائن</div>
                             </div>
-                            <div style="background:var(--bg-main); border:1px solid var(--border-color); padding:0.85rem; border-radius:10px;">
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
                                 <div style="font-size:1.35rem; color:#C4B5FD; font-weight:900;">${st.accessCount || 0}</div>
-                                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">💬 نقرات التواصل عبر واتساب</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">💬 نقرات التواصل عبر واتساب</div>
                             </div>
-                            <div style="background:var(--bg-main); border:1px solid var(--border-color); padding:0.85rem; border-radius:10px;">
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
                                 <div style="font-size:1.35rem; color:#FBBF24; font-weight:900;">⭐ ${avgRating}</div>
-                                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">تقييم الزبائن (${st.ratingCount || 1} تقييم)</div>
+                                <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">تقييم الزبائن (${st.ratingCount || 1} تقييم)</div>
                             </div>
                         </div>
                     </div>
@@ -2560,19 +2490,19 @@ window.addEventListener('DOMContentLoaded', () => {
             // TAB 5: SETTINGS & GPS UPDATE
             html += `
                 <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none;">
-                    <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
                         <h4 style="color:#F8FAFC; margin:0 0 0.75rem 0; font-size:0.95rem;">📞 إعدادات التواصل مع الزبائن:</h4>
-                        <label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">رقم واتساب العام للجمهور:</label>
+                        <label style="font-size:0.82rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">رقم واتساب العام للجمهور:</label>
                         <input type="tel" id="pubPhone_${st.id}" value="${st.publicPhone || st.phone}" maxlength="10" style="padding:0.7rem; font-size:0.95rem;">
-                        <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.86rem; margin-bottom:0.85rem; cursor:pointer; background:var(--bg-main); padding:0.7rem; border-radius:8px; border:1px solid var(--border-color);">
+                        <label style="display:flex; align-items:center; gap:0.6rem; color:#F8FAFC; font-size:0.86rem; margin-bottom:0.85rem; cursor:pointer; background:#0F172A; padding:0.7rem; border-radius:8px; border:1px solid #334155;">
                             <input type="checkbox" id="shwCon_${st.id}" ${st.showContact !== false ? 'checked' : ''} style="width:1.15rem; height:1.15rem; margin:0;"> السماح للمستهلكين بمراسلتي عبر واتساب
                         </label>
                         <button onclick="saveStSet('${st.id}')" class="btn-secondary" style="padding:0.8rem; font-size:0.92rem; margin-bottom:0;">💾 حفظ إعدادات التواصل</button>
                     </div>
 
-                    <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
                         <h4 style="color:#34D399; margin:0 0 0.4rem 0; font-size:0.92rem;">📍 تحديث الموقع الجغرافي للمحطة (GPS):</h4>
-                        <p style="font-size:0.76rem; color:var(--text-muted); margin:0 0 0.65rem 0;">إذا قمت بتسجيل المحطة سابقاً من موقع غير دقيق، اضغط أدناه وأنت داخل المحطة لتحديث إحداثياتها:</p>
+                        <p style="font-size:0.76rem; color:#94A3B8; margin:0 0 0.65rem 0;">إذا قمت بتسجيل المحطة سابقاً من موقع غير دقيق، اضغط أدناه وأنت داخل المحطة لتحديث إحداثياتها:</p>
                         <button onclick="updateOwnerStationGPS('${st.id}')" style="background:#064E3B; border:1px solid #10B981; color:#FFFFFF; width:100%; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.85rem; cursor:pointer;">📍 تحديث موقع المحطة الدقيق الآن</button>
                     </div>
 
@@ -2580,6 +2510,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
+            <div class="owner-bottom-nav">
+                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" class="nav-btn active"><span>📦</span>المواد</button>
+                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" class="nav-btn"><span>➕</span>تعديل</button>
+                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" class="nav-btn"><span>📢</span>البث</button>
+                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" class="nav-btn"><span>📊</span>إحصاء</button>
+                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" class="nav-btn"><span>⚙️</span>حساب</button>
+                    </div>
             html += `</div>`; // End of main dashboard container
 
             let dash = document.getElementById('sec-stationDashboard');
@@ -2605,7 +2542,6 @@ window.addEventListener('DOMContentLoaded', () => {
         };
 
         window.emergencyPanicAll = async function(id, statusVal) {
-            if(navigator.vibrate) navigator.vibrate([50, 100, 50]);
             if (!db) return;
             try {
                 let ref = db.collection("stations").doc(id);
@@ -2618,6 +2554,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
                     await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
                     showToast(statusVal ? "🟢 تم فتح وتفعيل جميع المواد بنجاح!" : "🚨 تم إغلاق جميع المواد (نفدت) طارئاً!");
+                    if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
                     let updated = await ref.get();
                     loadMyStationDashboard({ id, ...updated.data() }, 'materials');
                 }
@@ -2627,7 +2564,6 @@ window.addEventListener('DOMContentLoaded', () => {
         };
 
         window.toggleMat = async function(id, cat, stat) {
-            if(navigator.vibrate) navigator.vibrate(50);
             try {
                 let ref = db.collection("stations").doc(id);
                 let doc = await ref.get();
@@ -2636,6 +2572,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     mStatus[cat] = stat;
                     await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
                     showToast(stat ? `🟢 تم تفعيل توفر (${cat})` : `🔴 تم تحويل (${cat}) إلى نفدت الكمية`);
+                    if(navigator.vibrate) navigator.vibrate(50);
                     let updated = await ref.get();
                     loadMyStationDashboard({ id, ...updated.data() }, 'materials');
                 }
@@ -2643,10 +2580,7 @@ window.addEventListener('DOMContentLoaded', () => {
         };
 
         window.updatePrc = async function(id, cat) {
-            if(navigator.vibrate) navigator.vibrate(50);
-            let inputEl = document.getElementById(`prc_${id}_${cat}`);
-            let checkEl = document.getElementById(`prc_check_${id}_${cat}`);
-            let val = inputEl ? inputEl.value.trim() : "";
+            let val = document.getElementById(`prc_${id}_${cat}`).value.trim();
             try {
                 let ref = db.collection("stations").doc(id);
                 let doc = await ref.get();
@@ -2654,10 +2588,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     let mPrices = doc.data().materialsPrices || {};
                     mPrices[cat] = val;
                     await ref.update({ materialsPrices: mPrices, lastUpdate: new Date().toISOString() });
-                    if(checkEl) {
-                        checkEl.style.opacity = '1';
-                        setTimeout(() => checkEl.style.opacity = '0', 2000);
-                    }
+                    showToast(`💾 تم حفظ سعر (${cat}) بنجاح!`);
+                    if(navigator.vibrate) navigator.vibrate(50);
+                    let okIcon = document.getElementById(`prc_ok_${cat}`); if(okIcon){ okIcon.style.opacity=1; setTimeout(()=>okIcon.style.opacity=0, 2000); }
                 }
             } catch (e) { showToast("خطأ في حفظ السعر"); }
         };
@@ -2931,17 +2864,17 @@ window.addEventListener('DOMContentLoaded', () => {
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
                             <div style="flex:1;">
                                 <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${sAdmName} ${tierLabel}</h4>
-                                <p style="font-size:0.8rem; color:var(--text-muted); margin:0.15rem 0;">المنطقة: ${sAdmRegion} | الدخول: <b>${sAdmPhone}</b></p>
+                                <p style="font-size:0.8rem; color:#94A3B8; margin:0.15rem 0;">المنطقة: ${sAdmRegion} | الدخول: <b>${sAdmPhone}</b></p>
                                 <p style="font-size:0.8rem; color:#F59E0B; margin:0.15rem 0;">🔑 الرمز السري: <b>${sAdmPin}</b></p>
                                 <p style="font-size:0.8rem; color:#38BDF8; margin:0.15rem 0;">الفئات: ${sAdmCats}</p>
-                                <div style="background:var(--bg-card); border:1px solid var(--border-color); padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
+                                <div style="background:#1E293B; border:1px solid #475569; padding:0.45rem 0.6rem; border-radius:8px; margin:0.35rem 0; font-size:0.78rem;">
                                     <div style="color:#34D399; font-weight:bold; margin-bottom:0.2rem;">📍 الموقع الدقيق المسجل (GPS):</div>
                                     ${(st.lat && st.lon) ? `
                                         <div style="color:#F8FAFC; direction:ltr; text-align:right; font-family:monospace; margin-bottom:0.25rem;">${Number(st.lat).toFixed(6)}, ${Number(st.lon).toFixed(6)}</div>
                                         <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:inline-block; background:#0284C7; color:white; text-decoration:none; padding:0.2rem 0.5rem; border-radius:4px; font-size:0.72rem; font-weight:bold;">🗺️ فتح الموقع على خرائط Google</a>
                                     ` : `<span style="color:#EF4444;">غير مسجل</span>`}
                                 </div>
-                                <div style="background:var(--bg-main); border:1px solid var(--border-color); padding:0.5rem; border-radius:8px; margin: 0.4rem 0; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                                <div style="background:#0F172A; border:1px solid #334155; padding:0.5rem; border-radius:8px; margin: 0.4rem 0; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
                                     <div style="display:flex; align-items:center; gap:0.25rem;">
                                         <label style="font-size:0.73rem; color:#38BDF8; font-weight:bold;">🔍 نطاق البحث(كم):</label>
                                         <input type="number" id="sradius_${id}" value="${currentSearchRadius}" style="width:52px; padding:0.2rem; margin:0; font-size:0.8rem;">
@@ -2973,7 +2906,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>`;
             });
-            container.innerHTML = html || '<p style="text-align:center; color:var(--text-muted);">لا توجد محطات مسجلة.</p>';
+            container.innerHTML = html || '<p style="text-align:center; color:#94A3B8;">لا توجد محطات مسجلة.</p>';
         }
 
         window.filterAdminList = function() {
@@ -3023,7 +2956,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 availableCategories.forEach(cat => {
                     let docId = categoryDocs[cat] || '';
                     html += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:0.45rem 0.65rem; border-radius:6px; border:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#1E293B; padding:0.45rem 0.65rem; border-radius:6px; border:1px solid #475569;">
                             <span style="font-size:0.85rem;"><b>${cat}</b></span>
                             <div style="display:flex; gap:0.4rem;">
                                 <button onclick="editCategory('${docId}', '${cat}')" style="background:#0284C7; color:white; border:none; padding:0.25rem 0.6rem; border-radius:4px; cursor:pointer; font-size:0.75rem;">تعديل</button>
@@ -3335,7 +3268,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             <p style="font-size:0.85rem; color:#CBD5E1; line-height:1.6; margin-bottom:1.25rem;">
                                 لكي يعمل التطبيق بأفضل كفاءة ويوجهك لأقرب المحطات ويرسل لك إشعارات التنبيه الفورية وصافرات الإنذار، يرجى السماح بالأذونات التالية:
                             </p>
-                            <div style="background:var(--bg-main); padding:0.85rem; border-radius:10px; margin-bottom:1.25rem; font-size:0.82rem; color:#F8FAFC; line-height:1.8;">
+                            <div style="background:#0F172A; padding:0.85rem; border-radius:10px; margin-bottom:1.25rem; font-size:0.82rem; color:#F8FAFC; line-height:1.8;">
                                 📍 <b>الموقع الجغرافي (GPS):</b> لحساب المسافة الدقيقة وعرض المحطات القريبة.<br>
                                 🔔 <b>الإشعارات الفورية:</b> لتنبيهك عند توفر المحروقات والغاز.<br>
                                 🔊 <b>تنبيهات الصوت:</b> لإطلاق صفارة الإنذار عند التغيرات اللحظية.
@@ -3392,7 +3325,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     let statusTxt = isAvail ? '🟢 متوفر' : '🔴 نفد';
                     
                     matsCheckHtml += `
-                        <div style="background:var(--bg-main); padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; border:1px solid var(--border-color); display:flex; flex-direction:column; gap:0.6rem;">
+                        <div style="background:#0F172A; padding:0.85rem; border-radius:12px; margin-bottom:0.75rem; border:1px solid #334155; display:flex; flex-direction:column; gap:0.6rem;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <span style="font-weight:900; color:#FBBF24; font-size:1.05rem;">📦 ${cat}</span>
                                 <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; background:${isAvail?'rgba(16, 185, 129, 0.15)':'rgba(239, 68, 68, 0.1)'}; padding:0.3rem 0.6rem; border-radius:8px; border:1px solid ${isAvail?'#10B981':'#EF4444'}; transition:all 0.2s;" id="wel_lbl_${cat}">
@@ -3400,7 +3333,7 @@ window.addEventListener('DOMContentLoaded', () => {
                                     <input type="checkbox" id="wel_chk_${cat}" ${isAvail?'checked':''} onchange="toggleWelcomeStyle('${cat}')" style="width:1.2rem; height:1.2rem; margin:0; accent-color:#10B981;">
                                 </label>
                             </div>
-                            <input type="number" id="wel_prc_${cat}" value="${prc}" placeholder="تعديل السعر (اختياري)..." style="margin:0; padding:0.5rem; font-size:0.85rem; background:var(--bg-card); color:#F8FAFC; border:1px solid var(--border-color); border-radius:6px; font-weight:bold;">
+                            <input type="number" id="wel_prc_${cat}" value="${prc}" placeholder="تعديل السعر (اختياري)..." style="margin:0; padding:0.5rem; font-size:0.85rem; background:#1E293B; color:#F8FAFC; border:1px solid #475569; border-radius:6px; font-weight:bold;">
                         </div>
                     `;
                 });
@@ -3635,7 +3568,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         let isAvail = st.materialsStatus && st.materialsStatus[cat];
                         let prc = (st.materialsPrices && st.materialsPrices[cat]) ? st.materialsPrices[cat] : '';
                         html += `
-                            <div style="background:var(--bg-main); padding:0.6rem; border-radius:8px; margin-bottom:0.5rem; border:1px solid var(--border-color);">
+                            <div style="background:#0F172A; padding:0.6rem; border-radius:8px; margin-bottom:0.5rem; border:1px solid #475569;">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                                     <span style="font-weight:bold; color:#FBBF24; font-size:0.85rem;">📦 ${cat}</span>
                                     <label style="color:white; font-size:0.8rem; cursor:pointer;"><input type="checkbox" id="adm_edit_chk_${cat}" ${isAvail?'checked':''}> متوفر</label>
