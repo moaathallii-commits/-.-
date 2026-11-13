@@ -244,6 +244,179 @@
             overflow: hidden;
         }
 
+        
+        /* Light Mode Support (UX #5) */
+        body.light-mode {
+            background: #F1F5F9 !important;
+            color: #0F172A !important;
+        }
+        body.light-mode header {
+            background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%) !important;
+            border-bottom: 1px solid #CBD5E1 !important;
+            color: #D97706 !important;
+        }
+        body.light-mode .app-section:not(#sec-consumerRadar) {
+            background: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+            color: #0F172A !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+        }
+        body.light-mode input, body.light-mode select, body.light-mode textarea {
+            background: #F8FAFC !important;
+            color: #0F172A !important;
+            border-color: #94A3B8 !important;
+        }
+        body.light-mode .sticky-search-bar {
+            background: rgba(241, 245, 249, 0.95) !important;
+            border-bottom: 1px solid #CBD5E1 !important;
+        }
+        body.light-mode .owner-bottom-nav {
+            background: rgba(255, 255, 255, 0.96) !important;
+            border-top: 1px solid #CBD5E1 !important;
+        }
+
+        .theme-toggle-icon {
+            position: absolute;
+            right: 1rem; top: 1.1rem;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: #FBBF24;
+            background: #334155;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #475569;
+            transition: transform 0.2s;
+        }
+        .theme-toggle-icon:active { transform: scale(0.92); }
+
+        /* Onboarding Feature Cards (UX #9) */
+        .onboarding-steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            text-align: center;
+        }
+        .onboarding-step-card {
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 0.65rem 0.35rem;
+        }
+        body.light-mode .onboarding-step-card {
+            background: #F8FAFC;
+            border-color: #CBD5E1;
+        }
+
+        /* Interactive Map Container (UX #1) */
+        #interactiveMapContainer {
+            display: none;
+            width: 100%;
+            height: 340px;
+            border-radius: 12px;
+            margin-top: 0.75rem;
+            border: 2px solid #38BDF8;
+            background: #0F172A;
+            overflow: hidden;
+            position: relative;
+        }
+        .map-toggle-btn {
+            background: #1E293B;
+            border: 1px solid #38BDF8;
+            color: #38BDF8;
+            padding: 0.55rem 1rem;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        /* Sticky Search & Filter (UX #2) */
+        .sticky-search-bar {
+            position: sticky;
+            top: 0;
+            z-index: 950;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 0.65rem 0.5rem;
+            border-bottom: 1px solid #334155;
+            margin: 0 -0.5rem;
+        }
+
+        /* Skeleton Loading State (UX #4) */
+        .skeleton-card {
+            background: #1E293B;
+            border-radius: 14px;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            animation: pulse-skeleton 1.4s infinite ease-in-out;
+            border: 1px solid #334155;
+        }
+        .skeleton-line {
+            background: #334155;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+        }
+        @keyframes pulse-skeleton {
+            0% { opacity: 1; }
+            50% { opacity: 0.45; }
+            100% { opacity: 1; }
+        }
+
+        /* Bottom App Bar for Owner (UX #6) */
+        .owner-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0.45rem 0;
+            z-index: 9000;
+            padding-bottom: env(safe-area-inset-bottom, 0.45rem);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.4);
+        }
+        .owner-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #94A3B8;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0.35rem;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+            width: 100%;
+        }
+        .owner-nav-item.active {
+            color: #38BDF8;
+            transform: translateY(-2px);
+        }
+        .owner-nav-item svg {
+            width: 22px;
+            height: 22px;
+            margin-bottom: 0.2rem;
+            fill: currentColor;
+        }
+
         /* Utilities */
         .settings-icon {
             position: absolute;
@@ -290,43 +463,6 @@
             background: #1E293B; border: 2px solid #FBBF24; padding: 1.5rem; border-radius: 16px;
             width: 90%; max-width: 400px; text-align: center;
         }
-
-        /* UX Batch 2: Light Mode & UI Adjustments */
-        body.light-mode { background: #F8FAFC; color: #0F172A; }
-        body.light-mode .app-section { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        body.light-mode header { background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%); color: #0F172A; border-bottom: 1px solid #E2E8F0; }
-        body.light-mode header h1 { color: #0F172A; }
-        body.light-mode input, body.light-mode select { background: #F8FAFC; color: #0F172A; border-color: #CBD5E1; }
-        body.light-mode .sticky-header { background: rgba(255, 255, 255, 0.95); border-bottom-color: #E2E8F0; }
-        body.light-mode .radar-container { background: #FFFFFF; border-color: #E2E8F0; }
-        body.light-mode .vip-card { background: linear-gradient(180deg, #FFFFFF 0%, #FEF3C7 100%) !important; border-color: #F59E0B !important; }
-        body.light-mode .bottom-app-bar { background: rgba(255, 255, 255, 0.95); border-top-color: #E2E8F0; }
-        
-        /* Bottom App Bar */
-        .bottom-app-bar {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 600px;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
-            border-top: 1px solid #334155;
-            display: flex; justify-content: space-around; align-items: center;
-            padding: 0.6rem 0; z-index: 5000;
-        }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #64748B; font-size: 0.75rem; font-weight: bold; cursor: pointer; gap: 0.3rem;
-            transition: all 0.2s; padding: 0.2rem; flex: 1;
-        }
-        .nav-item.active { color: #38BDF8; }
-        .nav-item i { font-size: 1.3rem; font-style: normal; }
-
-        /* Onboarding Carousel */
-        .carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 1rem; padding-bottom: 1rem; scrollbar-width: none; }
-        .carousel-container::-webkit-scrollbar { display: none; }
-        .carousel-slide { min-width: 100%; scroll-snap-align: center; text-align: center; padding: 1.5rem 1rem; box-sizing: border-box; background: rgba(30, 41, 59, 0.4); border-radius: 16px; border: 1px dashed #334155; }
-        body.light-mode .carousel-slide { background: #F8FAFC; border-color: #E2E8F0; }
-        .carousel-icon { font-size: 3.5rem; margin-bottom: 1rem; }
-        
-        .owner-tab-pane { padding-bottom: 75px; } /* Space for bottom bar */
     </style>
 </head>
 <body>
@@ -389,10 +525,10 @@
 
     <!-- Header (Dynamic) -->
     <header id="mainHeader">
+        <div id="themeToggleBtn" class="theme-toggle-icon" onclick="toggleThemeMode()" title="تبديل المظهر (ليلي / نهاري)">☀️</div>
         <h1 style="margin: 0; font-size: 1.5rem; letter-spacing: 1px;">متوفر هناا</h1>
         <p style="font-size: 0.8rem; margin: 0.3rem 0 0 0; color: #94A3B8;">المنصة السحابية الموحدة للمحروقات والغاز</p>
-        <div id="consumerSettingsBtn" class="settings-icon" style="display:none; right: 1rem; left: auto;" onclick="showSection('consumerSettings')" title="الإعدادات">⚙️</div>
-        <div class="settings-icon" style="left: 1rem; top: 1.1rem; border-radius: 10px; background: transparent; font-size: 1.2rem;" onclick="toggleLightMode()" title="تبديل المظهر">🌗</div>
+        <div id="consumerSettingsBtn" class="settings-icon" style="display:none;" onclick="showSection('consumerSettings')" title="الإعدادات">⚙️</div>
     </header>
 
     <!-- Escape Button for Station Owners who chose Consumer by mistake -->
@@ -401,33 +537,33 @@
     <main style="padding: 0.5rem; max-width: 600px; margin: auto;">
 
         <!-- 1. Onboarding (Routing) - Shown by default so screen is NEVER blank -->
-        <section id="sec-onboarding" class="app-section" style="display: block; padding: 1rem;">
-            
-            <button id="installBtn" style="display: none; background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white; padding: 0.85rem; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);">
-                📲 تثبيت التطبيق على الشاشة الرئيسية
-            </button>
-
-            <div class="carousel-container">
-                <div class="carousel-slide">
-                    <div class="carousel-icon">🔍</div>
-                    <h3 style="color:#38BDF8; margin-top:0;">ابحث عن محروقاتك</h3>
-                    <p style="color:#94A3B8; font-size:0.85rem; line-height:1.6; margin-bottom:0;">رادار ذكي يمسح منطقتك ليعرض لك أقرب المحطات المعتمدة تلقائياً. (اسحب لليسار 👈)</p>
+        <section id="sec-onboarding" class="app-section" style="display: block;">
+            <h2 style="text-align: center; color: #FBBF24; margin-top: 0; margin-bottom: 0.4rem;">مرحباً بك في متوفر هناا</h2>
+            <p style="text-align: center; color: #94A3B8; font-size: 0.85rem; margin-bottom: 1rem;">دليلك السحابي الفوري للمحروقات والغاز في منطقتك:</p>
+            <div class="onboarding-steps-grid">
+                <div class="onboarding-step-card">
+                    <div style="font-size:1.6rem; margin-bottom:0.25rem;">📡</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#38BDF8;">1. افحص الرادار</div>
+                    <div style="font-size:0.68rem; color:#94A3B8; margin-top:0.15rem;">حدد أقرب المحطات لموقعك</div>
                 </div>
-                <div class="carousel-slide">
-                    <div class="carousel-icon">📦</div>
-                    <h3 style="color:#34D399; margin-top:0;">اعرف المتوفر فوراً</h3>
-                    <p style="color:#94A3B8; font-size:0.85rem; line-height:1.6; margin-bottom:0;">لا داعي للذهاب والسؤال. تعرف على توفر البنزين والمازوت والغاز بدقة قبل الانطلاق.</p>
+                <div class="onboarding-step-card">
+                    <div style="font-size:1.6rem; margin-bottom:0.25rem;">🟢</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#34D399;">2. تأكد من التوفر</div>
+                    <div style="font-size:0.68rem; color:#94A3B8; margin-top:0.15rem;">بنزين، مازوت، وغاز بلحظتها</div>
                 </div>
-                <div class="carousel-slide">
-                    <div class="carousel-icon">🗺️</div>
-                    <h3 style="color:#FBBF24; margin-top:0;">انطلق للموقع المباشر</h3>
-                    <p style="color:#94A3B8; font-size:0.85rem; line-height:1.6; margin-bottom:0;">بضغطة واحدة، يوجهك التطبيق عبر خرائط جوجل إلى المحطة مباشرة.</p>
+                <div class="onboarding-step-card">
+                    <div style="font-size:1.6rem; margin-bottom:0.25rem;">🗺️</div>
+                    <div style="font-size:0.75rem; font-weight:bold; color:#FBBF24;">3. انطلق للموقع</div>
+                    <div style="font-size:0.68rem; color:#94A3B8; margin-top:0.15rem;">توجيه مباشر عبر الخريطة</div>
                 </div>
             </div>
             
-            <p style="text-align: center; color: #64748B; font-size: 0.85rem; margin-bottom: 1rem; font-weight:bold;">اختر نوع حسابك للبدء:</p>
-            <button onclick="setUserRoute('consumer')" class="btn-primary" style="font-size:1.05rem; padding: 1.1rem; border-radius:14px; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);">🔍 مستخدم عادي (أبحث عن المحروقات)</button>
-            <button onclick="setUserRoute('station')" class="btn-secondary" style="background:#334155; font-size:1rem; padding: 1rem; margin-bottom:0; border-radius:14px;">⛽ صاحب محطة أو موزع معتمد</button>
+            <button onclick="window.open('https://t.me/+7QVYs8WgbLwzM2I8', '_blank')" style="background: linear-gradient(135deg, #0088cc 0%, #005580 100%); color: white; padding: 0.85rem; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; margin-bottom: 1rem; box-shadow: 0 4px 10px rgba(0, 136, 204, 0.3);">
+                📲 الانضمام لقناة التلغرام وتحميل التطبيق
+            </button>
+
+            <button onclick="setUserRoute('consumer')" class="btn-primary" style="font-size:1.05rem; padding: 1.2rem;">🔍 مستخدم عادي (أبحث عن المحروقات)</button>
+            <button onclick="setUserRoute('station')" class="btn-secondary" style="background:#334155; font-size:1.05rem; padding: 1.2rem; margin-bottom:0;">⛽ صاحب محطة أو موزع معتمد</button>
         </section>
 
         <!-- 2. Consumer UI - Radar -->
@@ -442,16 +578,23 @@
             
             <p id="radarStatusMsg" style="text-align:center; color:#94A3B8; font-size:0.85rem; min-height:22px; margin: 0.5rem 0;">اضغط على دائرة الرادار لفحص أقرب المحطات</p>
             
-            <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; margin: 0.75rem 0; overflow-x: auto; padding-bottom: 0.4rem;">
-                <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
-            </div>
-
-            <div style="margin: 0.5rem 0;">
+            <div class="sticky-search-bar">
+                <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom: 0.4rem;">
+                    <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
+                </div>
                 <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية / المنطقة..." style="margin-bottom:0; padding:0.65rem 0.85rem; font-size:0.85rem; background:#1E293B; border:1px solid #334155;">
             </div>
 
             <!-- Local Sponsor / Promotional Banner (Top of Search Results) -->
             <div id="localSponsorBanner" class="local-sponsor-banner"></div>
+
+            <!-- Interactive Map View Toggle (UX #1) -->
+            <div id="consumerViewToggle" style="display:none;">
+                <button onclick="toggleMapView()" class="map-toggle-btn" id="mapToggleBtn">🗺️ عرض المحطات على الخريطة التفاعلية</button>
+                <div id="interactiveMapContainer">
+                    <iframe id="mapIframe" width="100%" height="100%" style="border:0;" loading="lazy" allowfullscreen src=""></iframe>
+                </div>
+            </div>
 
             <div id="consumerStationsList" style="margin-top: 1rem;"></div>
 
@@ -768,7 +911,10 @@
                 <button onclick="adminAddNewStationAction()" style="background:#0284C7; color:white; border:none; width:100%; padding:0.85rem; border-radius:10px; font-weight:900; cursor:pointer; font-size:0.9rem;">➕ إضافة المحطة واعتمادها فوراً</button>
             </div>
 
-            <h3 style="font-size: 1rem; color:#FBBF24; margin-bottom:0.5rem;">إدارة طلبات ومحطات السحابة</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; background:#1E293B; padding:0.75rem; border-radius:8px; border:1px solid #475569;">
+                <h3 style="font-size: 0.95rem; color:#FBBF24; margin:0;">إدارة طلبات ومحطات السحابة</h3>
+                <button onclick="adminRefreshAllStations()" style="background:#059669; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; font-weight:bold; font-size:0.75rem; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,0.4);">🔄 تحديث حالة جميع المحطات (للآن)</button>
+            </div>
             <div id="adminCloudList"></div>
         </section>
 
@@ -803,14 +949,6 @@
         let uploadedSponsorBase64 = '';
 
         // --- Offline / Online Indicator ---
-        
-        window.toggleLightMode = function() {
-            document.body.classList.toggle('light-mode');
-            let isLight = document.body.classList.contains('light-mode');
-            localStorage.setItem('light_mode', isLight);
-            if (navigator.vibrate) navigator.vibrate(30);
-        };
-
         function updateNetworkStatusBar() {
             let bar = document.getElementById('offlineIndicatorBar');
             if (!bar) return;
@@ -913,7 +1051,7 @@
                             <div style="font-size:3rem; margin-bottom:0.3rem;">📲⛽</div>
                             <h3 style="color:#FBBF24; margin:0 0 0.5rem 0; font-size:1.25rem;">تثبيت تطبيق "متوفر هناا"</h3>
                             <p style="font-size:0.86rem; color:#CBD5E1; line-height:1.6; margin-bottom:1rem;">
-                                قم بتثبيت المنصة كتطبيق رسمي على شاشة هاتفك الرئيسية للوصول السريع الفوري، وتلقي إشعارات توفر المحروقات والغاز وصافرات الإنذار بالخلفية:
+                                انضم إلى قناة التلغرام الرسمية لتحميل أحدث نسخة من التطبيق للوصول السريع الفوري، وتلقي إشعارات توفر المحروقات والغاز وصافرات الإنذار:
                             </p>
                             <div style="background:#0F172A; border:1px solid #334155; padding:0.75rem; border-radius:10px; margin-bottom:1rem; text-align:right; font-size:0.8rem; color:#A7F3D0; line-height:1.7;">
                                 ✓ يفتح فوراً بضغطة واحدة بدون متصفح.<br>
@@ -924,8 +1062,8 @@
                                 💡 <b>طريقة التثبيت السريع:</b><br>${guideText}
                             </div>
                             ${!isIos ? `
-                            <button id="pwaModalInstallNowBtn" onclick="triggerPwaInstallAction()" class="btn-primary" style="background:linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0.6rem; box-shadow:0 4px 14px rgba(139, 92, 246, 0.5);">
-                                📲 تثبيت التطبيق على الهاتف الآن
+                            <button id="pwaModalInstallNowBtn" onclick="window.open('https://t.me/+7QVYs8WgbLwzM2I8', '_blank'); dismissPwaInstallModal();" class="btn-primary" style="background:linear-gradient(135deg, #0088cc 0%, #005580 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0.6rem; box-shadow:0 4px 14px rgba(0, 136, 204, 0.5);">
+                                📲 تحميل التطبيق من قناة التلغرام
                             </button>` : ''}
                             <button onclick="dismissPwaInstallModal()" style="background:transparent; border:1px solid #475569; color:#94A3B8; width:100%; padding:0.65rem; border-radius:10px; cursor:pointer; font-size:0.82rem; font-weight:bold;">
                                 المتابعة عبر المتصفح (تثبيت لاحقاً)
@@ -942,6 +1080,14 @@
         }
 
         // --- Core Helpers ---
+                window.toggleThemeMode = function() {
+            let isLight = document.body.classList.toggle('light-mode');
+            localStorage.setItem('theme_mode', isLight ? 'light' : 'dark');
+            let btn = document.getElementById('themeToggleBtn');
+            if (btn) btn.textContent = isLight ? '🌙' : '☀️';
+            showToast(isLight ? "☀️ تم تفعيل الوضع النهاري (الفاتح)" : "🌙 تم تفعيل الوضع الليلي (الداكن)");
+        };
+
         function showToast(msg, duration = 3000) {
             let toast = document.getElementById('toast-notification');
             if (toast) {
@@ -1152,6 +1298,11 @@
 
         // --- Initial Boot ---
         window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('theme_mode') === 'light') {
+                document.body.classList.add('light-mode');
+                let tBtn = document.getElementById('themeToggleBtn');
+                if (tBtn) tBtn.textContent = '🌙';
+            }
             updateNetworkStatusBar();
             showFirstLaunchPwaInstallModalIfNeeded();
 
@@ -1174,11 +1325,6 @@
                 } else {
                     showSection('stationPortal');
                 }
-            }
-
-            
-            if (localStorage.getItem('light_mode') === 'true') {
-                document.body.classList.add('light-mode');
             }
 
             // 2. Restore GPS
@@ -1481,6 +1627,13 @@
 
             const finishRadarScan = async () => {
                 status.textContent = "جاري جلب بيانات المحطات القريبة...";
+                const listEl = document.getElementById('consumerStationsList');
+                if (listEl) {
+                    listEl.innerHTML = `
+                        <div class="skeleton-card"><div class="skeleton-line" style="width:45%;"></div><div class="skeleton-line" style="width:70%;"></div><div class="skeleton-line" style="width:100%; height:38px; margin-bottom:0;"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-line" style="width:55%;"></div><div class="skeleton-line" style="width:80%;"></div><div class="skeleton-line" style="width:100%; height:38px; margin-bottom:0;"></div></div>
+                    `;
+                }
                 let stations = await loadCloudStationsData();
                 setTimeout(() => {
                     sweep.style.display = 'none';
@@ -1572,8 +1725,36 @@
             let html = '';
             let dotsHtml = '';
 
+            // UX #1: Auto-Collapse Radar when results are displayed to save vertical screen space
+            const radarCont = document.getElementById('radarContainer');
+            if (radarCont && topResults.length > 0) {
+                radarCont.style.width = '115px';
+                radarCont.style.height = '115px';
+                radarCont.style.margin = '0.6rem auto';
+                radarCont.style.transition = 'all 0.35s ease';
+                let rBtn = document.getElementById('radarBtn');
+                if (rBtn) {
+                    rBtn.style.width = '54px';
+                    rBtn.style.height = '54px';
+                    rBtn.style.fontSize = '0.68rem';
+                    rBtn.textContent = 'تحديث';
+                }
+            }
+
+            const viewToggle = document.getElementById('consumerViewToggle');
+            if (viewToggle) {
+                viewToggle.style.display = topResults.length > 0 ? 'block' : 'none';
+            }
+
             if (topResults.length === 0) {
-                list.innerHTML = '<p style="text-align:center; color:#94A3B8; background:#1E293B; padding:1.25rem; border-radius:14px; font-size:0.9rem;">لا توجد محطات معتمدة ضمن نطاق بحثك الحالي. اضغط على تحديث الرادار لتحديد موقعك بدقة.</p>';
+                list.innerHTML = `
+                    <div style="text-align:center; background:#1E293B; padding:2rem 1.25rem; border-radius:16px; border:1px dashed #475569;">
+                        <div style="font-size:3rem; margin-bottom:0.5rem; opacity:0.75;">📡</div>
+                        <h4 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.05rem;">لا توجد محطات مطابقة في نطاقك الحالي</h4>
+                        <p style="color:#94A3B8; font-size:0.84rem; margin:0 0 1.2rem 0; line-height:1.6;">لم نرصد محطات معتمدة تطابق فلتر البحث ضمن نطاقك الجغرافي. جرب اختيار فئة (الكل) أو تحديث موقعك الدقيق:</p>
+                        <button onclick="filterConsumerStations('all'); activateRadar();" style="background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:white; border:none; padding:0.75rem 1.4rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; box-shadow:0 4px 12px rgba(2,132,199,0.35);">🔄 عرض الكل وتحديث الرادار</button>
+                    </div>
+                `;
                 dotsCont.innerHTML = '';
                 return;
             }
@@ -1637,7 +1818,7 @@
                     waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="background:#25D366; color:white; padding:0.45rem 0.85rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.78rem; display:inline-flex; align-items:center; gap:0.3rem;">💬 تواصل</a>`;
                 }
                 let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="background:#334155; color:#CBD5E1; border:1px solid #475569; padding:0.45rem 0.85rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📤 مشاركة</button>`;
-                let rateStarsHtml = `<span style="display:inline-flex; gap:0.15rem; margin-right:0.35rem;">${[1,2,3,4,5].map(n => `<button onclick="rateStation('${st.id}', ${n})" title="تقييم ${n}" style="background:#0F172A; color:#FBBF24; border:1px solid #334155; border-radius:4px; padding:0.1rem 0.3rem; font-size:0.68rem; cursor:pointer;">${n}★</button>`).join('')}</span>`;
+                let rateStarsHtml = `<span style="display:inline-flex; align-items:center; gap:0.2rem; margin-right:0.4rem;">` + [1,2,3,4,5].map(n => `<svg onclick="rateStation('${st.id}', ${n})" title="تقييم ${n} نجوم" viewBox="0 0 24 24" width="19" height="19" style="cursor:pointer; fill:${n <= Math.round(parseFloat(currentRating)) ? '#FBBF24' : 'none'}; stroke:#FBBF24; stroke-width:1.8; transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`).join('') + `</span>`;
                 let footerBarHtml = `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.08);"><div style="font-size:0.75rem; color:#F59E0B; display:flex; align-items:center;">⭐ <b>${currentRating}</b> (${ratingCount}) ${rateStarsHtml}</div><div style="display:flex; gap:0.4rem;">${waBtn}${shareBtn}</div></div>`;
 
                 html += `
@@ -1701,6 +1882,40 @@
                 }
             } catch (e) {
                 showToast("حدث خطأ أثناء التقييم.");
+            }
+        };
+
+                window.toggleMapView = function() {
+            let mapCont = document.getElementById('interactiveMapContainer');
+            let btn = document.getElementById('mapToggleBtn');
+            let list = document.getElementById('consumerStationsList');
+            if (!mapCont || !btn || !list) return;
+
+            if (mapCont.style.display === 'none' || mapCont.style.display === '') {
+                mapCont.style.display = 'block';
+                list.style.display = 'none';
+                btn.innerHTML = '📋 إغلاق الخريطة والعودة للقائمة';
+                btn.style.background = '#38BDF8';
+                btn.style.color = '#0F172A';
+                let iframe = document.getElementById('mapIframe');
+                if (iframe) {
+                    if (userLat !== null && userLon !== null) {
+                        iframe.src = `https://maps.google.com/maps?q=${userLat},${userLon}&z=13&output=embed`;
+                    } else {
+                        let firstWithCoords = allStations.find(s => s.status === 'approved' && s.lat && s.lon);
+                        if (firstWithCoords) {
+                            iframe.src = `https://maps.google.com/maps?q=${firstWithCoords.lat},${firstWithCoords.lon}&z=13&output=embed`;
+                        } else {
+                            iframe.src = `https://maps.google.com/maps?q=35.5,36.3&z=10&output=embed`;
+                        }
+                    }
+                }
+            } else {
+                mapCont.style.display = 'none';
+                list.style.display = 'block';
+                btn.innerHTML = '🗺️ عرض المحطات على الخريطة التفاعلية';
+                btn.style.background = '#1E293B';
+                btn.style.color = '#38BDF8';
             }
         };
 
@@ -2293,17 +2508,32 @@
                         </div>
                     </div>
 
-                    <!-- 2. BOTTOM APP BAR NAVIGATION (Native feel) -->
-                    <div class="bottom-app-bar">
-                        <div class="nav-item active" id="ownerTabBtn_materials" onclick="switchOwnerTab('materials')"><i>📦</i><span>المواد</span></div>
-                        <div class="nav-item" id="ownerTabBtn_addcat" onclick="switchOwnerTab('addcat')"><i>➕</i><span>التصنيفات</span></div>
-                        <div class="nav-item" id="ownerTabBtn_broadcast" onclick="switchOwnerTab('broadcast')"><i>📢</i><span>البث</span></div>
-                        <div class="nav-item" id="ownerTabBtn_stats" onclick="switchOwnerTab('stats')"><i>📊</i><span>نشاطي</span></div>
-                        <div class="nav-item" id="ownerTabBtn_settings" onclick="switchOwnerTab('settings')"><i>⚙️</i><span>حسابي</span></div>
+                    <!-- 2. OWNER BOTTOM NAVIGATION BAR (UX #6) -->
+                    <div class="owner-bottom-nav">
+                        <button onclick="switchOwnerTab('materials')" id="ownerTabBtn_materials" class="owner-nav-item active">
+                            <svg viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18s.41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.38v6.71l6-3.39z"/></svg>
+                            المواد
+                        </button>
+                        <button onclick="switchOwnerTab('addcat')" id="ownerTabBtn_addcat" class="owner-nav-item">
+                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                            الأصناف
+                        </button>
+                        <button onclick="switchOwnerTab('broadcast')" id="ownerTabBtn_broadcast" class="owner-nav-item">
+                            <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+                            البث والترقية
+                        </button>
+                        <button onclick="switchOwnerTab('stats')" id="ownerTabBtn_stats" class="owner-nav-item">
+                            <svg viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z"/></svg>
+                            الإحصائيات
+                        </button>
+                        <button onclick="switchOwnerTab('settings')" id="ownerTabBtn_settings" class="owner-nav-item">
+                            <svg viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                            الحساب
+                        </button>
                     </div>
 
                     <!-- TAB 1: MATERIALS (One-Tap Toggles, Prices & Emergency Buttons) -->
-                    <div id="ownerTabContent_materials" class="owner-tab-pane">
+                    <div id="ownerTabContent_materials" class="owner-tab-pane" style="padding-bottom: 65px;">
                         <div style="background:#1E293B; padding:0.65rem; border-radius:12px; border:1px solid #334155; margin-bottom:1rem;">
                             <div style="font-size:0.75rem; color:#94A3B8; margin-bottom:0.4rem; text-align:center; font-weight:bold;">⚡ أزرار التحكم السريع بجميع المواد دفعة واحدة:</div>
                             <div style="display:flex; gap:0.5rem;">
@@ -2327,9 +2557,9 @@
                                 <span style="font-size:1.1rem; font-weight:900; color:#FFFFFF;">📦 ${cat}</span>
                                 <span style="background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.25); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.82rem; font-weight:900; color:#FFFFFF;">${statusBadge}</span>
                             </div>
-                            <div style="display:flex; gap:0.5rem; align-items:center;">
-                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" onblur="updatePrc('${st.id}','${cat}')" placeholder="اكتب السعر هنا (يحفظ تلقائياً)..." style="margin:0; padding:0.75rem; font-size:0.9rem; background:#0F172A; font-weight:bold; border:1px solid #475569; flex:1; border-radius:10px;">
-                                <span id="prc_saved_${st.id}_${cat}" style="color:#34D399; font-size:0.75rem; display:none; white-space:nowrap; font-weight:bold; align-items:center; gap:0.2rem;">✅ حُفظ</span>
+                            <div style="display:flex; gap:0.5rem; align-items:center; position:relative;">
+                                <input type="number" id="prc_${st.id}_${cat}" value="${prc}" placeholder="السعر بالليرة السورية (يُحفظ تلقائياً عند الخروج)..." onblur="updatePrc('${st.id}','${cat}')" style="margin:0; padding:0.6rem 0.75rem; font-size:0.9rem; background:#0F172A; font-weight:bold; border:1px solid #475569; flex:1; transition:border-color 0.25s;">
+                                <span id="prc_saved_tick_${st.id}_${cat}" style="color:#34D399; font-size:0.78rem; font-weight:bold; opacity:0; transition:opacity 0.25s; white-space:nowrap; background:#064E3B; padding:0.35rem 0.55rem; border-radius:6px; border:1px solid #10B981;">✅ حُفظ</span>
                             </div>
                         </div>`;
                 });
@@ -2346,7 +2576,7 @@
             // TAB 2: ADD OR DELETE CATEGORIES (إضافة أو حذف مواد أو صنف)
             let missing = availableCategories.filter(c => !(st.categories || []).includes(c));
             html += `
-                <div id="ownerTabContent_addcat" class="owner-tab-pane" style="display:none;">
+                <div id="ownerTabContent_addcat" class="owner-tab-pane" style="display:none; padding-bottom: 65px;">
                     <div style="background:#1E293B; padding:1rem; border-radius:14px; border:1px solid #38BDF8; margin-bottom:1rem;">
                         <h4 style="color:#38BDF8; margin:0 0 0.5rem 0; font-size:0.95rem;">➕ إضافة مادة أو صنف جديد لمحطتك:</h4>
             `;
@@ -2392,14 +2622,14 @@
 
             // TAB 3: BROADCAST & UPGRADE
             html += `
-                <div id="ownerTabContent_broadcast" class="owner-tab-pane" style="display:none;">
+                <div id="ownerTabContent_broadcast" class="owner-tab-pane" style="display:none; padding-bottom: 65px;">
                     <div style="background:linear-gradient(135deg, #78350F 0%, #451A03 100%); border:2px solid #FBBF24; padding:1rem; border-radius:14px; margin-bottom:1rem;">
                         <h4 style="color:#FDE68A; margin:0 0 0.4rem 0; font-size:0.95rem;">📢 الإعلان الصاخب (بث عاجل في هواتف المستهلكين):</h4>
                         <p style="font-size:0.78rem; color:#FEF3C7; margin:0 0 0.65rem 0; line-height:1.5;">تظهر رسالتك كإشعار منسدل بصوت صافرة إنذار لجميع المستهلكين في نطاقك وتختفي تلقائياً بعد 3 ساعات:</p>
                         <div style="display:flex; gap:0.5rem; flex-direction:column;">
                             <input type="text" id="bcMsg_${st.id}" value="${safeBroadcast}" placeholder="اكتب رسالة البث العاجل هنا (مثال: وصلت دفعة غاز منزلي الآن)..." style="margin:0; background:#0F172A; font-weight:bold; font-size:0.9rem;">
                             <div style="display:flex; gap:0.5rem;">
-                                <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${st.name}', '${st.region}', '${st.phone}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.9rem; cursor:pointer; flex:2;">🚀 إطلاق البث الصاخب الآن</button>
+                                <button onclick="${isVip ? `sendVIPBroadcast('${st.id}')` : `promptVipForBroadcast('${safeName}', '${safeRegion}', '${escapeHTML(st.phone)}')`}" style="background:#D97706; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:900; font-size:0.9rem; cursor:pointer; flex:2;">🚀 إطلاق البث الصاخب الآن</button>
                                 ${st.broadcastMsg ? `<button onclick="document.getElementById('bcMsg_${st.id}').value=''; sendVIPBroadcast('${st.id}');" style="background:#475569; color:white; border:none; border-radius:10px; padding:0.8rem; font-weight:bold; font-size:0.8rem; cursor:pointer; flex:1;">إيقاف البث</button>` : ''}
                             </div>
                         </div>
@@ -2409,14 +2639,14 @@
                     <div style="background:linear-gradient(135deg, #2E1065 0%, #1E293B 100%); border:2px solid #C084FC; padding:1rem; border-radius:14px; text-align:center;">
                         <div style="color:#E9D5FF; font-weight:900; font-size:0.95rem; margin-bottom:0.35rem;">👑 ضاعف مبيعاتك ووسّع نطاق الرادار حتى 30 كم+</div>
                         <p style="color:#CBD5E1; font-size:0.78rem; margin:0 0 0.75rem 0;">تصدّر قائمة البحث لدى المستهلكين واحصل على ميزة الإعلانات المنسدلة الفورية:</p>
-                        <button onclick="openUpgradeModal('${st.name}', '${st.region}', '${st.phone}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.75rem 1.2rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; width:100%; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض باقات (VIP / VIP+) والأسعار</button>
+                        <button onclick="openUpgradeModal('${safeName}', '${safeRegion}', '${escapeHTML(st.phone)}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.75rem 1.2rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; width:100%; box-shadow:0 0 12px rgba(192,132,252,0.5);">🚀 استعراض باقات (VIP / VIP+) والأسعار</button>
                     </div>
                 </div>
             `;
 
             // TAB 4: STATS
             html += `
-                <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none;">
+                <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none; padding-bottom: 65px;">
                     <div style="background:#1E293B; border:1px solid #334155; padding:1.1rem; border-radius:14px; text-align:center;">
                         <h4 style="color:#60A5FA; margin:0 0 0.85rem 0; font-size:0.95rem;">📊 إحصائيات تفاعل المستهلكين مع محطتك:</h4>
                         <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.6rem;">
@@ -2443,7 +2673,7 @@
 
             // TAB 5: SETTINGS & GPS UPDATE
             html += `
-                <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none;">
+                <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none; padding-bottom: 65px;">
                     <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
                         <h4 style="color:#F8FAFC; margin:0 0 0.75rem 0; font-size:0.95rem;">📞 إعدادات التواصل مع الزبائن:</h4>
                         <label style="font-size:0.82rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">رقم واتساب العام للجمهور:</label>
@@ -2473,7 +2703,6 @@
         }
 
         window.switchOwnerTab = function(tabName) {
-            if (navigator.vibrate) navigator.vibrate(30);
             currentOwnerActiveTab = tabName;
             ['materials', 'addcat', 'broadcast', 'stats', 'settings'].forEach(t => {
                 let pane = document.getElementById(`ownerTabContent_${t}`);
@@ -2487,7 +2716,6 @@
                     }
                 }
             });
-            window.scrollTo({top: 0, behavior: 'smooth'});
         };
 
         window.emergencyPanicAll = async function(id, statusVal) {
@@ -2502,7 +2730,7 @@
                         d.categories.forEach(c => { mStatus[c] = statusVal; });
                     }
                     await ref.update({ materialsStatus: mStatus, lastUpdate: new Date().toISOString() });
-                    if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+                    if (navigator.vibrate) navigator.vibrate(statusVal ? 60 : [60, 40, 60]);
                     showToast(statusVal ? "🟢 تم فتح وتفعيل جميع المواد بنجاح!" : "🚨 تم إغلاق جميع المواد (نفدت) طارئاً!");
                     let updated = await ref.get();
                     loadMyStationDashboard({ id, ...updated.data() }, 'materials');
@@ -2529,24 +2757,25 @@
         };
 
         window.updatePrc = async function(id, cat) {
-            let val = document.getElementById(`prc_${id}_${cat}`).value.trim();
+            let inputEl = document.getElementById(`prc_${id}_${cat}`);
+            if (!inputEl) return;
+            let val = inputEl.value.trim();
             try {
                 let ref = db.collection("stations").doc(id);
                 let doc = await ref.get();
                 if (doc.exists) {
-                    let d = doc.data();
-                    let mPrices = d.materialsPrices || {};
-                    // Only update if changed
-                    if (mPrices[cat] !== val) {
-                        mPrices[cat] = val;
-                        await ref.update({ materialsPrices: mPrices, lastUpdate: new Date().toISOString() });
-                        if (navigator.vibrate) navigator.vibrate(40);
-                        let savedSpan = document.getElementById(`prc_saved_${id}_${cat}`);
-                        if (savedSpan) {
-                            savedSpan.style.display = 'flex';
-                            setTimeout(() => { savedSpan.style.display = 'none'; }, 2500);
-                        }
+                    let mPrices = doc.data().materialsPrices || {};
+                    if ((mPrices[cat] || '') === val) return; // Only write if price actually changed
+                    mPrices[cat] = val;
+                    await ref.update({ materialsPrices: mPrices, lastUpdate: new Date().toISOString() });
+                    if (navigator.vibrate) navigator.vibrate(40);
+                    let tickEl = document.getElementById(`prc_saved_tick_${id}_${cat}`);
+                    if (tickEl) {
+                        tickEl.style.opacity = '1';
+                        setTimeout(() => { tickEl.style.opacity = '0'; }, 2000);
                     }
+                    inputEl.style.borderColor = '#10B981';
+                    setTimeout(() => { inputEl.style.borderColor = '#475569'; }, 2000);
                 }
             } catch (e) { showToast("خطأ في حفظ السعر"); }
         };
@@ -2849,7 +3078,7 @@
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:95px;">
                                 ${st.status !== 'approved' ?
-                                    `<button onclick="approveAndNotify('${id}', '${st.name}', '${st.phone}')" style="background:#059669; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">قبول + واتساب</button>` :
+                                    `<button onclick="approveAndNotify('${id}', '${sAdmName}', '${sAdmPhone}')" style="background:#059669; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">قبول + واتساب</button>` :
                                     `<button onclick="updateStStatus('${id}', 'pending')" style="background:#475569; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-size:0.75rem;">تعليق</button>`
                                 }
                                 <button onclick="admSetTier('${id}', 'vip')" style="background:${(isVip && !isVipPlus) ? '#475569' : '#D97706'}; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.73rem;">${(isVip && !isVipPlus) ? 'إلغاء VIP' : 'تفعيل VIP ⭐'}</button>
@@ -3497,6 +3726,30 @@
                 loadAdminPanel();
             } catch(e) {
                 showToast("حدث خطأ أثناء إضافة المحطة");
+            }
+        };
+
+        
+        window.adminRefreshAllStations = async function() {
+            if(!db) return;
+            if(!confirm("هل أنت متأكد من تحديث طابع الوقت (تحديث الحالة) لجميع المحطات المعتمدة إلى (الآن)؟")) return;
+            try {
+                showToast("⏳ جاري التحديث الجماعي للمحطات...");
+                let nowIso = new Date().toISOString();
+                let snap = await db.collection("stations").where("status", "==", "approved").get();
+                let batch = db.batch();
+                let count = 0;
+                snap.forEach(doc => {
+                    batch.update(doc.ref, { lastUpdate: nowIso });
+                    count++;
+                });
+                if(count > 0) {
+                    await batch.commit();
+                }
+                showToast(`✅ تم تحديث وقت ${count} محطات بنجاح!`);
+                loadAdminPanel();
+            } catch(e) {
+                showToast("خطأ أثناء التحديث الجماعي");
             }
         };
 
