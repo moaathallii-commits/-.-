@@ -3086,6 +3086,7 @@
                                 
                                 <button onclick="adminQuickRefresh('${id}')" style="background:#0284C7; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">🔄 تحديث الوقت فقط (الآن)</button>
                                 <button onclick="adminOpenEditMaterials('${id}')" style="background:#059669; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">📦 تعديل المواد للعميل</button>
+                                <button onclick="adminOpenFullEdit('${id}')" style="background:#D97706; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">⚙️ تعديل شامل للبيانات</button>
                                 <button onclick="admDelete('${id}')" style="background:#DC2626; color:white; border:none; padding:0.4rem; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">حذف نهائي</button>
                             </div>
                         </div>
@@ -3532,7 +3533,10 @@
                             تأكد من حالة المواد الحالية. إذا كانت مطابقة، اضغط <b>(تم)</b> لتحديث وقت المحطة للزبائن. أو قم بتعديلها بضغطة واحدة:
                         </p>
                         ${matsCheckHtml}
-                        <button id="submitWelcomeSurveyBtn" onclick="submitWelcomeSurvey('${st.id}')" class="btn-primary" style="background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-top:0.5rem; margin-bottom:0; box-shadow:0 4px 12px rgba(2, 132, 199, 0.4); border-radius:10px;">✅ تم (تأكيد الحالة ودخول اللوحة)</button>
+                        <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                            <button id="submitWelcomeSurveyBtn" onclick="submitWelcomeSurvey('${st.id}')" class="btn-primary" style="flex:3; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0; box-shadow:0 4px 12px rgba(2, 132, 199, 0.4); border-radius:10px;">✅ تم (اعتماد التحديث)</button>
+                            <button onclick="document.getElementById('stationWelcomeModalWrapper').remove()" style="flex:1; background:#334155; color:white; border:none; padding:0.9rem; font-weight:bold; font-size:0.9rem; border-radius:10px; cursor:pointer;">تخطي ✕</button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -3627,14 +3631,37 @@
         history.pushState({ page: 'app_root' }, document.title, window.location.href);
 
         window.addEventListener('popstate', function (event) {
-            // If Mandatory Station Survey Modal is open, block back button completely!
-            if (document.getElementById('stationWelcomeModalWrapper')) {
-                history.pushState({ page: 'welcome_modal' }, document.title, window.location.href);
-                showToast("🔒 يجب تأكيد وحفظ حالة توفر المواد أولاً للمتابعة!");
+            // 1. Close Admin Full Edit Modal or Admin Materials Modal if open
+            let admFullModal = document.getElementById('adminFullEditModal');
+            if (admFullModal) {
+                history.pushState({ page: 'admin' }, document.title, window.location.href);
+                admFullModal.remove();
+                return;
+            }
+            let admMatsModal = document.getElementById('adminEditMatsModal');
+            if (admMatsModal) {
+                history.pushState({ page: 'admin' }, document.title, window.location.href);
+                admMatsModal.remove();
                 return;
             }
 
-            // If Consumer Settings is open, return to Consumer Radar instead of exiting
+            // 2. Close Station Owner Welcome Modal if open (acts like Skip)
+            let welModal = document.getElementById('stationWelcomeModalWrapper');
+            if (welModal) {
+                history.pushState({ page: 'dashboard' }, document.title, window.location.href);
+                welModal.remove();
+                return;
+            }
+
+            // 3. Close Alert Modal if open
+            let alrtModal = document.getElementById('alertModalOverlay');
+            if (alrtModal && alrtModal.style.display === 'flex') {
+                history.pushState({ page: 'radar' }, document.title, window.location.href);
+                closeAlertModal();
+                return;
+            }
+
+            // 4. If Consumer Settings is open, return to Consumer Radar instead of exiting
             let settSec = document.getElementById('sec-consumerSettings');
             if (settSec && settSec.style.display === 'block') {
                 history.pushState({ page: 'radar' }, document.title, window.location.href);
@@ -3642,7 +3669,7 @@
                 return;
             }
 
-            // If Upgrade Modal is open, close it instead of exiting
+            // 5. If Upgrade Modal is open, close it instead of exiting
             let upgModal = document.getElementById('upgradeModalOverlay');
             if (upgModal && upgModal.style.display === 'flex') {
                 history.pushState({ page: 'dashboard' }, document.title, window.location.href);
@@ -3761,6 +3788,145 @@
                 loadAdminPanel();
             } catch(e) {
                 showToast("خطأ أثناء التحديث");
+            }
+        };
+
+        
+        window.adminOpenFullEdit = async function(id) {
+            if(!db) return;
+            try {
+                let doc = await db.collection("stations").doc(id).get();
+                if(!doc.exists) return;
+                let st = doc.data();
+                let stCats = st.categories || [];
+                
+                let catsCheckboxesHtml = availableCategories.map(cat => {
+                    let isChecked = stCats.includes(cat) ? 'checked' : '';
+                    let sCat = escapeHTML(cat);
+                    return `<label style="display:flex; align-items:center; gap:0.35rem; font-size:0.8rem; color:#F8FAFC; cursor:pointer; background:#1E293B; padding:0.35rem 0.6rem; border-radius:6px; border:1px solid #334155;"><input type="checkbox" value="${sCat}" class="adm-edit-cat-chk" ${isChecked} style="width:1rem; height:1rem; margin:0;"> ${sCat}</label>`;
+                }).join('');
+
+                let modalHtml = `
+                    <div id="adminFullEditModal" class="modal-overlay" style="display:flex; z-index:30000; background:rgba(0,0,0,0.85);">
+                        <div class="modal-content" style="border:2px solid #FBBF24; max-width:430px; max-height:90vh; overflow-y:auto; text-align:right;">
+                            <h3 style="color:#FBBF24; margin-top:0; font-size:1.1rem; border-bottom:1px solid #334155; padding-bottom:0.5rem;">⚙️ تعديل شامل لمحطة: ${escapeHTML(st.name)}</h3>
+                            
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                                <div>
+                                    <label style="font-size:0.75rem; color:#94A3B8;">اسم المحطة:</label>
+                                    <input type="text" id="admEdit_name" value="${escapeHTML(st.name)}" style="margin:0; padding:0.55rem; font-size:0.85rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.75rem; color:#94A3B8;">المنطقة:</label>
+                                    <input type="text" id="admEdit_region" value="${escapeHTML(st.region)}" style="margin:0; padding:0.55rem; font-size:0.85rem;">
+                                </div>
+                            </div>
+
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+                                <div>
+                                    <label style="font-size:0.75rem; color:#94A3B8;">هاتف الدخول (Phone):</label>
+                                    <input type="text" id="admEdit_phone" value="${escapeHTML(st.phone)}" maxlength="10" style="margin:0; padding:0.55rem; font-size:0.85rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.75rem; color:#94A3B8;">الرمز السري (Pin Code):</label>
+                                    <input type="text" id="admEdit_pin" value="${escapeHTML(st.pinCode || '')}" style="margin:0; padding:0.55rem; font-size:0.85rem;">
+                                </div>
+                            </div>
+
+                            <div style="background:#0F172A; border:1px solid #334155; padding:0.6rem; border-radius:8px; margin-bottom:0.6rem;">
+                                <label style="font-size:0.75rem; color:#38BDF8; display:block; margin-bottom:0.3rem;">📞 رقم واتساب التواصل العام للجمهور:</label>
+                                <input type="text" id="admEdit_pubPhone" value="${escapeHTML(st.publicPhone || st.phone)}" maxlength="10" style="margin-bottom:0.4rem; padding:0.5rem; font-size:0.85rem;">
+                                <label style="display:flex; align-items:center; gap:0.4rem; font-size:0.78rem; color:#CBD5E1; cursor:pointer;">
+                                    <input type="checkbox" id="admEdit_showContact" ${st.showContact !== false ? 'checked' : ''} style="width:1rem; height:1rem; margin:0;"> تفعيل زر تواصل واتساب للمستهلكين
+                                </label>
+                            </div>
+                            
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.6rem;">
+                                <div>
+                                    <label style="font-size:0.7rem; color:#34D399;">خط العرض (Lat):</label>
+                                    <input type="number" id="admEdit_lat" value="${st.lat || ''}" step="any" style="margin:0; padding:0.5rem; font-size:0.8rem;">
+                                </div>
+                                <div>
+                                    <label style="font-size:0.7rem; color:#34D399;">خط الطول (Lon):</label>
+                                    <input type="number" id="admEdit_lon" value="${st.lon || ''}" step="any" style="margin:0; padding:0.5rem; font-size:0.8rem;">
+                                </div>
+                            </div>
+
+                            <label style="font-size:0.75rem; color:#FBBF24; font-weight:bold; display:block; margin-bottom:0.35rem;">📦 الأصناف والفئات المعتمدة لهذه المحطة (إضافة / حذف):</label>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.4rem; background:#0F172A; padding:0.6rem; border-radius:8px; border:1px solid #475569; margin-bottom:0.75rem;">
+                                ${catsCheckboxesHtml}
+                            </div>
+                            
+                            <button onclick="adminSaveFullEdit('${id}')" class="btn-primary" style="background:#D97706; margin-top:0.25rem; margin-bottom:0; padding:0.8rem;">💾 حفظ كافة التعديلات الشاملة</button>
+                            <button onclick="document.getElementById('adminFullEditModal').remove()" class="btn-secondary" style="background:#475569; margin-top:0.5rem; margin-bottom:0; padding:0.6rem;">إلغاء</button>
+                        </div>
+                    </div>
+                `;
+                let div = document.createElement('div');
+                div.innerHTML = modalHtml;
+                document.body.appendChild(div.firstElementChild);
+                
+            } catch(e) {
+                showToast("خطأ في جلب بيانات المحطة");
+            }
+        };
+
+        window.adminSaveFullEdit = async function(id) {
+            if(!db) return;
+            let nName = document.getElementById('admEdit_name').value.trim();
+            let nRegion = document.getElementById('admEdit_region').value.trim();
+            let nPhone = document.getElementById('admEdit_phone').value.trim();
+            let nPin = document.getElementById('admEdit_pin').value.trim();
+            let nPubPhone = document.getElementById('admEdit_pubPhone').value.trim() || nPhone;
+            let nShowContact = document.getElementById('admEdit_showContact').checked;
+            let nLat = parseFloat(document.getElementById('admEdit_lat').value);
+            let nLon = parseFloat(document.getElementById('admEdit_lon').value);
+            let selectedCats = Array.from(document.querySelectorAll('.adm-edit-cat-chk:checked')).map(cb => cb.value);
+            
+            if(!nName || !nRegion || !nPhone || !nPin) return showToast("جميع الحقول الأساسية مطلوبة!");
+            if(selectedCats.length === 0) return showToast("يرجى اختيار صنف واحد على الأقل للمحطة!");
+            
+            try {
+                let ref = db.collection("stations").doc(id);
+                let doc = await ref.get();
+                if (!doc.exists) return;
+                let st = doc.data();
+
+                // Sync materialsStatus & materialsPrices with selected categories while preserving existing values
+                let oldStatus = st.materialsStatus || {};
+                let oldPrices = st.materialsPrices || {};
+                let newStatus = {};
+                let newPrices = {};
+                selectedCats.forEach(cat => {
+                    newStatus[cat] = oldStatus[cat] === true;
+                    newPrices[cat] = oldPrices[cat] !== undefined ? oldPrices[cat] : "";
+                });
+
+                let updateData = {
+                    name: nName,
+                    region: nRegion,
+                    phone: nPhone,
+                    pinCode: nPin,
+                    publicPhone: nPubPhone,
+                    showContact: nShowContact,
+                    categories: selectedCats,
+                    materialsStatus: newStatus,
+                    materialsPrices: newPrices
+                };
+                
+                if (!isNaN(nLat) && !isNaN(nLon)) {
+                    updateData.lat = nLat;
+                    updateData.lon = nLon;
+                    updateData.locationFormatted = `${nLat.toFixed(6)}, ${nLon.toFixed(6)}`;
+                    updateData.googleMapsUrl = `https://maps.google.com/?q=${nLat},${nLon}`;
+                }
+                
+                await ref.update(updateData);
+                document.getElementById('adminFullEditModal').remove();
+                showToast("✅ تم حفظ التعديلات الشاملة والفئات بنجاح!");
+                loadAdminPanel();
+            } catch(e) {
+                showToast("حدث خطأ أثناء الحفظ");
             }
         };
 
