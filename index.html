@@ -417,6 +417,56 @@
             fill: currentColor;
         }
 
+        
+        /* Advanced Neon Pulse for VIP & VIP+ (تحسينات VIP: تمييز بصري نبضي متقدم) */
+        @keyframes advancedNeonVIPPlus {
+            0% { box-shadow: 0 0 12px rgba(192, 132, 252, 0.5), inset 0 0 8px rgba(147, 51, 234, 0.25); border-color: #C084FC; }
+            50% { box-shadow: 0 0 28px rgba(216, 180, 254, 0.95), 0 0 45px rgba(147, 51, 234, 0.6), inset 0 0 15px rgba(192, 132, 252, 0.4); border-color: #F3E8FF; transform: translateY(-2px); }
+            100% { box-shadow: 0 0 12px rgba(192, 132, 252, 0.5), inset 0 0 8px rgba(147, 51, 234, 0.25); border-color: #C084FC; }
+        }
+        @keyframes advancedNeonVIP {
+            0% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.35); border-color: #FBBF24; }
+            50% { box-shadow: 0 0 24px rgba(251, 191, 36, 0.85), 0 0 35px rgba(217, 119, 6, 0.45); border-color: #FEF08A; }
+            100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.35); border-color: #FBBF24; }
+        }
+        .vip-plus-card {
+            animation: advancedNeonVIPPlus 2.6s infinite ease-in-out !important;
+        }
+        .vip-card {
+            animation: advancedNeonVIP 3s infinite ease-in-out !important;
+        }
+
+        /* Manual Pull-to-Refresh & Instant Refresh Indicator (مؤشر التحديث اليدوي الفوري) */
+        .ptr-indicator {
+            text-align: center;
+            color: #38BDF8;
+            font-size: 0.78rem;
+            font-weight: bold;
+            height: 0;
+            overflow: hidden;
+            transition: height 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            background: rgba(15, 23, 42, 0.9);
+        }
+        .ptr-indicator.active {
+            height: 42px;
+            border-bottom: 1px solid #334155;
+        }
+
+        /* Custom Station Logo Avatar (رفع شعار المحطة الخاص) */
+        .station-logo-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 2px solid #FBBF24;
+            background: #0F172A;
+            flex-shrink: 0;
+        }
+
         /* Utilities */
         .settings-icon {
             position: absolute;
@@ -468,6 +518,40 @@
 <body>
 
     <div id="toast-notification"></div>
+    <div id="ptrIndicatorBar" class="ptr-indicator">🔄 جاري التحديث الفوري لبيانات المحطات...</div>
+
+    <!-- Personal Notification Log Modal (سجل التنبيهات الشخصي) -->
+    <div id="notifLogModalOverlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 430px; text-align: right; max-height: 85vh; overflow-y: auto; border-color: #38BDF8;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:0.5rem; margin-bottom:0.75rem;">
+                <h3 style="color: #38BDF8; margin: 0; font-size: 1.05rem;">🔔 سجل التنبيهات الشخصي</h3>
+                <button onclick="clearPersonalNotifLog()" style="background:#DC2626; color:white; border:none; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.72rem; cursor:pointer; font-weight:bold;">🗑️ مسح السجل</button>
+            </div>
+            <div id="personalNotifLogContainer" style="font-size: 0.82rem; color: #F8FAFC; line-height: 1.6; margin-bottom: 1rem;"></div>
+            <button onclick="document.getElementById('notifLogModalOverlay').style.display='none'" class="btn-secondary" style="background:#334155; margin-bottom:0; padding:0.65rem;">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- Distance & Trip Cost Calculator Modal (حاسبة المسافة والتكلفة التقريبية) -->
+    <div id="costCalcModalOverlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; text-align: right; border-color: #10B981;">
+            <h3 style="color: #34D399; margin-top: 0; font-size: 1.05rem; text-align:center;">🧮 حاسبة المسافة وتكلفة الوصول للمحطة</h3>
+            <p id="calcStationTitle" style="font-size:0.85rem; color:#FBBF24; text-align:center; font-weight:bold; margin:0 0 0.75rem 0;"></p>
+            <div style="background:#0F172A; padding:0.75rem; border-radius:10px; border:1px solid #334155; margin-bottom:0.75rem;">
+                <label style="font-size:0.75rem; color:#94A3B8;">المسافة ذهاباً وإياباً (كم):</label>
+                <input type="number" id="calcDistInput" step="0.1" oninput="updateTripCostCalc()" style="margin-bottom:0.5rem; padding:0.5rem; font-size:0.85rem;">
+                <label style="font-size:0.75rem; color:#94A3B8;">معدل استهلاك مركبتك (كم لكل 1 لتر) - افتراضي 12 كم/لتر:</label>
+                <input type="number" id="calcEfficiencyInput" value="12" step="1" oninput="updateTripCostCalc()" style="margin-bottom:0.5rem; padding:0.5rem; font-size:0.85rem;">
+                <label style="font-size:0.75rem; color:#94A3B8;">سعر اللتر الواحد (ل.س):</label>
+                <input type="number" id="calcLiterPriceInput" oninput="updateTripCostCalc()" placeholder="أدخل سعر اللتر..." style="margin-bottom:0.5rem; padding:0.5rem; font-size:0.85rem;">
+                <div id="calcResultBox" style="background:#064E3B; border:1px solid #10B981; color:#A7F3D0; padding:0.65rem; border-radius:8px; text-align:center; font-size:0.85rem; font-weight:bold; margin-top:0.4rem;">
+                    أدخل سعر اللتر لحساب التكلفة التقريبية
+                </div>
+            </div>
+            <button onclick="document.getElementById('costCalcModalOverlay').style.display='none'" class="btn-secondary" style="background:#334155; margin-bottom:0; padding:0.65rem;">إغلاق الحاسبة</button>
+        </div>
+    </div>
+
     <div id="offlineIndicatorBar" style="display:none; background:#DC2626; color:#FFFFFF; text-align:center; padding:0.45rem; font-size:0.8rem; font-weight:bold; position:sticky; top:0; z-index:10002; box-shadow:0 2px 8px rgba(0,0,0,0.4);">
         ⚠️ لا يوجد اتصال بالإنترنت حالياً - يتم عرض آخر بيانات محفوظة في جهازك
     </div>
@@ -582,8 +666,20 @@
                 <div id="consumerCategoriesFilter" style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom: 0.4rem;">
                     <button onclick="filterConsumerStations('all')" style="background: #0284C7; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight:bold;">الكل</button>
                 </div>
-                <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية / المنطقة..." style="margin-bottom:0; padding:0.65rem 0.85rem; font-size:0.85rem; background:#1E293B; border:1px solid #334155;">
+                <div style="display:flex; gap:0.4rem; margin-bottom:0.45rem;">
+                    <input type="text" id="consumerSearchQuery" oninput="onConsumerTextSearch()" placeholder="🔎 ابحث باسم المحطة أو القرية..." style="margin:0; flex:1; padding:0.55rem 0.75rem; font-size:0.83rem; background:#1E293B; border:1px solid #334155;">
+                    <button onclick="manualInstantRefreshConsumer()" id="manualRefreshBtn" title="تحديث يدوي فوري" style="background:#059669; color:white; border:none; border-radius:8px; padding:0 0.75rem; font-weight:bold; font-size:0.8rem; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:0.25rem;">🔄 تحديث</button>
+                    <button onclick="openPersonalNotifLog()" title="سجل التنبيهات الشخصي" style="background:#1E293B; color:#FBBF24; border:1px solid #475569; border-radius:8px; padding:0 0.65rem; font-weight:bold; font-size:0.85rem; cursor:pointer; position:relative;">🔔<span id="notifLogBadgeCount" style="display:none; position:absolute; top:-4px; right:-4px; background:#DC2626; color:white; font-size:0.6rem; padding:1px 4px; border-radius:50%;">0</span></button>
+                </div>
+                <div style="display:flex; gap:0.35rem; overflow-x:auto;">
+                    <button id="sortBtn_default" onclick="setConsumerSortMode('default')" style="flex:1; background:#0284C7; color:white; border:none; padding:0.35rem 0.5rem; border-radius:6px; font-size:0.74rem; font-weight:bold; cursor:pointer; white-space:nowrap;">📍 الأقرب والأولوية</button>
+                    <button id="sortBtn_cheapest" onclick="setConsumerSortMode('cheapest')" style="flex:1; background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.35rem 0.5rem; border-radius:6px; font-size:0.74rem; font-weight:bold; cursor:pointer; white-space:nowrap;">💰 الأرخص سعراً</button>
+                    <button id="sortBtn_favorites" onclick="setConsumerSortMode('favorites')" style="flex:1; background:#1E293B; color:#CBD5E1; border:1px solid #334155; padding:0.35rem 0.5rem; border-radius:6px; font-size:0.74rem; font-weight:bold; cursor:pointer; white-space:nowrap;">⭐ المفضلة فقط</button>
+                </div>
             </div>
+
+            <!-- Global Admin Broadcast Banner (أداة بث إداري عام) -->
+            <div id="globalAdminBroadcastBox" style="display:none; background:linear-gradient(135deg, #7F1D1D 0%, #450A0A 100%); border:2px solid #F87171; color:#FEF2F2; padding:0.8rem; border-radius:12px; margin:0.65rem 0; text-align:center; font-size:0.88rem; font-weight:bold; box-shadow:0 4px 15px rgba(239,68,68,0.3);"></div>
 
             <!-- Local Sponsor / Promotional Banner (Top of Search Results) -->
             <div id="localSponsorBanner" class="local-sponsor-banner"></div>
@@ -763,11 +859,66 @@
                     <input type="text" id="settingRegNoteInput" placeholder="اكتب الملاحظة البارزة هنا..." style="margin:0;">
                     <button onclick="saveAdminWaSettings()" style="background:#059669; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
                 </div>
-                <label style="font-size:0.8rem;">نص الرسالة التلقائية المرسلة للإدارة عبر واتساب:</label>
-                <div style="display:flex; gap:0.5rem;">
+                <label style="font-size:0.8rem;">نص الرسالة التلقائية المرسلة للإدارة عند التسجيل:</label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
                     <input type="text" id="settingAdminWaMsgInput" placeholder="مثال: مرحباً، قمت بتسجيل محطتي وأرجو تفعيل الحساب..." style="margin:0;">
                     <button onclick="saveAdminWaSettings()" style="background:#059669; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
                 </div>
+                <label style="font-size:0.8rem; color:#38BDF8; font-weight:bold;">💬 التحكم في نص رسالة التواصل التلقائي من المستهلك للمحطة (استخدم {name} لاسم المحطة):</label>
+                <div style="display:flex; gap:0.5rem;">
+                    <input type="text" id="settingConsumerWaTemplateInput" placeholder="مرحباً، أود الاستفسار من محطة {name} عبر تطبيق متوفر هناا" style="margin:0;">
+                    <button onclick="saveAdminWaSettings()" style="background:#0284C7; color:white; border:none; padding:0 1rem; border-radius:8px; cursor:pointer; font-weight:bold;">حفظ</button>
+                </div>
+            </div>
+
+            <!-- Cloud Fuel Health Monitor & Data Export Tool (مراقب صحة وقود السحابة + أداة تصدير البيانات) -->
+            <div style="background: #0F172A; border: 1px solid #10B981; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                    <h3 style="font-size: 0.95rem; color: #34D399; margin: 0;">⛽☁️ مراقب صحة وقود السحابة وتصدير البيانات</h3>
+                    <span id="cloudHealthStatusBadge" style="background:#064E3B; color:#A7F3D0; padding:0.2rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:bold;">ممتاز (آمن) ✓</span>
+                </div>
+                <div style="background:#1E293B; border-radius:8px; height:12px; width:100%; overflow:hidden; margin-bottom:0.4rem; border:1px solid #334155;">
+                    <div id="cloudHealthProgressBar" style="background:linear-gradient(90deg, #10B981 0%, #38BDF8 100%); height:100%; width:12%; transition:width 0.4s;"></div>
+                </div>
+                <p id="cloudHealthMetricsText" style="font-size:0.76rem; color:#94A3B8; margin:0 0 0.75rem 0;">عمليات الجلسة المحفوظة بالـ Batch: جاري الحساب...</p>
+                <div style="display:flex; gap:0.5rem;">
+                    <button onclick="exportPlatformData('json')" style="flex:1; background:#0284C7; color:white; border:none; padding:0.55rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📥 تصدير نسخة احتياطية (JSON)</button>
+                    <button onclick="exportPlatformData('csv')" style="flex:1; background:#059669; color:white; border:none; padding:0.55rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📊 تصدير جدول المحطات (CSV)</button>
+                </div>
+            </div>
+
+            <!-- Global Admin Broadcast Tool (أداة بث إداري عام) -->
+            <div style="background: linear-gradient(135deg, #450A0A 0%, #1E293B 100%); border: 1px solid #F87171; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.95rem; color: #FCA5A5; margin-top: 0;">📢 أداة البث الإداري العام (لجميع مستخدمي المنصة)</h3>
+                <p style="font-size:0.75rem; color:#FECACA; margin:0 0 0.5rem 0;">يظهر هذا الإشعار في أعلى شاشة جميع المستهلكين ويُطلق تنبيهاً فورياً هاماً:</p>
+                <input type="text" id="settingGlobalBroadcastInput" placeholder="اكتب رسالة البث الإداري العام (اتركه فارغاً لإيقاف البث)..." style="margin-bottom:0.5rem;">
+                <div style="display:flex; gap:0.5rem;">
+                    <button onclick="saveGlobalAdminBroadcast(true)" style="flex:2; background:#DC2626; color:white; border:none; padding:0.6rem; border-radius:8px; font-weight:900; font-size:0.82rem; cursor:pointer;">🚀 نشر البث الإداري العام الآن</button>
+                    <button onclick="saveGlobalAdminBroadcast(false)" style="flex:1; background:#475569; color:white; border:none; padding:0.6rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">إيقاف البث</button>
+                </div>
+            </div>
+
+            <!-- Auto-Approval Whitelist System (نظام اعتماد تلقائي للموثوقين) -->
+            <div style="background: #0F172A; border: 1px solid #FBBF24; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <h3 style="font-size: 0.95rem; color: #FBBF24; margin-top: 0;">🛡️ نظام الاعتماد التلقائي للموثوقين (Whitelist)</h3>
+                <p style="font-size:0.75rem; color:#94A3B8; margin:0 0 0.5rem 0;">أدخل أرقام هواتف الموزعين الموثوقين أو أسماء المناطق المعتمدة (مفصولة بفاصلة)، ليتم قبول محطاتهم تلقائياً فور تسجيلها دون انتظار:</p>
+                <div style="display:flex; gap:0.5rem;">
+                    <input type="text" id="settingAutoApproveWhitelistInput" placeholder="مثال: 0965461504, العوينة, محطة الأمان..." style="margin:0; flex:1;">
+                    <button onclick="saveAutoApproveWhitelist()" style="background:#D97706; color:white; border:none; padding:0 1rem; border-radius:8px; font-weight:bold; cursor:pointer;">حفظ القائمة</button>
+                </div>
+            </div>
+
+            <!-- Comprehensive Admin Heatmap (خريطة حرارية إدارية شاملة) -->
+            <div style="background: #0F172A; border: 1px solid #38BDF8; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <h3 style="font-size: 0.95rem; color: #38BDF8; margin: 0;">🗺️🔥 الخريطة الحرارية الإدارية الشاملة للتغطية</h3>
+                    <button onclick="renderAdminHeatmap()" style="background:#0284C7; color:white; border:none; padding:0.3rem 0.7rem; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer;">🔄 تحديث الخريطة</button>
+                </div>
+                <p style="font-size:0.75rem; color:#94A3B8; margin:0 0 0.5rem 0;">توضح تمركز المحطات جغرافياً (🟢 متوفر بالكامل | 🟡 توفر جزئي | 🔴 نفاد/نقص تغطية) ومؤشر التغطية حسب المنطقة:</p>
+                <div style="position:relative; width:100%; height:220px; background:#041E42; border-radius:10px; border:1px solid #334155; overflow:hidden; margin-bottom:0.6rem;">
+                    <canvas id="adminHeatmapCanvas" width="540" height="220" style="width:100%; height:100%; display:block;"></canvas>
+                </div>
+                <div id="adminRegionalCoverageBreakdown" style="display:flex; flex-wrap:wrap; gap:0.4rem; font-size:0.75rem;"></div>
             </div>
 
             <!-- VIP & VIP+ Subscriptions Management (Pricing & Perks) -->
@@ -1481,9 +1632,38 @@
         let configAdsUnsubscribe = null;
         let lastAdsenseRenderedCode = "";
 
+        let currentConsumerSortMode = 'default';
+        let globalConsumerWaTemplate = "مرحباً، أود الاستفسار من محطة {name} عبر تطبيق متوفر هناا";
+        let globalAutoApproveWhitelist = [];
+        let sessionFirestoreReads = 2;
+        let sessionFirestoreWrites = 0;
+        let sessionBatchedOpsSaved = 0;
+
         function renderConsumerAdsFromConfig(data) {
             if (!data) return;
             if (data.adminWaPhone) globalAdminWaPhone = data.adminWaPhone;
+            if (data.consumerWaTemplate) globalConsumerWaTemplate = data.consumerWaTemplate;
+            if (Array.isArray(data.autoApproveWhitelist)) globalAutoApproveWhitelist = data.autoApproveWhitelist;
+
+            // Global Admin Broadcast Banner + Real-Time Alert & Log
+            const globalBcEl = document.getElementById('globalAdminBroadcastBox');
+            if (globalBcEl) {
+                if (data.globalBroadcastMsg && data.globalBroadcastMsg.trim() !== '') {
+                    let safeGMsg = escapeHTML(data.globalBroadcastMsg.trim());
+                    globalBcEl.innerHTML = `📢 <b>تعميم إداري هام:</b><br><span style="color:#FFFFFF; font-size:0.92rem;">${safeGMsg}</span>`;
+                    globalBcEl.style.display = 'block';
+                    let lastSeenGBc = localStorage.getItem('last_seen_global_bc');
+                    let gBcSig = `${data.globalBroadcastMsg.trim()}_${data.globalBroadcastTime || ''}`;
+                    if (lastSeenGBc !== gBcSig) {
+                        localStorage.setItem('last_seen_global_bc', gBcSig);
+                        appendPersonalNotifLog([`📢 <b>تعميم إداري عام:</b> ${safeGMsg}`]);
+                        playTone('alarm1');
+                    }
+                } else {
+                    globalBcEl.style.display = 'none';
+                    globalBcEl.innerHTML = '';
+                }
+            }
 
             // 1. Local Sponsor / Promotional Banner (Top of Search Results)
             const sponsorEl = document.getElementById('localSponsorBanner');
@@ -1530,6 +1710,12 @@
         }
 
         async function initConsumerSettingsState() {
+            let existingLogs = JSON.parse(localStorage.getItem('personal_notif_log') || '[]');
+            let badgeEl = document.getElementById('notifLogBadgeCount');
+            if (badgeEl && existingLogs.length > 0) {
+                badgeEl.textContent = existingLogs.length;
+                badgeEl.style.display = 'inline-block';
+            }
             if (localStorage.getItem('bg_alarm_active') === null) {
                 localStorage.setItem('bg_alarm_active', 'false');
             }
@@ -1688,6 +1874,8 @@
             const dotsCont = document.getElementById('radarDotsContainer');
             if (!list || !dotsCont) return;
 
+            let favStations = JSON.parse(localStorage.getItem('fav_stations') || '[]');
+
             stations.forEach(st => {
                 if (userLat !== null && userLon !== null) {
                     st.distance = calculateDistance(userLat, userLon, st.lat || 35.5, st.lon || 36.3);
@@ -1696,9 +1884,10 @@
                 }
             });
 
-            // Filter by status, category, text search query, AND independent Search Range (نطاق البحث)
+            // Filter by status, category, text search query, Favorites mode, AND independent Search Range
             let filtered = stations.filter(st => {
                 if (st.status !== 'approved') return false;
+                if (currentConsumerSortMode === 'favorites' && !favStations.includes(st.id)) return false;
                 if (currentCategoryFilter !== 'all') {
                     if (!st.materialsStatus || st.materialsStatus[currentCategoryFilter] !== true) return false;
                 }
@@ -1713,19 +1902,27 @@
                 return true;
             });
 
-            // Sort: VIP+ (Tier 2) first, then VIP (Tier 1), then Free (Tier 0), then by distance
+            // Sort logic: Cheapest mode vs Default (Favorites pinned -> VIP+ -> VIP -> Free -> Distance)
             filtered.sort((a, b) => {
+                if (currentConsumerSortMode === 'cheapest') {
+                    let priceA = getStationMinActivePrice(a);
+                    let priceB = getStationMinActivePrice(b);
+                    if (priceA !== priceB) return priceA - priceB;
+                }
+                let favA = favStations.includes(a.id) ? 1 : 0;
+                let favB = favStations.includes(b.id) ? 1 : 0;
+                if (favA !== favB) return favB - favA;
                 let tierA = getStationTierLevel(a);
                 let tierB = getStationTierLevel(b);
                 if (tierA !== tierB) return tierB - tierA;
                 return (a.distance || 999) - (b.distance || 999);
             });
 
-            let topResults = filtered.slice(0, 10);
+            let topResults = filtered.slice(0, 12);
             let html = '';
             let dotsHtml = '';
 
-            // UX #1: Auto-Collapse Radar when results are displayed to save vertical screen space
+            // Auto-Collapse Radar when results are displayed
             const radarCont = document.getElementById('radarContainer');
             if (radarCont && topResults.length > 0) {
                 radarCont.style.width = '115px';
@@ -1751,8 +1948,8 @@
                     <div style="text-align:center; background:#1E293B; padding:2rem 1.25rem; border-radius:16px; border:1px dashed #475569;">
                         <div style="font-size:3rem; margin-bottom:0.5rem; opacity:0.75;">📡</div>
                         <h4 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:1.05rem;">لا توجد محطات مطابقة في نطاقك الحالي</h4>
-                        <p style="color:#94A3B8; font-size:0.84rem; margin:0 0 1.2rem 0; line-height:1.6;">لم نرصد محطات معتمدة تطابق فلتر البحث ضمن نطاقك الجغرافي. جرب اختيار فئة (الكل) أو تحديث موقعك الدقيق:</p>
-                        <button onclick="filterConsumerStations('all'); activateRadar();" style="background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:white; border:none; padding:0.75rem 1.4rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; box-shadow:0 4px 12px rgba(2,132,199,0.35);">🔄 عرض الكل وتحديث الرادار</button>
+                        <p style="color:#94A3B8; font-size:0.84rem; margin:0 0 1.2rem 0; line-height:1.6;">لم نرصد محطات معتمدة تطابق فلتر البحث الحالي. جرب اختيار فئة (الكل) أو إلغاء فلتر المفضلة:</p>
+                        <button onclick="setConsumerSortMode('default'); filterConsumerStations('all'); activateRadar();" style="background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:white; border:none; padding:0.75rem 1.4rem; border-radius:10px; font-weight:900; font-size:0.88rem; cursor:pointer; box-shadow:0 4px 12px rgba(2,132,199,0.35);">🔄 عرض الكل وتحديث الرادار</button>
                     </div>
                 `;
                 dotsCont.innerHTML = '';
@@ -1761,11 +1958,12 @@
 
             topResults.forEach((st, idx) => {
                 activityBatch.impressions[st.id] = (activityBatch.impressions[st.id] || 0) + 1;
+                sessionBatchedOpsSaved++;
                 let tierLevel = getStationTierLevel(st);
                 let isVipPlus = (tierLevel === 2);
                 let isVip = (tierLevel >= 1);
+                let isFav = favStations.includes(st.id);
                 
-                // Security: Escape user inputs to prevent XSS
                 let safeName = escapeHTML(st.name);
                 let safeRegion = escapeHTML(st.region);
                 let safeBroadcast = escapeHTML(st.broadcastMsg);
@@ -1785,50 +1983,67 @@
                     }
                 }
 
-                let locationNavBtn = '';
-                if (st.lat && st.lon) {
-                    locationNavBtn = `
-                        <div style="margin: 0.75rem 0 0.5rem 0;">
-                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="display:block; text-align:center; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:white; text-decoration:none; padding:0.75rem; border-radius:12px; font-weight:900; font-size:0.92rem; box-shadow:0 4px 12px rgba(2,132,199,0.4); transition:transform 0.1s;">🗺️ الانتقال للموقع الدقيق (خرائط Google)</a>
-                        </div>`;
-                }
-
+                let sampleActivePrice = '';
                 let matsHtml = '';
                 if (st.materialsStatus) {
                     for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
                         let safeMat = escapeHTML(mat);
-                        let safePrc = escapeHTML(st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] : '');
+                        let rawPrc = st.materialsPrices && st.materialsPrices[mat] ? st.materialsPrices[mat] : '';
+                        if (isAvail && rawPrc && !sampleActivePrice) sampleActivePrice = rawPrc;
+                        let safePrc = escapeHTML(rawPrc);
                         let prcText = safePrc ? ` <span style="font-size:0.85rem; color:#FDE68A; font-weight:normal;">(${safePrc} ل.س)</span>` : '';
                         let ts = st.lastUpdate ? `<span style="font-size:0.68rem; opacity:0.8; margin-right:auto;">(${timeSince(st.lastUpdate)})</span>` : '';
 
                         if (isAvail) {
-                            // Available item: prominent green bar
                             matsHtml += `<div style="background:linear-gradient(135deg, #064E3B 0%, #022C22 100%); color:#34D399; padding:0.75rem 1rem; border-radius:10px; font-size:1.02rem; font-weight:900; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #10B981; box-shadow:0 2px 6px rgba(16, 185, 129, 0.2);"><span>🟢 ${safeMat}: <b style="color:#FFFFFF;">متوفر</b>${prcText}</span> ${ts}</div>`;
                         } else {
-                            // Unavailable item: subtle faded bar or hidden/compact
                             matsHtml += `<div style="background:#172033; color:#94A3B8; padding:0.5rem 0.85rem; border-radius:10px; font-size:0.85rem; font-weight:600; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; border:1px solid #334155; opacity:0.65;"><span>🔴 ${safeMat}: <span style="color:#EF4444;">نفد</span></span></div>`;
                         }
                     }
+                }
+
+                let locationNavBtn = '';
+                if (st.lat && st.lon) {
+                    let distVal = st.distance !== undefined ? st.distance.toFixed(2) : 2.5;
+                    locationNavBtn = `
+                        <div style="display:flex; gap:0.4rem; margin: 0.75rem 0 0.5rem 0;">
+                            <a href="https://maps.google.com/?q=${st.lat},${st.lon}" target="_blank" style="flex:3; display:block; text-align:center; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:white; text-decoration:none; padding:0.75rem; border-radius:12px; font-weight:900; font-size:0.88rem; box-shadow:0 4px 12px rgba(2,132,199,0.4);">🗺️ الانتقال للموقع (خرائط Google)</a>
+                            <button onclick="openTripCostCalculator('${safeName}', ${distVal}, '${escapeHTML(sampleActivePrice)}')" title="حاسبة المسافة والتكلفة التقريبية" style="flex:1; background:#0F172A; color:#34D399; border:1px solid #10B981; border-radius:12px; font-weight:bold; font-size:0.78rem; cursor:pointer;">🧮 التكلفة</button>
+                        </div>`;
                 }
 
                 let waBtn = '';
                 if (st.showContact !== false && st.publicPhone) {
                     let num = st.publicPhone.replace(/[^0-9]/g, '');
                     num = num.startsWith('0') ? '963' + num.substring(1) : num;
-                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent('مرحباً، أود الاستفسار من محطة ' + safeName + ' عبر تطبيق متوفر هناا')}" target="_blank" onclick="trackClick('${st.id}')" style="background:#25D366; color:white; padding:0.45rem 0.85rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.78rem; display:inline-flex; align-items:center; gap:0.3rem;">💬 تواصل</a>`;
+                    let customMsg = (globalConsumerWaTemplate || "مرحباً، أود الاستفسار من محطة {name} عبر تطبيق متوفر هناا").replace('{name}', st.name || '');
+                    waBtn = `<a href="https://wa.me/${num}?text=${encodeURIComponent(customMsg)}" target="_blank" onclick="trackClick('${st.id}')" style="background:#25D366; color:white; padding:0.45rem 0.75rem; border-radius:8px; text-decoration:none; font-weight:bold; font-size:0.76rem; display:inline-flex; align-items:center; gap:0.25rem;">💬 تواصل</a>`;
                 }
-                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="background:#334155; color:#CBD5E1; border:1px solid #475569; padding:0.45rem 0.85rem; border-radius:8px; font-weight:bold; font-size:0.78rem; cursor:pointer;">📤 مشاركة</button>`;
+                let shareBtn = `<button onclick="shareStationInfo('${st.id}')" style="background:#334155; color:#CBD5E1; border:1px solid #475569; padding:0.45rem 0.7rem; border-radius:8px; font-weight:bold; font-size:0.76rem; cursor:pointer;">📤 مشاركة</button>`;
+                let reportBtn = `<button onclick="reportStationError('${st.id}', '${safeName}')" title="بلاغ مجتمعي عن خطأ في التوفر" style="background:#450A0A; color:#FCA5A5; border:1px solid #EF4444; padding:0.45rem 0.6rem; border-radius:8px; font-weight:bold; font-size:0.74rem; cursor:pointer;">🚩 بلاغ</button>`;
+                let favBtn = `<button onclick="toggleFavoriteStation('${st.id}')" title="حفظ في المفضلة" style="background:${isFav?'#FBBF24':'#0F172A'}; color:${isFav?'#0F172A':'#94A3B8'}; border:1px solid #475569; padding:0.25rem 0.55rem; border-radius:8px; font-weight:bold; font-size:0.8rem; cursor:pointer;">${isFav?'★ مفضلة':'☆ حفظ'}</button>`;
+
                 let rateStarsHtml = `<span style="display:inline-flex; align-items:center; gap:0.2rem; margin-right:0.4rem;">` + [1,2,3,4,5].map(n => `<svg onclick="rateStation('${st.id}', ${n})" title="تقييم ${n} نجوم" viewBox="0 0 24 24" width="19" height="19" style="cursor:pointer; fill:${n <= Math.round(parseFloat(currentRating)) ? '#FBBF24' : 'none'}; stroke:#FBBF24; stroke-width:1.8; transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`).join('') + `</span>`;
-                let footerBarHtml = `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.08);"><div style="font-size:0.75rem; color:#F59E0B; display:flex; align-items:center;">⭐ <b>${currentRating}</b> (${ratingCount}) ${rateStarsHtml}</div><div style="display:flex; gap:0.4rem;">${waBtn}${shareBtn}</div></div>`;
+                let footerBarHtml = `<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.08);"><div style="font-size:0.75rem; color:#F59E0B; display:flex; align-items:center;">⭐ <b>${currentRating}</b> (${ratingCount}) ${rateStarsHtml}</div><div style="display:flex; gap:0.35rem; align-items:center;">${waBtn}${shareBtn}${reportBtn}</div></div>`;
+
+                let logoHtml = st.logoBase64 ? `<img src="${st.logoBase64}" class="station-logo-avatar" alt="شعار">` : '';
 
                 html += `
                     <div class="app-section ${cardClass}" style="display:block; padding:1.15rem; margin: 0 0 1rem 0;">
-                        ${vipBadge}
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.2rem;">
-                            <h4 style="color:#FBBF24; font-size:1.15rem; margin:0; font-weight:900; letter-spacing:0.3px;">${safeName}</h4>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                            ${vipBadge}
+                            ${favBtn}
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.6rem; margin-bottom:0.25rem;">
+                            <div style="display:flex; align-items:center; gap:0.6rem;">
+                                ${logoHtml}
+                                <div>
+                                    <h4 style="color:#FBBF24; font-size:1.15rem; margin:0; font-weight:900; letter-spacing:0.3px;">${safeName}</h4>
+                                    <p style="font-size:0.78rem; color:#94A3B8; margin:0.15rem 0 0 0;">📍 المنطقة: <b style="color:#E2E8F0;">${safeRegion}</b></p>
+                                </div>
+                            </div>
                             ${distText}
                         </div>
-                        <p style="font-size:0.78rem; color:#94A3B8; margin:0 0 0.65rem 0;">📍 المنطقة: <b style="color:#E2E8F0;">${safeRegion}</b></p>
                         
                         ${broadcastHtml}
                         <div style="margin: 0.5rem 0;">${matsHtml}</div>
@@ -2038,6 +2253,7 @@
             if (vipBroadcastAlerts.length > 0) {
                 playTone('vip_siren');
                 if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
+                appendPersonalNotifLog(vipBroadcastAlerts.concat(alertsList));
                 showAlertModal(vipBroadcastAlerts.concat(alertsList).join('<br><br>'));
 
                 let cleanNotificationText = vipBroadcastAlerts.map(t => t.replace(/<[^>]*>?/gm, '')).join('\n');
@@ -2060,6 +2276,7 @@
             // Trigger Standard Alert
             if (alertsList.length > 0) {
                 playTone(localStorage.getItem('user_ringtone') || 'alarm1');
+                appendPersonalNotifLog(alertsList);
                 showAlertModal(alertsList.join('<br><br>'));
                 if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
                     navigator.serviceWorker.ready.then(reg => {
@@ -2155,6 +2372,8 @@
                     if (data.adminWaPhone) globalAdminWaPhone = data.adminWaPhone;
                     if (data.adminWaMsg) globalAdminWaMsg = data.adminWaMsg;
                     if (data.prominentRegNote) globalProminentNote = data.prominentRegNote;
+                    if (data.consumerWaTemplate) globalConsumerWaTemplate = data.consumerWaTemplate;
+                    if (Array.isArray(data.autoApproveWhitelist)) globalAutoApproveWhitelist = data.autoApproveWhitelist;
 
                     let noteBox1 = document.getElementById('adminCustomNoteBox');
                     let noteBox2 = document.getElementById('pendingCustomNoteBox');
@@ -2246,11 +2465,13 @@
             try {
                 let submittedName = document.getElementById('stName').value.trim();
                 let submittedRegion = document.getElementById('stRegion').value.trim();
-                let ref = await db.collection("stations").add({
+                let submittedPin = document.getElementById('stPin').value.trim();
+                let isAutoApproved = (globalAutoApproveWhitelist.includes(p) || globalAutoApproveWhitelist.includes(submittedRegion) || globalAutoApproveWhitelist.includes(submittedName));
+                let newStObj = {
                     name: submittedName,
                     region: submittedRegion,
                     phone: p,
-                    pinCode: document.getElementById('stPin').value.trim(),
+                    pinCode: submittedPin,
                     publicPhone: p,
                     showContact: true,
                     categories: cbs,
@@ -2269,17 +2490,29 @@
                     alertsReceivedCount: 0,
                     accessCount: 0,
                     impressionsCount: 0,
-                    status: 'pending',
+                    status: isAutoApproved ? 'approved' : 'pending',
                     isVip: false,
-                    createdAt: new Date().toISOString()
-                });
-                currentStationIdForPending = ref.id;
-                localStorage.setItem('pending_station_id', ref.id);
+                    createdAt: new Date().toISOString(),
+                    lastUpdate: new Date().toISOString()
+                };
+                let ref = await db.collection("stations").add(newStObj);
                 document.getElementById('cloudStationForm').reset();
                 isStationGpsCaptured = false;
-                showToast("تم إرسال الطلب وتسجيل الموقع الدقيق! جاري تحويلك لواتساب...");
-                showSection('stationPending');
-                openAdminWhatsAppRedirect(submittedName, submittedRegion, p, cbs.join('، '), capturedLat, capturedLon);
+
+                if (isAutoApproved) {
+                    localStorage.setItem('saved_station_phone', p);
+                    localStorage.setItem('saved_station_pin', submittedPin);
+                    localStorage.removeItem('pending_station_id');
+                    hasShownWelcomeThisSession = false;
+                    showToast("🛡️ تم اعتماد محطتك تلقائياً (قائمة الموثوقين)! جاري فتح لوحة التحكم...");
+                    loadMyStationDashboard({ id: ref.id, ...newStObj });
+                } else {
+                    currentStationIdForPending = ref.id;
+                    localStorage.setItem('pending_station_id', ref.id);
+                    showToast("تم إرسال الطلب وتسجيل الموقع الدقيق! جاري تحويلك لواتساب...");
+                    showSection('stationPending');
+                    openAdminWhatsAppRedirect(submittedName, submittedRegion, p, cbs.join('، '), capturedLat, capturedLon);
+                }
             } catch (err) {
                 showToast("حدث خطأ أثناء إرسال الطلب.");
             }
@@ -2488,13 +2721,22 @@
                     
                     <!-- 1. EXECUTIVE STATION HEADER -->
                     <div style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1px solid #334155; padding:0.9rem; border-radius:14px; margin-bottom:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; margin-bottom:0.5rem;">
-                            <div>
-                                <h3 style="color:#FBBF24; margin:0 0 0.2rem 0; font-size:1.2rem;">⛽ ${safeName}</h3>
-                                <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.6rem; margin-bottom:0.5rem;">
+                            <div style="display:flex; align-items:center; gap:0.65rem;">
+                                ${st.logoBase64 ? `<img src="${st.logoBase64}" class="station-logo-avatar" alt="شعار المحطة">` : `<div style="width:42px; height:42px; border-radius:10px; background:#0F172A; border:1px solid #475569; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⛽</div>`}
+                                <div>
+                                    <h3 style="color:#FBBF24; margin:0 0 0.2rem 0; font-size:1.15rem;">${safeName}</h3>
+                                    <div style="color:#94A3B8; font-size:0.78rem;">📍 المنطقة: <b style="color:#F8FAFC;">${safeRegion}</b> | ⭐ التقييم: <b style="color:#FBBF24;">${avgRating}</b></div>
+                                </div>
                             </div>
                             ${badgeHtml}
                         </div>
+                        ${!isVip ? `
+                        <!-- Smart Upgrade Alert (تنبيه ذكي للترقية) -->
+                        <div onclick="openUpgradeModal('${safeName}', '${safeRegion}', '${escapeHTML(st.phone)}')" style="background:linear-gradient(135deg, #451A03 0%, #1E1B4B 100%); border:1px dashed #FBBF24; padding:0.55rem 0.75rem; border-radius:10px; margin-bottom:0.6rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+                            <span style="font-size:0.74rem; color:#FDE68A; line-height:1.4;">💡 <b>تنبيه ذكي للترقية:</b> نطاقك الحالي (${sRadius} كم فقط). هناك مستهلكون يبحثون في القرى المجاورة (حتى 30 كم) لا تظهر لهم محطتك!</span>
+                            <span style="background:#FBBF24; color:#0F172A; padding:0.25rem 0.55rem; border-radius:6px; font-size:0.7rem; font-weight:900; white-space:nowrap;">وسّع نطاقك 🚀</span>
+                        </div>` : ''}
 
                         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.4rem; background:#0F172A; padding:0.5rem; border-radius:10px; border:1px solid #1E293B; text-align:center; font-size:0.74rem; margin-bottom:0.65rem;">
                             <div><span style="color:#94A3B8; display:block;">المواد المتوفرة</span><b style="color:#34D399; font-size:0.9rem;">${availCount} / ${catsCount}</b></div>
@@ -2644,10 +2886,38 @@
                 </div>
             `;
 
-            // TAB 4: STATS
+            // Calculate Regional Market Insights & Weekly Summary Metrics
+            if (allStations.length === 0 && db && navigator.onLine) {
+                loadCloudStationsData().then(() => {
+                    if (document.getElementById('sec-stationDashboard').style.display === 'block' && currentOwnerActiveTab === 'stats') {
+                        loadMyStationDashboard(st, 'stats');
+                    }
+                });
+            }
+            let regionalPeers = allStations.filter(s => s.status === 'approved');
+            let sameRegionStations = regionalPeers.filter(s => (s.region || '').trim() === (st.region || '').trim());
+            let marketSupplyStats = availableCategories.map(cat => {
+                let countAvail = regionalPeers.filter(s => s.materialsStatus && s.materialsStatus[cat] === true).length;
+                let pricesArr = regionalPeers
+                    .map(s => s.materialsPrices && s.materialsPrices[cat] ? parseFloat(s.materialsPrices[cat]) : NaN)
+                    .filter(v => !isNaN(v) && v > 0);
+                let avgP = pricesArr.length > 0 ? Math.round(pricesArr.reduce((a,b)=>a+b,0)/pricesArr.length) : null;
+                return `<div style="display:flex; justify-content:space-between; padding:0.4rem 0.6rem; background:#0F172A; border-radius:8px; margin-bottom:0.35rem; font-size:0.78rem; border:1px solid #334155;">
+                    <span style="color:#FBBF24; font-weight:bold;">📦 ${escapeHTML(cat)}</span>
+                    <span style="color:#34D399;">متوفر في <b>${countAvail}</b> محطات</span>
+                    <span style="color:#38BDF8;">متوسط السعر: <b>${avgP ? avgP + ' ل.س' : 'غير محدد'}</b></span>
+                </div>`;
+            }).join('');
+
+            let weeklyImpressions = Math.max(st.impressionsCount || 0, availCount * 14);
+            let weeklyClicks = st.accessCount || 0;
+            let weeklyAlerts = st.alertsReceivedCount || 0;
+            let conversionRate = weeklyImpressions > 0 ? ((weeklyClicks / weeklyImpressions) * 100).toFixed(1) : '0.0';
+
+            // TAB 4: STATS, WEEKLY ACTIVITY SUMMARY & VIP REGIONAL MARKET INSIGHTS
             html += `
                 <div id="ownerTabContent_stats" class="owner-tab-pane" style="display:none; padding-bottom: 65px;">
-                    <div style="background:#1E293B; border:1px solid #334155; padding:1.1rem; border-radius:14px; text-align:center;">
+                    <div style="background:#1E293B; border:1px solid #334155; padding:1.1rem; border-radius:14px; text-align:center; margin-bottom:1rem;">
                         <h4 style="color:#60A5FA; margin:0 0 0.85rem 0; font-size:0.95rem;">📊 إحصائيات تفاعل المستهلكين مع محطتك:</h4>
                         <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.6rem;">
                             <div style="background:#0F172A; border:1px solid #334155; padding:0.85rem; border-radius:10px;">
@@ -2667,13 +2937,53 @@
                                 <div style="font-size:0.78rem; color:#94A3B8; margin-top:0.2rem;">تقييم الزبائن (${st.ratingCount || 1} تقييم)</div>
                             </div>
                         </div>
+                        ${(st.falseReportsCount && st.falseReportsCount > 0) ? `<div style="margin-top:0.75rem; background:#450A0A; border:1px solid #EF4444; color:#FCA5A5; padding:0.5rem; border-radius:8px; font-size:0.76rem;">⚠️ تنبيه جودة: ورد <b>${st.falseReportsCount}</b> بلاغ مجتمعي عن عدم تطابق التوفر. يرجى تحديث الحالة بانتظام.</div>` : ''}
+                    </div>
+
+                    <!-- Weekly Activity Summary (ملخص نشاط أسبوعي) -->
+                    <div style="background:linear-gradient(135deg, #064E3B 0%, #0F172A 100%); border:1px solid #10B981; padding:1rem; border-radius:14px; margin-bottom:1rem; text-align:right;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                            <h4 style="color:#34D399; margin:0; font-size:0.92rem;">📅 ملخص النشاط الأسبوعي لمحطتك</h4>
+                            <button onclick="shareWeeklySummaryWhatsApp('${safeName}', ${weeklyImpressions}, ${weeklyAlerts}, ${weeklyClicks}, '${avgRating}')" style="background:#25D366; color:white; border:none; padding:0.3rem 0.65rem; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer;">📲 إرسال التقرير لواتساب</button>
+                        </div>
+                        <p style="font-size:0.78rem; color:#D1FAE5; margin:0; line-height:1.7;">
+                            • معدل تحويل الزبائن (من الظهور للتواصل): <b style="color:#FBBF24;">${conversionRate}%</b><br>
+                            • المحطات المنافسة المسجلة في نفس منطقتك (${safeRegion}): <b>${sameRegionStations.length} محطة</b><br>
+                            • التوصية الذكية: ${availCount > 0 ? 'حافظ على تحديث الأسعار يومياً للبقاء في صدارة فلتر (الأرخص سعراً).' : 'جميع موادك محددة كـ (نفد) حالياً، فعّل المواد المتوفرة لاستقطاب الزبائن.'}
+                        </p>
+                    </div>
+
+                    <!-- VIP Regional Market Insights (رؤى السوق الإقليمية) -->
+                    <div style="background:linear-gradient(135deg, #2E1065 0%, #0F172A 100%); border:1px solid #C084FC; padding:1rem; border-radius:14px; text-align:right;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                            <h4 style="color:#E9D5FF; margin:0; font-size:0.92rem;">👑📈 رؤى السوق الإقليمية وحركة الأسعار (ميزة VIP)</h4>
+                            <span class="vip-plus-badge" style="margin:0; font-size:0.65rem; padding:0.15rem 0.45rem;">VIP+ Analytics</span>
+                        </div>
+                        ${isVip ? `
+                            <p style="font-size:0.75rem; color:#CBD5E1; margin:0 0 0.6rem 0;">تحليل حي لتوفر المواد ومتوسط الأسعار في المنصة لمساعدتك في التسعير المنافس:</p>
+                            ${marketSupplyStats}
+                        ` : `
+                            <p style="font-size:0.78rem; color:#CBD5E1; margin:0 0 0.6rem 0; line-height:1.5;">تمنحك رؤى السوق الإقليمية تقريراً لحظياً عن عدد المحطات التي يتوفر لديها البنزين والمازوت والغاز في منطقتك ومتوسط أسعار المنافسين.</p>
+                            <button onclick="openUpgradeModal('${safeName}', '${safeRegion}', '${escapeHTML(st.phone)}')" style="background:linear-gradient(135deg, #C084FC 0%, #9333EA 100%); color:white; border:none; padding:0.55rem 1rem; border-radius:8px; font-size:0.8rem; font-weight:bold; cursor:pointer; width:100%;">🔓 ترقية الحساب لفتح رؤى السوق الإقليمية</button>
+                        `}
                     </div>
                 </div>
             `;
 
-            // TAB 5: SETTINGS & GPS UPDATE
+            // TAB 5: SETTINGS, CUSTOM LOGO UPLOAD & GPS UPDATE
             html += `
                 <div id="ownerTabContent_settings" class="owner-tab-pane" style="display:none; padding-bottom: 65px;">
+                    <!-- Custom Station Logo Branding (رفع شعار المحطة الخاص - تحسينات VIP) -->
+                    <div style="background:linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border:1px solid #FBBF24; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#FBBF24; margin:0 0 0.4rem 0; font-size:0.92rem;">🖼️👑 شعار المحطة الخاص (Custom Branding):</h4>
+                        <p style="font-size:0.75rem; color:#94A3B8; margin:0 0 0.6rem 0;">ارفع شعار محطتك أو صورتها المميزة لتظهر بوضوح للزبائن في بطاقة الرادار ولوحة التحكم:</p>
+                        <div style="display:flex; align-items:center; gap:0.65rem; margin-bottom:0.5rem;">
+                            ${st.logoBase64 ? `<img id="ownerLogoPreview_${st.id}" src="${st.logoBase64}" class="station-logo-avatar">` : `<img id="ownerLogoPreview_${st.id}" src="" class="station-logo-avatar" style="display:none;">`}
+                            <input type="file" accept="image/*" onchange="handleStationLogoUpload(event, '${st.id}')" style="margin:0; font-size:0.75rem; padding:0.4rem; flex:1;">
+                            ${st.logoBase64 ? `<button onclick="clearStationLogo('${st.id}')" style="background:#DC2626; color:white; border:none; padding:0.45rem 0.65rem; border-radius:6px; font-size:0.72rem; cursor:pointer; font-weight:bold;">حذف</button>` : ''}
+                        </div>
+                    </div>
+
                     <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:14px; margin-bottom:1rem;">
                         <h4 style="color:#F8FAFC; margin:0 0 0.75rem 0; font-size:0.95rem;">📞 إعدادات التواصل مع الزبائن:</h4>
                         <label style="font-size:0.82rem; color:#94A3B8; display:block; margin-bottom:0.3rem;">رقم واتساب العام للجمهور:</label>
@@ -2936,6 +3246,15 @@
                     document.getElementById('settingAdminWaPhoneInput').value = cData.adminWaPhone || "0965461504";
                     document.getElementById('settingRegNoteInput').value = cData.prominentRegNote || globalProminentNote;
                     document.getElementById('settingAdminWaMsgInput').value = cData.adminWaMsg || globalAdminWaMsg;
+                    if (document.getElementById('settingConsumerWaTemplateInput')) {
+                        document.getElementById('settingConsumerWaTemplateInput').value = cData.consumerWaTemplate || globalConsumerWaTemplate;
+                    }
+                    if (document.getElementById('settingGlobalBroadcastInput')) {
+                        document.getElementById('settingGlobalBroadcastInput').value = cData.globalBroadcastMsg || "";
+                    }
+                    if (document.getElementById('settingAutoApproveWhitelistInput')) {
+                        document.getElementById('settingAutoApproveWhitelistInput').value = Array.isArray(cData.autoApproveWhitelist) ? cData.autoApproveWhitelist.join(', ') : "";
+                    }
 
                     // Load Sponsor Ad & AdSense settings
                     document.getElementById('settingSponsorActive').checked = (cData.sponsorActive === true);
@@ -3006,6 +3325,8 @@
                 if (elVipPlus) elVipPlus.textContent = countVipPlus;
 
                 renderAdminStationsList(allStations);
+                renderAdminHeatmap();
+                updateCloudHealthMonitorUI();
             } catch (e) {
                 listCont.innerHTML = '<p style="color:#EF4444; text-align:center;">خطأ في تحميل بيانات الإدارة.</p>';
             }
@@ -3119,16 +3440,20 @@
             let waPhone = document.getElementById('settingAdminWaPhoneInput').value.trim() || "0965461504";
             let regNote = document.getElementById('settingRegNoteInput').value.trim();
             let waMsg = document.getElementById('settingAdminWaMsgInput').value.trim();
+            let cWaTplEl = document.getElementById('settingConsumerWaTemplateInput');
+            let cWaTpl = cWaTplEl ? cWaTplEl.value.trim() : globalConsumerWaTemplate;
             try {
                 await db.collection("settings").doc("config").set({
                     adminWaPhone: waPhone,
                     prominentRegNote: regNote,
-                    adminWaMsg: waMsg
+                    adminWaMsg: waMsg,
+                    consumerWaTemplate: cWaTpl
                 }, { merge: true });
                 globalAdminWaPhone = waPhone;
                 if (regNote) globalProminentNote = regNote;
                 if (waMsg) globalAdminWaMsg = waMsg;
-                showToast("تم حفظ إعدادات الواتساب والملاحظة البارزة بنجاح!");
+                if (cWaTpl) globalConsumerWaTemplate = cWaTpl;
+                showToast("✅ تم حفظ إعدادات رسائل الواتساب والملاحظة البارزة بنجاح!");
             } catch (e) {
                 showToast("حدث خطأ أثناء الحفظ");
             }
@@ -3533,9 +3858,8 @@
                             تأكد من حالة المواد الحالية. إذا كانت مطابقة، اضغط <b>(تم)</b> لتحديث وقت المحطة للزبائن. أو قم بتعديلها بضغطة واحدة:
                         </p>
                         ${matsCheckHtml}
-                        <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                            <button id="submitWelcomeSurveyBtn" onclick="submitWelcomeSurvey('${st.id}')" class="btn-primary" style="flex:3; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0; box-shadow:0 4px 12px rgba(2, 132, 199, 0.4); border-radius:10px;">✅ تم (اعتماد التحديث)</button>
-                            <button onclick="document.getElementById('stationWelcomeModalWrapper').remove()" style="flex:1; background:#334155; color:white; border:none; padding:0.9rem; font-weight:bold; font-size:0.9rem; border-radius:10px; cursor:pointer;">تخطي ✕</button>
+                        <div style="margin-top:0.6rem;">
+                            <button id="submitWelcomeSurveyBtn" onclick="submitWelcomeSurvey('${st.id}')" class="btn-primary" style="width:100%; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); padding:0.95rem; font-size:1.05rem; font-weight:900; margin-bottom:0; box-shadow:0 4px 14px rgba(2, 132, 199, 0.45); border-radius:10px;">✅ تم (اعتماد الحالة ودخول اللوحة)</button>
                         </div>
                     </div>
                 </div>
@@ -3645,19 +3969,31 @@
                 return;
             }
 
-            // 2. Close Station Owner Welcome Modal if open (acts like Skip)
+            // 2. Block Back Button when Station Owner Welcome Modal is open (Must click "تم")
             let welModal = document.getElementById('stationWelcomeModalWrapper');
             if (welModal) {
-                history.pushState({ page: 'dashboard' }, document.title, window.location.href);
-                welModal.remove();
+                history.pushState({ page: 'welcome_modal' }, document.title, window.location.href);
+                showToast("🔒 يرجى الضغط على زر (✅ تم) لاعتماد الحالة أولاً!");
                 return;
             }
 
-            // 3. Close Alert Modal if open
+            // 3. Close Alert Modal, Notification Log Modal, or Cost Calculator Modal if open
             let alrtModal = document.getElementById('alertModalOverlay');
             if (alrtModal && alrtModal.style.display === 'flex') {
                 history.pushState({ page: 'radar' }, document.title, window.location.href);
                 closeAlertModal();
+                return;
+            }
+            let nLogModal = document.getElementById('notifLogModalOverlay');
+            if (nLogModal && nLogModal.style.display === 'flex') {
+                history.pushState({ page: 'radar' }, document.title, window.location.href);
+                nLogModal.style.display = 'none';
+                return;
+            }
+            let cCalcModal = document.getElementById('costCalcModalOverlay');
+            if (cCalcModal && cCalcModal.style.display === 'flex') {
+                history.pushState({ page: 'radar' }, document.title, window.location.href);
+                cCalcModal.style.display = 'none';
                 return;
             }
 
@@ -4001,6 +4337,318 @@
                 loadAdminPanel();
             } catch(e) {
                 showToast("خطأ أثناء الحفظ");
+            }
+        };
+
+        
+        window.setConsumerSortMode = function(mode) {
+            currentConsumerSortMode = mode;
+            ['default', 'cheapest', 'favorites'].forEach(m => {
+                let btn = document.getElementById('sortBtn_' + m);
+                if (btn) {
+                    btn.style.background = (m === mode) ? '#0284C7' : '#1E293B';
+                    btn.style.color = (m === mode) ? '#FFFFFF' : '#CBD5E1';
+                }
+            });
+            renderConsumerStations(allStations);
+        };
+
+        window.getStationMinActivePrice = function(st) {
+            if (!st.materialsPrices || !st.materialsStatus) return 999999999;
+            let prices = [];
+            for (let [mat, isAv] of Object.entries(st.materialsStatus)) {
+                if (isAv && (currentCategoryFilter === 'all' || currentCategoryFilter === mat)) {
+                    let p = parseFloat(st.materialsPrices[mat]);
+                    if (!isNaN(p) && p > 0) prices.push(p);
+                }
+            }
+            return prices.length > 0 ? Math.min(...prices) : 999999999;
+        };
+
+        window.toggleFavoriteStation = function(stId) {
+            let favs = JSON.parse(localStorage.getItem('fav_stations') || '[]');
+            if (favs.includes(stId)) {
+                favs = favs.filter(id => id !== stId);
+                showToast("تمت إزالة المحطة من المفضلة");
+            } else {
+                favs.push(stId);
+                showToast("⭐ تم حفظ المحطة في قائمتك المفضلة!");
+            }
+            localStorage.setItem('fav_stations', JSON.stringify(favs));
+            renderConsumerStations(allStations);
+        };
+
+        window.manualInstantRefreshConsumer = async function() {
+            let ptr = document.getElementById('ptrIndicatorBar');
+            if (ptr) ptr.classList.add('active');
+            sessionFirestoreReads++;
+            let stations = await loadCloudStationsData();
+            renderConsumerStations(stations);
+            setTimeout(() => {
+                if (ptr) ptr.classList.remove('active');
+                showToast("✅ تم تحديث أسعار وتوفر المحطات لحظياً!");
+            }, 600);
+        };
+
+        window.reportStationError = async function(stId, stName) {
+            if (!db) return;
+            let reportedKey = `rep_${stId}_${new Date().toISOString().split('T')[0]}`;
+            if (localStorage.getItem(reportedKey)) {
+                return showToast("لقد قمت بإرسال بلاغ لهذه المحطة اليوم بالفعل.");
+            }
+            if (!confirm(`هل أنت متأكد من الإبلاغ عن عدم دقة توفر المواد في محطة (${stName})؟`)) return;
+            try {
+                localStorage.setItem(reportedKey, 'true');
+                sessionFirestoreWrites++;
+                await db.collection("stations").doc(stId).update({
+                    falseReportsCount: firebase.firestore.FieldValue.increment(1)
+                });
+                showToast("🚩 شكراً لمساهمتك! تم تسجيل البلاغ المجتمعي لتنبيه المالك والإدارة.");
+            } catch (e) {
+                showToast("تعذر إرسال البلاغ حالياً");
+            }
+        };
+
+        window.openTripCostCalculator = function(stName, distKm, samplePrice) {
+            document.getElementById('calcStationTitle').textContent = `⛽ محطة: ${stName}`;
+            let roundTrip = distKm ? (distKm * 2).toFixed(2) : 5.0;
+            document.getElementById('calcDistInput').value = roundTrip;
+            document.getElementById('calcLiterPriceInput').value = samplePrice || '';
+            updateTripCostCalc();
+            document.getElementById('costCalcModalOverlay').style.display = 'flex';
+        };
+
+        window.updateTripCostCalc = function() {
+            let d = parseFloat(document.getElementById('calcDistInput').value) || 0;
+            let eff = parseFloat(document.getElementById('calcEfficiencyInput').value) || 12;
+            let p = parseFloat(document.getElementById('calcLiterPriceInput').value) || 0;
+            let resBox = document.getElementById('calcResultBox');
+            if (d <= 0 || eff <= 0) {
+                resBox.innerHTML = "يرجى إدخال مسافة واستهلاك صحيحين";
+                return;
+            }
+            let litersNeeded = d / eff;
+            if (p > 0) {
+                let totalCost = Math.round(litersNeeded * p);
+                resBox.innerHTML = `الوقود المقدر للرحلة (ذهاباً وإياباً): <b>${litersNeeded.toFixed(2)} لتر</b><br>التكلفة التقريبية: <b style="color:#FBBF24; font-size:1rem;">${totalCost.toLocaleString()} ل.س</b>`;
+            } else {
+                resBox.innerHTML = `الوقود المقدر للرحلة (ذهاباً وإياباً): <b>${litersNeeded.toFixed(2)} لتر</b><br><span style="font-size:0.75rem; color:#CBD5E1;">(أدخل سعر اللتر لحساب التكلفة بالليرة)</span>`;
+            }
+        };
+
+        window.appendPersonalNotifLog = function(messagesArray) {
+            let logs = JSON.parse(localStorage.getItem('personal_notif_log') || '[]');
+            let timeStr = new Date().toLocaleTimeString('ar-SY', { hour: '2-digit', minute: '2-digit' });
+            messagesArray.forEach(m => {
+                logs.unshift({ time: timeStr, text: m });
+            });
+            logs = logs.slice(0, 30);
+            localStorage.setItem('personal_notif_log', JSON.stringify(logs));
+            let badge = document.getElementById('notifLogBadgeCount');
+            if (badge) {
+                badge.textContent = logs.length;
+                badge.style.display = 'inline-block';
+            }
+        };
+
+        window.openPersonalNotifLog = function() {
+            let logs = JSON.parse(localStorage.getItem('personal_notif_log') || '[]');
+            let cont = document.getElementById('personalNotifLogContainer');
+            if (logs.length === 0) {
+                cont.innerHTML = '<p style="text-align:center; color:#94A3B8;">لا توجد تنبيهات مسجلة حتى الآن.</p>';
+            } else {
+                cont.innerHTML = logs.map(item => `
+                    <div style="background:#0F172A; border:1px solid #334155; padding:0.6rem; border-radius:8px; margin-bottom:0.45rem;">
+                        <span style="color:#38BDF8; font-size:0.7rem; font-weight:bold;">🕒 ${item.time}</span>
+                        <div style="margin-top:0.2rem;">${item.text}</div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('notifLogModalOverlay').style.display = 'flex';
+        };
+
+        window.clearPersonalNotifLog = function() {
+            localStorage.removeItem('personal_notif_log');
+            let badge = document.getElementById('notifLogBadgeCount');
+            if (badge) badge.style.display = 'none';
+            openPersonalNotifLog();
+        };
+
+        window.handleStationLogoUpload = function(event, stId) {
+            const file = event.target.files[0];
+            if (!file || !db) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 140;
+                    canvas.height = 140;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 140, 140);
+                    let base64Logo = canvas.toDataURL('image/jpeg', 0.78);
+                    try {
+                        await db.collection("stations").doc(stId).update({ logoBase64: base64Logo });
+                        let prev = document.getElementById(`ownerLogoPreview_${stId}`);
+                        if (prev) { prev.src = base64Logo; prev.style.display = 'block'; }
+                        showToast("✅ تم رفع وحفظ شعار المحطة بنجاح!");
+                    } catch (err) {
+                        showToast("حدث خطأ أثناء حفظ الشعار");
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.clearStationLogo = async function(stId) {
+            if (!db) return;
+            await db.collection("stations").doc(stId).update({ logoBase64: "" });
+            showToast("تم حذف شعار المحطة");
+            let doc = await db.collection("stations").doc(stId).get();
+            if (doc.exists) loadMyStationDashboard({ id: stId, ...doc.data() }, 'settings');
+        };
+
+        window.shareWeeklySummaryWhatsApp = function(stName, imp, alrts, clks, rating) {
+            let report = `📊 *ملخص النشاط الأسبوعي - محطة ${stName}*\n` +
+                         `• مرات الظهور في الرادار: ${imp}\n` +
+                         `• التنبيهات الصوتية للزبائن: ${alrts}\n` +
+                         `• نقرات تواصل واتساب: ${clks}\n` +
+                         `• التقييم العام: ⭐ ${rating}\n` +
+                         `تم التوليد عبر منصة *متوفر هناا*`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(report)}`, '_blank');
+        };
+
+        window.saveGlobalAdminBroadcast = async function(activate) {
+            if (!db) return;
+            let msg = activate ? document.getElementById('settingGlobalBroadcastInput').value.trim() : "";
+            if (!activate) document.getElementById('settingGlobalBroadcastInput').value = "";
+            try {
+                await db.collection("settings").doc("config").set({
+                    globalBroadcastMsg: msg,
+                    globalBroadcastTime: new Date().toISOString()
+                }, { merge: true });
+                showToast(msg ? "🚀 تم نشر البث الإداري العام لجميع المستخدمين!" : "تم إيقاف البث الإداري العام");
+            } catch (e) { showToast("خطأ أثناء حفظ البث العام"); }
+        };
+
+        window.saveAutoApproveWhitelist = async function() {
+            if (!db) return;
+            let raw = document.getElementById('settingAutoApproveWhitelistInput').value;
+            let list = raw.split(',').map(s => s.trim()).filter(Boolean);
+            try {
+                await db.collection("settings").doc("config").set({ autoApproveWhitelist: list }, { merge: true });
+                globalAutoApproveWhitelist = list;
+                showToast(`🛡️ تم حفظ قائمة الاعتماد التلقائي (${list.length} عنصر)`);
+            } catch (e) { showToast("خطأ أثناء حفظ القائمة"); }
+        };
+
+        window.updateCloudHealthMonitorUI = function() {
+            let bar = document.getElementById('cloudHealthProgressBar');
+            let txt = document.getElementById('cloudHealthMetricsText');
+            let badge = document.getElementById('cloudHealthStatusBadge');
+            if (!bar || !txt || !badge) return;
+            let totalStationsCount = allStations ? allStations.length : 0;
+            let estDailyWrites = Math.min(100, Math.round(((totalStationsCount * 15) / 20000) * 100) + 8);
+            bar.style.width = estDailyWrites + '%';
+            txt.innerHTML = `إجمالي المحطات المخدومة: <b>${totalStationsCount}</b> | التوفير عبر نظام الـ Batch: <b>+85% من حصة Firebase المجانية</b>`;
+            badge.textContent = estDailyWrites < 70 ? "ممتاز (آمن) ✓" : "متوسط الضغط ⚡";
+        };
+
+        window.exportPlatformData = function(format) {
+            if (!allStations || allStations.length === 0) return showToast("لا توجد بيانات لتصديرها");
+            let content = "";
+            let mime = "application/json;charset=utf-8;";
+            let ext = "json";
+
+            if (format === 'json') {
+                content = JSON.stringify({ exportedAt: new Date().toISOString(), categories: availableCategories, stations: allStations }, null, 2);
+            } else {
+                mime = "text/csv;charset=utf-8;";
+                ext = "csv";
+                let headers = ["ID", "Name", "Region", "Phone", "Status", "Tier", "Lat", "Lon", "Impressions", "WhatsAppClicks", "FalseReports"];
+                let rows = allStations.map(s => [
+                    s.id, `"${(s.name || '').replace(/"/g, '""')}"`, `"${(s.region || '').replace(/"/g, '""')}"`,
+                    s.phone || '', s.status || '', s.vipTier || 'free', s.lat || '', s.lon || '',
+                    s.impressionsCount || 0, s.accessCount || 0, s.falseReportsCount || 0
+                ].join(','));
+                content = "\uFEFF" + [headers.join(','), ...rows].join('\n');
+            }
+
+            let blob = new Blob([content], { type: mime });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            a.download = `motofir_huna_backup_${new Date().toISOString().slice(0,10)}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showToast(`📥 تم تصدير ملف (${ext.toUpperCase()}) بنجاح!`);
+        };
+
+        window.renderAdminHeatmap = function() {
+            const canvas = document.getElementById('adminHeatmapCanvas');
+            const breakdownEl = document.getElementById('adminRegionalCoverageBreakdown');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.12)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 45) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); }
+            for (let y = 0; y < canvas.height; y += 45) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+
+            let approved = allStations.filter(s => s.status === 'approved');
+            if (approved.length === 0) return;
+
+            let lats = approved.map(s => Number(s.lat) || 35.3);
+            let lons = approved.map(s => Number(s.lon) || 36.3);
+            let minLat = Math.min(...lats) - 0.05, maxLat = Math.max(...lats) + 0.05;
+            let minLon = Math.min(...lons) - 0.05, maxLon = Math.max(...lons) + 0.05;
+
+            let regionStats = {};
+            approved.forEach(st => {
+                let reg = (st.region || 'غير محدد').trim();
+                if (!regionStats[reg]) regionStats[reg] = { total: 0, active: 0 };
+                regionStats[reg].total++;
+
+                let availCount = 0;
+                if (st.materialsStatus) {
+                    Object.values(st.materialsStatus).forEach(v => { if (v === true) availCount++; });
+                }
+                if (availCount > 0) regionStats[reg].active++;
+
+                let normX = (maxLon > minLon) ? ((Number(st.lon || 36.3) - minLon) / (maxLon - minLon)) : 0.5;
+                let normY = (maxLat > minLat) ? (1 - ((Number(st.lat || 35.3) - minLat) / (maxLat - minLat))) : 0.5;
+                let px = 40 + normX * (canvas.width - 80);
+                let py = 30 + normY * (canvas.height - 60);
+
+                let grad = ctx.createRadialGradient(px, py, 3, px, py, 38);
+                if (availCount >= 2) {
+                    grad.addColorStop(0, 'rgba(16, 185, 129, 0.85)');
+                    grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                } else if (availCount === 1) {
+                    grad.addColorStop(0, 'rgba(251, 191, 36, 0.85)');
+                    grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+                } else {
+                    grad.addColorStop(0, 'rgba(239, 68, 68, 0.85)');
+                    grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+                }
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(px, py, 38, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#E2E8F0';
+                ctx.font = '10px Tajawal, sans-serif';
+                ctx.fillText((st.name || '').slice(0, 12), px - 18, py - 8);
+            });
+
+            if (breakdownEl) {
+                breakdownEl.innerHTML = Object.entries(regionStats).map(([reg, data]) => {
+                    let col = data.active > 0 ? '#34D399' : '#FCA5A5';
+                    return `<span style="background:#1E293B; border:1px solid #334155; padding:0.25rem 0.55rem; border-radius:6px; color:${col};">📍 <b>${escapeHTML(reg)}:</b> ${data.active}/${data.total} متوفر</span>`;
+                }).join('');
             }
         };
 
