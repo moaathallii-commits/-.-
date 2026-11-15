@@ -495,7 +495,24 @@
             align-items: center;
         }
 
-        </style>
+        
+        @keyframes pendingAdminPulse {
+            0% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(217, 119, 6, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0); }
+        }
+    
+        @keyframes bellShake {
+            0%, 100% { transform: rotate(0deg); }
+            20%, 60% { transform: rotate(-14deg) scale(1.1); }
+            40%, 80% { transform: rotate(14deg) scale(1.1); }
+        }
+        .bell-shake-anim {
+            animation: bellShake 0.7s ease-in-out 3;
+            border-color: #FBBF24 !important;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
+        }
+    </style>
 </head>
 <body>
 
@@ -621,7 +638,7 @@
                 <div class="consumer-tools-bar" style="overflow-x:auto; padding-bottom:0.15rem;">
                     <button id="btnSortCheapest" onclick="toggleSortCheapest()" style="background:#1E293B; color:#CBD5E1; border:1px solid #475569; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap;">💰 الأرخص سعراً</button>
                     <button id="btnFilterFavs" onclick="toggleFilterFavorites()" style="background:#1E293B; color:#CBD5E1; border:1px solid #475569; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap;">❤️ المحطات المفضلة</button>
-                    <button onclick="openConsumerNotifLogModal()" style="background:#1E293B; color:#FBBF24; border:1px solid #475569; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap;">🔔 سجل التنبيهات</button>
+                    <button id="consumerBellLogBtn" onclick="openConsumerNotifLogModal()" style="background:#1E293B; color:#FBBF24; border:1px solid #475569; padding:0.35rem 0.65rem; border-radius:6px; font-size:0.75rem; font-weight:bold; cursor:pointer; white-space:nowrap; position:relative;">🔔 سجل التنبيهات <span id="consumerUnreadBadge" style="display:none; position:absolute; top:-5px; right:-5px; background:#DC2626; color:white; font-size:0.6rem; padding:0.15rem 0.3rem; border-radius:50%; min-width:14px; text-align:center;">0</span></button>
                 </div>
             </div>
 
@@ -951,7 +968,15 @@
                 <div id="adminCategoriesList" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
             </div>
 
-            <input type="text" id="adminSearchInput" oninput="filterAdminList()" placeholder="🔍 ابحث عن محطة بالاسم، المنطقة أو الهاتف...">
+            <div style="background:#1E293B; border:1px solid #334155; padding:1rem; border-radius:12px; margin-bottom:1.5rem;">
+                <input type="text" id="adminSearchInput" oninput="filterAdminList()" placeholder="🔍 بحث ذكي (الاسم، المنطقة، الهاتف، أو المادة)..." style="margin-bottom:0.5rem; padding:0.85rem; font-size:0.95rem; font-weight:bold; background:#0F172A; border-color:#38BDF8;">
+                <div style="display:flex; flex-wrap:wrap; gap:0.4rem;" id="adminQuickFilters">
+                    <button onclick="applyAdminQuickFilter('all')" id="admFltBtn_all" style="background:#38BDF8; color:#0F172A; border:none; padding:0.35rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">الكل</button>
+                    <button onclick="applyAdminQuickFilter('pending')" id="admFltBtn_pending" style="background:#1E293B; color:#CBD5E1; border:1px solid #475569; padding:0.35rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">⏳ قيد الانتظار</button>
+                    <button onclick="applyAdminQuickFilter('vip')" id="admFltBtn_vip" style="background:#1E293B; color:#CBD5E1; border:1px solid #475569; padding:0.35rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">👑 VIP</button>
+                    <button onclick="applyAdminQuickFilter('active')" id="admFltBtn_active" style="background:#1E293B; color:#CBD5E1; border:1px solid #475569; padding:0.35rem 0.75rem; border-radius:8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">🟢 متوفر لديها مواد</button>
+                </div>
+            </div>
 
             
             <div style="background:#1E293B; border:1px solid #38BDF8; padding:1.25rem; border-radius:12px; margin-bottom:1.5rem;">
@@ -1039,9 +1064,17 @@
                 bar.style.display = 'none';
             }
         }
-        window.addEventListener('online', () => {
+        window.addEventListener('online', async () => {
             updateNetworkStatusBar();
-            showToast("🟢 عاد الاتصال بالإنترنت");
+            showToast("🟢 عاد الاتصال بالإنترنت - جاري فحص التحديثات الفائتة...");
+            let stations = await loadCloudStationsData();
+            if (stations && stations.length > 0) {
+                let recentAvailCount = stations.filter(s => s.status === 'approved' && s.lastUpdate && (Date.now() - new Date(s.lastUpdate).getTime()) <= 10800000).length;
+                if (recentAvailCount > 0) {
+                    showToast(`🌐 عاد الاتصال! هناك ${recentAvailCount} محطات قامت بتحديث توفرها خلال آخر 3 ساعات.`);
+                }
+                checkSmartAlertsSilent(stations, userLat, userLon);
+            }
         });
         window.addEventListener('offline', () => {
             updateNetworkStatusBar();
@@ -1680,7 +1713,20 @@
             if (stations.length > 0) {
                 renderConsumerStations(stations);
             }
+            updateUnreadBadgeUI();
         }
+
+        window.updateUnreadBadgeUI = function() {
+            let badge = document.getElementById('consumerUnreadBadge');
+            if (!badge) return;
+            let unreadCount = parseInt(localStorage.getItem('unread_notif_count') || '0');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        };
 
         function updateConsumerPrefsUI() {
             const container = document.getElementById('consumerAlertPreferences');
@@ -1949,7 +1995,9 @@
                 }
 
                 let isFav = favIds.includes(st.id);
-                let favBtnHtml = `<button class="fav-heart-btn" onclick="toggleFavoriteStation('${st.id}')" title="حفظ في المفضلة">${isFav ? '❤️' : '🤍'}</button>`;
+                let subIds = JSON.parse(localStorage.getItem('subscribed_stations') || '[]');
+                let isSub = subIds.includes(st.id);
+                let favBtnHtml = `<button class="fav-heart-btn" onclick="toggleFavoriteStation('${st.id}')" title="حفظ في المفضلة">${isFav ? '❤️' : '🤍'}</button><button class="fav-heart-btn" onclick="toggleStationSpecificSub('${st.id}', '${safeName}')" title="تنبيه مخصص لهذه المحطة">${isSub ? '🔔' : '🔕'}</button>`;
                 let logoHtml = st.logoBase64 ? `<img src="${st.logoBase64}" alt="شعار" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid #FBBF24; margin-left:0.5rem; flex-shrink:0;">` : '';
 
                 let travelCostHtml = '';
@@ -2136,21 +2184,30 @@
                     let isWithinRange = (uLat === null || uLon === null) ? true : (dist <= stRadius);
                     let hasVipPrivilege = (getStationTierLevel(st) >= 1);
 
+                    let stUpdateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
+                    let isRecentChange = (Date.now() - stUpdateTime) <= 10800000; // Only alert for changes in last 3 hours
+
                     // 1. Check Loud Prominent VIP / VIP+ Broadcast (within Alert Range)
-                    if (hasVipPrivilege && st.broadcastMsg && st.broadcastMsg.trim() !== '' && isWithinRange) {
+                    if (hasVipPrivilege && st.broadcastMsg && st.broadcastMsg.trim() !== '' && isWithinRange && isRecentChange) {
                         let bKey = `${st.id}_bc`;
                         let currentBcSignature = `${st.broadcastMsg.trim()}_${st.broadcastId || ''}`;
                         if (lastBroadcasts[bKey] !== currentBcSignature) {
                             lastBroadcasts[bKey] = currentBcSignature;
                             broadcastChanged = true;
                             let distLabel = (uLat !== null && uLon !== null) ? ` (تبعد ${dist.toFixed(1)} كم)` : '';
-                            vipBroadcastAlerts.push(`🚨📢 <b>بث فوري عاجل من [${escapeHTML(st.name)} - ${escapeHTML(st.region)}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${escapeHTML(st.broadcastMsg)}"</span>`);
+                            vipBroadcastAlerts.push({
+                                html: `🚨📢 <b>بث فوري عاجل من [${escapeHTML(st.name)} - ${escapeHTML(st.region)}]${distLabel}:</b><br><span style="color:#FBBF24; font-size:1.05rem; font-weight:900;">"${escapeHTML(st.broadcastMsg)}"</span>`,
+                                action: { lat: st.lat, lon: st.lon, phone: st.publicPhone || st.phone }
+                            });
                             batchUpdateIds.add(st.id);
                         }
                     }
 
                     // 2. Check Standard Material Availability / Out of Stock
-                    if (uLat !== null && uLon !== null && st.lat && st.lon && st.materialsStatus && isWithinRange) {
+                    if (uLat !== null && uLon !== null && st.lat && st.lon && st.materialsStatus && isWithinRange && isRecentChange) {
+                        let lastPrices = JSON.parse(localStorage.getItem('last_known_prices') || '{}');
+                        let pricesChanged = false;
+                        
                         for (let [mat, isAvail] of Object.entries(st.materialsStatus)) {
                             if (savedPrefs.length === 0 || savedPrefs.includes(mat)) {
                                 let shouldAlert = false;
@@ -2158,18 +2215,36 @@
                                 else if (alertMode === 'available_only' && isAvail) shouldAlert = true;
                                 else if (alertMode === 'out_only' && !isAvail) shouldAlert = true;
 
-                                if (shouldAlert) {
-                                    let stateKey = `${st.id}_${mat}`;
-                                    if (lastAlerts[stateKey] !== isAvail) {
-                                        lastAlerts[stateKey] = isAvail;
-                                        stateChanged = true;
-                                        let statusMsg = isAvail ? "متوفرة الآن ✓" : "نفدت كميتها ✗";
-                                        alertsList.push(`⛽ محطة (${escapeHTML(st.name)}): مادة [${escapeHTML(mat)}] (${statusMsg}) - تبعد ${dist.toFixed(1)} كم`);
-                                        batchUpdateIds.add(st.id);
-                                    }
+                                let stateKey = `${st.id}_${mat}`;
+                                let currentPrc = parseFloat(st.materialsPrices ? st.materialsPrices[mat] : 0);
+                                let oldPrc = lastPrices[stateKey] || 0;
+                                let priceDropped = (isAvail && currentPrc > 0 && oldPrc > 0 && currentPrc < oldPrc);
+
+                                if (shouldAlert && lastAlerts[stateKey] !== isAvail) {
+                                    lastAlerts[stateKey] = isAvail;
+                                    stateChanged = true;
+                                    let statusMsg = isAvail ? "متوفرة الآن ✓" : "نفدت كميتها ✗";
+                                    alertsList.push({
+                                        html: `⛽ محطة (${escapeHTML(st.name)}): مادة [${escapeHTML(mat)}] (${statusMsg}) - تبعد ${dist.toFixed(1)} كم`,
+                                        action: { lat: st.lat, lon: st.lon, phone: st.publicPhone || st.phone }
+                                    });
+                                    batchUpdateIds.add(st.id);
+                                } else if (priceDropped) {
+                                    stateChanged = true;
+                                    alertsList.push({
+                                        html: `📉 تخفيض سعر ذكي! محطة (${escapeHTML(st.name)}) خفضت سعر [${escapeHTML(mat)}] إلى ${currentPrc} ل.س!`,
+                                        action: { lat: st.lat, lon: st.lon, phone: st.publicPhone || st.phone }
+                                    });
+                                    batchUpdateIds.add(st.id);
+                                }
+                                
+                                if (isAvail && currentPrc > 0 && lastPrices[stateKey] !== currentPrc) {
+                                    lastPrices[stateKey] = currentPrc;
+                                    pricesChanged = true;
                                 }
                             }
                         }
+                        if (pricesChanged) localStorage.setItem('last_known_prices', JSON.stringify(lastPrices));
                     }
                 }
             });
@@ -2188,15 +2263,22 @@
                 });
             }
 
+            let currentHour = new Date().getHours();
+            let isQuietHours = (currentHour >= 23 || currentHour < 7);
+
             // Trigger VIP Loud Siren & Prominent High-Priority System Notification
             if (vipBroadcastAlerts.length > 0) {
-                playTone('vip_siren');
-                if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
-                let combinedAlertHtml = vipBroadcastAlerts.concat(alertsList).join('<br><br>');
-                logConsumerNotification(combinedAlertHtml);
-                showAlertModal(combinedAlertHtml);
+                if (!isQuietHours) {
+                    playTone('vip_siren');
+                    if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 800]);
+                }
+                let allCombined = vipBroadcastAlerts.concat(alertsList);
+                let combinedHtml = allCombined.map(a => a.html).join('<br><br>');
+                // Log each separately for actions
+                allCombined.forEach(a => logConsumerNotification(a.html, a.action));
+                showAlertModal(combinedHtml);
 
-                let cleanNotificationText = vipBroadcastAlerts.map(t => t.replace(/<[^>]*>?/gm, '')).join('\n');
+                let cleanNotificationText = vipBroadcastAlerts.map(t => t.html.replace(/<[^>]*>?/gm, '')).join('\n');
                 if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
                     navigator.serviceWorker.ready.then(reg => {
                         reg.showNotification("🚨📢 إشعار VIP عاجل - متوفر هناا", {
@@ -2205,8 +2287,9 @@
                             badge: "icon-192.png",
                             tag: "vip-broadcast-" + Date.now(),
                             renotify: true,
-                            requireInteraction: true,
-                            vibrate: [500, 200, 500, 200, 800]
+                            silent: isQuietHours,
+                            requireInteraction: !isQuietHours,
+                            vibrate: isQuietHours ? [] : [500, 200, 500, 200, 800]
                         });
                     }).catch(e => {});
                 }
@@ -2215,19 +2298,25 @@
 
             // Trigger Standard Alert
             if (alertsList.length > 0) {
-                playTone(localStorage.getItem('user_ringtone') || 'alarm1');
-                let stdAlertHtml = alertsList.join('<br><br>');
-                logConsumerNotification(stdAlertHtml);
+                if (!isQuietHours) {
+                    playTone(localStorage.getItem('user_ringtone') || 'alarm1');
+                    if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 400]);
+                }
+                let stdAlertHtml = alertsList.map(a => a.html).join('<br><br>');
+                alertsList.forEach(a => logConsumerNotification(a.html, a.action));
                 showAlertModal(stdAlertHtml);
+                
                 if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker) {
+                    let cleanStandard = alertsList.map(t => t.html.replace(/<[^>]*>?/gm, '')).join('\n');
                     navigator.serviceWorker.ready.then(reg => {
                         reg.showNotification("🚨 تحديث رادار المحروقات", {
-                            body: alertsList.join('\n'),
+                            body: cleanStandard,
                             icon: "icon-192.png",
                             tag: "radar-alert-" + Date.now(),
                             renotify: true,
-                            requireInteraction: true,
-                            vibrate: [300, 150, 300, 150, 400]
+                            silent: isQuietHours,
+                            requireInteraction: !isQuietHours,
+                            vibrate: isQuietHours ? [] : [300, 150, 300, 150, 400]
                         });
                     }).catch(e => {});
                 }
@@ -3205,30 +3294,70 @@
                 document.getElementById('admTotalUsers').textContent = totalUsers;
                 document.getElementById('admActiveUsers').textContent = active24h;
 
-                // Stations & Totals
-                let sSnap = await db.collection("stations").get();
-                allStations = [];
-                let totalAlerts = 0;
-                let totalClicks = 0;
-                let countVip = 0;
-                let countVipPlus = 0;
-                sSnap.forEach(doc => {
-                    let d = doc.data();
-                    totalAlerts += (d.alertsReceivedCount || 0);
-                    totalClicks += (d.accessCount || 0);
-                    let lvl = getStationTierLevel(d);
-                    if (lvl === 2) countVipPlus++;
-                    else if (lvl === 1) countVip++;
-                    allStations.push({ id: doc.id, ...d });
-                });
-                document.getElementById('admTotalAlerts').textContent = totalAlerts;
-                document.getElementById('admTotalClicks').textContent = totalClicks;
-                let elVip = document.getElementById('admCountVip');
-                let elVipPlus = document.getElementById('admCountVipPlus');
-                if (elVip) elVip.textContent = countVip;
-                if (elVipPlus) elVipPlus.textContent = countVipPlus;
+                // Stations & Totals with Real-time Listener for New Pending Stations
+                if (window.adminStationsUnsubscribe) window.adminStationsUnsubscribe();
+                let initialAdminLoad = true;
+                window.adminStationsUnsubscribe = db.collection("stations").onSnapshot(sSnap => {
+                    allStations = [];
+                    let totalAlerts = 0;
+                    let totalClicks = 0;
+                    let countVip = 0;
+                    let countVipPlus = 0;
+                    let newPendingCount = 0;
+                    let latestPendingSt = null;
 
-                renderAdminStationsList(allStations);
+                    sSnap.docChanges().forEach(change => {
+                        if (change.type === 'added' && !initialAdminLoad) {
+                            let d = change.doc.data();
+                            if (d.status === 'pending') {
+                                newPendingCount++;
+                                latestPendingSt = { id: change.doc.id, ...d };
+                            }
+                        }
+                    });
+
+                    sSnap.forEach(doc => {
+                        let d = doc.data();
+                        totalAlerts += (d.alertsReceivedCount || 0);
+                        totalClicks += (d.accessCount || 0);
+                        let lvl = getStationTierLevel(d);
+                        if (lvl === 2) countVipPlus++;
+                        else if (lvl === 1) countVip++;
+                        allStations.push({ id: doc.id, ...d });
+                    });
+                    
+                    let elTotAl = document.getElementById('admTotalAlerts');
+                    let elTotCl = document.getElementById('admTotalClicks');
+                    let elVip = document.getElementById('admCountVip');
+                    let elVipPlus = document.getElementById('admCountVipPlus');
+                    if (elTotAl) elTotAl.textContent = totalAlerts;
+                    if (elTotCl) elTotCl.textContent = totalClicks;
+                    if (elVip) elVip.textContent = countVip;
+                    if (elVipPlus) elVipPlus.textContent = countVipPlus;
+
+                    renderAdminStationsList(allStations);
+                    
+                    if (!initialAdminLoad && newPendingCount > 0 && latestPendingSt) {
+                        playTone('chime');
+                        let safePName = escapeHTML(latestPendingSt.name);
+                        let alertHtml = `<div style="text-align:right;">
+                            <div style="font-size:2.5rem; text-align:center; margin-bottom:0.5rem;">🚨</div>
+                            <h3 style="color:#34D399; margin-top:0; text-align:center;">طلب اعتماد محطة جديدة!</h3>
+                            <p style="font-size:0.85rem; color:#F8FAFC;">هناك محطة جديدة بانتظار الاعتماد:</p>
+                            <ul style="font-size:0.8rem; color:#CBD5E1; line-height:1.6; padding-right:1.2rem;">
+                                <li><b>الاسم:</b> ${safePName}</li>
+                                <li><b>المنطقة:</b> ${escapeHTML(latestPendingSt.region)}</li>
+                                <li><b>الهاتف:</b> ${escapeHTML(latestPendingSt.phone)}</li>
+                                <li><b>الفئات:</b> ${(latestPendingSt.categories || []).join('، ')}</li>
+                            </ul>
+                            <button onclick="approveAndNotify('${latestPendingSt.id}', '${safePName}', '${latestPendingSt.phone}'); closeAlertModal();" style="background:#059669; color:white; border:none; width:100%; padding:0.75rem; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:0.5rem;">⚡ قبول وتفعيل فوري + واتساب</button>
+                        </div>`;
+                        showAlertModal(alertHtml);
+                    }
+                    initialAdminLoad = false;
+                }, err => {
+                    console.error("Admin snapshot error", err);
+                });
             } catch (e) {
                 listCont.innerHTML = '<p style="color:#EF4444; text-align:center;">خطأ في تحميل بيانات الإدارة.</p>';
             }
@@ -3267,8 +3396,18 @@
                 let sAdmPin = escapeHTML(st.pinCode || '---');
                 let sAdmCats = escapeHTML(catsList);
 
+                let hasAvail = false;
+                if (st.materialsStatus) {
+                    for (let [m, isAv] of Object.entries(st.materialsStatus)) {
+                        if (isAv) hasAvail = true;
+                    }
+                }
+                let isPending = st.status === 'pending';
+                let pulseAnim = isPending ? 'animation: pendingAdminPulse 1.5s infinite;' : '';
+                
                 html += `
-                    <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem;" data-search="${sAdmName} ${sAdmRegion} ${sAdmPhone}">
+                    <div class="admin-station-card" style="background:${cardBg}; border:2px solid ${cardBorder}; padding:1rem; border-radius:12px; margin-bottom:0.75rem; ${pulseAnim}" data-search="${sAdmName} ${sAdmRegion} ${sAdmPhone} ${sAdmCats}" data-status="${st.status}" data-vip="${isVip || isVipPlus}" data-active-mats="${hasAvail}">
+                        ${isPending ? '<div style="background:#D97706; color:white; font-size:0.7rem; font-weight:bold; text-align:center; padding:0.2rem; border-radius:4px; margin-bottom:0.5rem; letter-spacing:0.5px;">⏳ بانتظار موافقتك الآن</div>' : ''}
                         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
                             <div style="flex:1;">
                                 <h4 style="font-size:0.95rem; color:#FBBF24; margin:0 0 0.25rem 0;">${sAdmName} ${tierLabel}</h4>
@@ -3318,11 +3457,43 @@
             container.innerHTML = html || '<p style="text-align:center; color:#94A3B8;">لا توجد محطات مسجلة.</p>';
         }
 
+        let currentAdminQuickFilter = 'all';
+        
+        window.applyAdminQuickFilter = function(fType) {
+            currentAdminQuickFilter = fType;
+            ['all', 'pending', 'vip', 'active'].forEach(t => {
+                let b = document.getElementById('admFltBtn_' + t);
+                if (b) {
+                    if (t === fType) {
+                        b.style.background = '#38BDF8';
+                        b.style.color = '#0F172A';
+                        b.style.border = 'none';
+                    } else {
+                        b.style.background = '#1E293B';
+                        b.style.color = '#CBD5E1';
+                        b.style.border = '1px solid #475569';
+                    }
+                }
+            });
+            filterAdminList();
+        };
+
         window.filterAdminList = function() {
             let q = document.getElementById('adminSearchInput').value.toLowerCase();
             document.querySelectorAll('.admin-station-card').forEach(card => {
                 let txt = card.getAttribute('data-search').toLowerCase();
-                card.style.display = txt.includes(q) ? 'block' : 'none';
+                let status = card.getAttribute('data-status');
+                let isVip = card.getAttribute('data-vip') === 'true';
+                let hasActiveMats = card.getAttribute('data-active-mats') === 'true';
+                
+                let matchesSearch = txt.includes(q);
+                let matchesFilter = true;
+                
+                if (currentAdminQuickFilter === 'pending' && status !== 'pending') matchesFilter = false;
+                if (currentAdminQuickFilter === 'vip' && !isVip) matchesFilter = false;
+                if (currentAdminQuickFilter === 'active' && !hasActiveMats) matchesFilter = false;
+                
+                card.style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
             });
         };
 
@@ -3756,9 +3927,8 @@
                             تأكد من حالة المواد الحالية. إذا كانت مطابقة، اضغط <b>(تم)</b> لتحديث وقت المحطة للزبائن. أو قم بتعديلها بضغطة واحدة:
                         </p>
                         ${matsCheckHtml}
-                        <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                            <button id="submitWelcomeSurveyBtn" onclick="submitWelcomeSurvey('${st.id}')" class="btn-primary" style="flex:3; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); padding:0.9rem; font-size:1rem; font-weight:900; margin-bottom:0; box-shadow:0 4px 12px rgba(2, 132, 199, 0.4); border-radius:10px;">✅ تم (اعتماد التحديث)</button>
-                            <button onclick="document.getElementById('stationWelcomeModalWrapper').remove()" style="flex:1; background:#334155; color:white; border:none; padding:0.9rem; font-weight:bold; font-size:0.9rem; border-radius:10px; cursor:pointer;">تخطي ✕</button>
+                        <div style="display:flex; margin-top:0.5rem;">
+                            <button id="submitWelcomeSurveyBtn" onclick="submitWelcomeSurvey('${st.id}')" class="btn-primary" style="width:100%; background:linear-gradient(135deg, #0284C7 0%, #0369A1 100%); padding:1rem; font-size:1.05rem; font-weight:900; margin-bottom:0; box-shadow:0 4px 14px rgba(2, 132, 199, 0.5); border-radius:10px;">✅ تم (تأكيد واعتماد التحديث)</button>
                         </div>
                     </div>
                 </div>
@@ -3868,11 +4038,11 @@
                 return;
             }
 
-            // 2. Close Station Owner Welcome Modal if open (acts like Skip)
+            // 2. Prevent back button if Owner Welcome Modal is open (force action)
             let welModal = document.getElementById('stationWelcomeModalWrapper');
             if (welModal) {
-                history.pushState({ page: 'dashboard' }, document.title, window.location.href);
-                welModal.remove();
+                history.pushState({ page: 'welcome' }, document.title, window.location.href);
+                showToast("🔒 يجب تأكيد حالة المواد والضغط على زر (تم) للمتابعة.");
                 return;
             }
 
@@ -4365,25 +4535,80 @@
             showToast("⚠️ شكراً لتعاونك! تم تسجيل بلاغك المجتمعي لتنبيه المالك والإدارة.");
         };
 
-        window.logConsumerNotification = function(text) {
+        window.logConsumerNotification = function(text, actionData = null) {
             let logs = JSON.parse(localStorage.getItem('personal_notif_log') || '[]');
-            logs.unshift({ text: text, time: new Date().toISOString() });
+            logs.unshift({ text: text, time: new Date().toISOString(), actionData: actionData });
             localStorage.setItem('personal_notif_log', JSON.stringify(logs.slice(0, 30)));
+            let unread = parseInt(localStorage.getItem('unread_notif_count') || '0');
+            localStorage.setItem('unread_notif_count', unread + 1);
+            if (typeof updateUnreadBadgeUI === 'function') updateUnreadBadgeUI();
+            let bellBtn = document.getElementById('consumerBellLogBtn');
+            if (bellBtn) {
+                bellBtn.classList.remove('bell-shake-anim');
+                void bellBtn.offsetWidth;
+                bellBtn.classList.add('bell-shake-anim');
+            }
         };
 
-        window.openConsumerNotifLogModal = function() {
-            let logs = JSON.parse(localStorage.getItem('personal_notif_log') || '[]');
-            if (logs.length === 0) {
+        window.toggleStationSpecificSub = function(stId, stName) {
+            let subs = JSON.parse(localStorage.getItem('subscribed_stations') || '[]');
+            if (subs.includes(stId)) {
+                subs = subs.filter(id => id !== stId);
+                showToast(`🔕 تم إيقاف التنبيه المخصص لمحطة (${stName})`);
+            } else {
+                subs.push(stId);
+                showToast(`🔔 تم تفعيل التنبيه المخصص لمحطة (${stName}) فور توفر أي مادة!`);
+            }
+            localStorage.setItem('subscribed_stations', JSON.stringify(subs));
+            renderConsumerStations(allStations);
+        };
+
+        window.currentNotifTab = 'all';
+        window.openConsumerNotifLogModal = function(tabFilter = 'all') {
+            window.currentNotifTab = tabFilter;
+            localStorage.setItem('unread_notif_count', '0');
+            updateUnreadBadgeUI();
+            let allLogs = JSON.parse(localStorage.getItem('personal_notif_log') || '[]');
+            if (allLogs.length === 0) {
                 return showAlertModal("📭 لا توجد تنبيهات مسجلة في سجلك الشخصي حتى الآن.");
             }
-            let logHtml = `<div style="max-height:280px; overflow-y:auto; text-align:right; font-size:0.82rem;">`;
+            let logs = allLogs.filter(item => {
+                if (tabFilter === 'vip') return (item.text || '').includes('بث فوري عاجل');
+                if (tabFilter === 'stock') return !(item.text || '').includes('بث فوري عاجل');
+                return true;
+            });
+            let tabsBar = `<div style="display:flex; gap:0.35rem; margin-bottom:0.65rem;">
+                <button onclick="openConsumerNotifLogModal('all')" style="flex:1; background:${tabFilter==='all'?'#0284C7':'#0F172A'}; color:white; border:1px solid #334155; padding:0.35rem; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer;">الكل (${allLogs.length})</button>
+                <button onclick="openConsumerNotifLogModal('stock')" style="flex:1; background:${tabFilter==='stock'?'#059669':'#0F172A'}; color:white; border:1px solid #334155; padding:0.35rem; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer;">🟢 توفر وأسعار</button>
+                <button onclick="openConsumerNotifLogModal('vip')" style="flex:1; background:${tabFilter==='vip'?'#7C3AED':'#0F172A'}; color:white; border:1px solid #334155; padding:0.35rem; border-radius:6px; font-size:0.72rem; font-weight:bold; cursor:pointer;">👑 بث VIP</button>
+            </div>`;
+            let logHtml = tabsBar + `<div style="max-height:320px; overflow-y:auto; text-align:right; font-size:0.82rem; padding-right:0.3rem;">`;
             logs.forEach(item => {
-                logHtml += `<div style="background:#0F172A; border:1px solid #334155; padding:0.6rem; border-radius:8px; margin-bottom:0.5rem;">
-                    <div style="color:#38BDF8; font-size:0.7rem; margin-bottom:0.2rem;">🕒 ${timeSince(item.time)}</div>
-                    <div style="color:#F8FAFC;">${item.text}</div>
+                let isValidNow = (new Date() - new Date(item.time)) < 10800000; // 3 hours validity
+                let statusBadge = isValidNow ? `<span style="color:#34D399; font-weight:bold; font-size:0.65rem; background:rgba(16,185,129,0.15); padding:0.1rem 0.3rem; border-radius:4px;">[حديث ✓]</span>` : `<span style="color:#94A3B8; font-size:0.65rem; background:rgba(148,163,184,0.15); padding:0.1rem 0.3rem; border-radius:4px;">[قديم]</span>`;
+                
+                let actionBtns = '';
+                if (item.actionData && item.actionData.lat && item.actionData.phone) {
+                    let num = item.actionData.phone.replace(/[^0-9]/g, '');
+                    num = num.startsWith('0') ? '963' + num.substring(1) : num;
+                    let waTxt = encodeURIComponent('مرحباً، أود الاستفسار من المحطة عبر التنبيه الذي وصلني من متوفر هناا');
+                    actionBtns = `
+                        <div style="display:flex; gap:0.4rem; margin-top:0.5rem;">
+                            <a href="https://maps.google.com/?q=${item.actionData.lat},${item.actionData.lon}" target="_blank" style="background:#0284C7; color:white; padding:0.35rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.7rem; text-decoration:none; flex:1; text-align:center;">🗺️ انطلق للمحطة</a>
+                            <a href="https://wa.me/${num}?text=${waTxt}" target="_blank" style="background:#25D366; color:white; padding:0.35rem 0.6rem; border-radius:6px; font-weight:bold; font-size:0.7rem; text-decoration:none; flex:1; text-align:center;">💬 راسل المالك</a>
+                        </div>`;
+                }
+
+                logHtml += `<div style="background:#0F172A; border:1px solid #334155; padding:0.65rem; border-radius:10px; margin-bottom:0.65rem; opacity:${isValidNow ? '1' : '0.7'};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+                        <span style="color:#38BDF8; font-size:0.7rem; font-weight:bold;">🕒 ${timeSince(item.time)}</span>
+                        ${statusBadge}
+                    </div>
+                    <div style="color:#F8FAFC; line-height:1.5;">${item.text}</div>
+                    ${actionBtns}
                 </div>`;
             });
-            logHtml += `<button onclick="localStorage.removeItem('personal_notif_log'); closeAlertModal(); showToast('تم مسح السجل');" style="background:#DC2626; color:white; border:none; padding:0.4rem 0.8rem; border-radius:6px; font-size:0.75rem; width:100%; cursor:pointer; margin-top:0.4rem;">🗑️ مسح السجل</button></div>`;
+            logHtml += `<button onclick="localStorage.removeItem('personal_notif_log'); localStorage.setItem('unread_notif_count', '0'); updateUnreadBadgeUI(); closeAlertModal(); showToast('تم مسح السجل');" style="background:#DC2626; color:white; border:none; padding:0.5rem 0.8rem; border-radius:8px; font-weight:bold; font-size:0.78rem; width:100%; cursor:pointer; margin-top:0.4rem;">🗑️ مسح السجل بالكامل</button></div>`;
             showAlertModal(logHtml);
         };
 
