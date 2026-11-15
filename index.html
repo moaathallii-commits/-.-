@@ -1477,31 +1477,45 @@
         });
 
         // --- Categories & Settings ---
+        let isLoadingCategoriesLock = false;
         async function loadCategoriesAndInit() {
+            if (isLoadingCategoriesLock) return;
+            isLoadingCategoriesLock = true;
             if (db) {
                 try {
                     const snap = await db.collection("categories").get();
                     if (!snap.empty) {
-                        availableCategories = [];
-                        categoryDocs = {};
+                        let tempCats = [];
+                        let tempDocs = {};
                         snap.forEach(doc => {
-                            let cName = doc.data().name;
-                            if (cName) {
-                                availableCategories.push(cName);
-                                categoryDocs[cName] = doc.id;
+                            let cName = (doc.data().name || '').trim();
+                            // تنظيف ذاتي: إذا كان الصنف موجوداً مسبقاً في المصفوفة، احذفه من السحابة فوراً لمنع التكرار
+                            if (tempCats.includes(cName)) {
+                                db.collection("categories").doc(doc.id).delete().catch(()=>{});
+                            } else if (cName !== '') {
+                                tempCats.push(cName);
+                                tempDocs[cName] = doc.id;
                             }
                         });
+                        availableCategories = tempCats;
+                        categoryDocs = tempDocs;
                     } else {
+                        // إضافة الأصناف الافتراضية بمعرفات ثابتة تمنع التكرار حتى عند تزامن الفتح
                         let defaults = ["بنزين", "مازوت", "غاز منزلي"];
-                        availableCategories = [];
+                        let tempCats = [];
+                        let tempDocs = {};
                         for (let cat of defaults) {
-                            let ref = await db.collection("categories").add({ name: cat });
-                            availableCategories.push(cat);
-                            categoryDocs[cat] = ref.id;
+                            let safeId = 'cat_' + cat.replace(/\s+/g, '_');
+                            await db.collection("categories").doc(safeId).set({ name: cat }, { merge: true });
+                            tempCats.push(cat);
+                            tempDocs[cat] = safeId;
                         }
+                        availableCategories = tempCats;
+                        categoryDocs = tempDocs;
                     }
                 } catch (err) {}
             }
+            isLoadingCategoriesLock = false;
             updateConsumerPrefsUI();
             updateStationCheckboxesUI();
             updateConsumerFilterButtons();
@@ -3294,7 +3308,8 @@
                 document.getElementById('admTotalUsers').textContent = totalUsers;
                 document.getElementById('admActiveUsers').textContent = active24h;
 
-                // Stations & Totals with Real-time Listener for New Pending Stations
+                // Stations & Totals with Real-time Listener for New Pending Stations & Mismatch Thresholds
+                if (!window.adminAlertedMismatches) window.adminAlertedMismatches = new Set();
                 if (window.adminStationsUnsubscribe) window.adminStationsUnsubscribe();
                 let initialAdminLoad = true;
                 window.adminStationsUnsubscribe = db.collection("stations").onSnapshot(sSnap => {
@@ -3305,6 +3320,7 @@
                     let countVipPlus = 0;
                     let newPendingCount = 0;
                     let latestPendingSt = null;
+                    let todayStr = new Date().toISOString().split('T')[0];
 
                     sSnap.docChanges().forEach(change => {
                         if (change.type === 'added' && !initialAdminLoad) {
@@ -3324,6 +3340,30 @@
                         if (lvl === 2) countVipPlus++;
                         else if (lvl === 1) countVip++;
                         allStations.push({ id: doc.id, ...d });
+
+                        // --- نظام المراقبة الذكي لتراكم البلاغات المجتمعية في نفس اليوم ---
+                        let mismatchesToday = (d.mismatchDate === todayStr) ? (d.mismatchReportsCount || 0) : 0;
+                        if (mismatchesToday >= 3 && !window.adminAlertedMismatches.has(doc.id)) {
+                            window.adminAlertedMismatches.add(doc.id);
+                            if (!initialAdminLoad) {
+                                playTone('alarm2');
+                                let sMName = escapeHTML(d.name);
+                                let alertHtml = `<div style="text-align:right;">
+                                    <div style="font-size:2.5rem; text-align:center; margin-bottom:0.5rem; animation: bellShake 0.5s infinite;">🚨</div>
+                                    <h3 style="color:#EF4444; margin-top:0; text-align:center;">تحذير مجتمعي: بلاغات متراكمة!</h3>
+                                    <p style="font-size:0.85rem; color:#F8FAFC;">محطة <b>(${sMName})</b> تلقت <b>${mismatchesToday}</b> بلاغات من الزبائن بعدم صحة حالة التوفر هذا اليوم!</p>
+                                    <p style="font-size:0.75rem; color:#FCA5A5;">يرجى التواصل مع المالك أو مراجعة حالة توفر المواد من لوحة الإدارة.</p>
+                                    <div style="display:flex; gap:0.4rem; margin-top:0.65rem;">
+                                        <button onclick="closeAlertModal(); adminOpenEditMaterials('${doc.id}');" style="flex:1; background:#059669; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:bold; cursor:pointer; font-size:0.8rem;">📦 تعديل مواد المحطة</button>
+                                        <button onclick="closeAlertModal();" style="flex:1; background:#DC2626; color:white; border:none; padding:0.7rem; border-radius:8px; font-weight:bold; cursor:pointer; font-size:0.8rem;">حسناً، تمت المراجعة</button>
+                                    </div>
+                                </div>`;
+                                showAlertModal(alertHtml);
+                            }
+                        }
+                        if (mismatchesToday < 3) {
+                            window.adminAlertedMismatches.delete(doc.id);
+                        }
                     });
                     
                     let elTotAl = document.getElementById('admTotalAlerts');
@@ -3437,6 +3477,7 @@
                                     <button onclick="updateStationLimits('${id}')" style="background:#0284C7; color:white; border:none; padding:0.3rem 0.65rem; border-radius:6px; cursor:pointer; font-size:0.75rem; font-weight:bold;">حفظ النطاقات</button>
                                 </div>
                                 <span style="background:${badgeBg}; color:${badgeCol}; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:bold; display:inline-block;">${statusText} (بث اليوم: ${st.broadcastCountToday || 0})</span>
+                                ${(st.mismatchDate === new Date().toISOString().split('T')[0] && (st.mismatchReportsCount || 0) > 0) ? `<span style="background:#7F1D1D; color:#FCA5A5; border:1px solid #EF4444; padding:0.15rem 0.5rem; border-radius:4px; font-size:0.73rem; font-weight:bold; display:inline-block; margin-right:0.35rem;">⚠️ بلاغات اليوم: ${st.mismatchReportsCount}</span>` : ''}
                             </div>
                             <div style="display:flex; flex-direction:column; gap:0.35rem; min-width:95px;">
                                 ${st.status !== 'approved' ?
@@ -3559,14 +3600,17 @@
             e.preventDefault();
             if (!db) return;
             const catName = document.getElementById('newCategoryName').value.trim();
-            if (catName && !availableCategories.includes(catName)) {
-                try {
-                    await db.collection("categories").add({ name: catName });
-                    document.getElementById('newCategoryName').value = '';
-                    showToast("تمت إضافة الفئة!");
-                    loadCategoriesAndInit();
-                } catch (err) {}
+            if (!catName) return;
+            if (availableCategories.includes(catName)) {
+                return showToast("⚠️ هذا الصنف موجود مسبقاً!");
             }
+            try {
+                let safeId = 'cat_' + catName.replace(/\s+/g, '_');
+                await db.collection("categories").doc(safeId).set({ name: catName }, { merge: true });
+                document.getElementById('newCategoryName').value = '';
+                showToast("✅ تمت إضافة الفئة بنجاح!");
+                loadCategoriesAndInit();
+            } catch (err) {}
         });
 
         window.editCategory = async function(docId, oldName) {
@@ -4519,17 +4563,28 @@
         };
 
         window.reportStationMismatch = async function(stId, stName) {
-            let reportedKey = `rep_mismatch_${stId}_${new Date().toISOString().split('T')[0]}`;
+            let todayStr = new Date().toISOString().split('T')[0];
+            let reportedKey = `rep_mismatch_${stId}_${todayStr}`;
+            
             if (localStorage.getItem(reportedKey)) {
                 return showToast("لقد قمت بإرسال بلاغ لهذه المحطة اليوم بالفعل.");
             }
             if (!confirm(`هل تود الإبلاغ عن عدم دقة حالة التوفر في محطة (${stName})؟`)) return;
+            
             localStorage.setItem(reportedKey, 'true');
             if (db) {
                 try {
-                    await db.collection("stations").doc(stId).update({
-                        mismatchReportsCount: firebase.firestore.FieldValue.increment(1)
-                    });
+                    let ref = db.collection("stations").doc(stId);
+                    let doc = await ref.get();
+                    if (doc.exists) {
+                        let d = doc.data();
+                        // إذا كان البلاغ في نفس اليوم نزيد العداد، وإلا نرجعه إلى 1 لليوم الجديد
+                        let newCount = (d.mismatchDate === todayStr) ? (d.mismatchReportsCount || 0) + 1 : 1;
+                        await ref.update({
+                            mismatchReportsCount: newCount,
+                            mismatchDate: todayStr
+                        });
+                    }
                 } catch (e) {}
             }
             showToast("⚠️ شكراً لتعاونك! تم تسجيل بلاغك المجتمعي لتنبيه المالك والإدارة.");
