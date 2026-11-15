@@ -4239,16 +4239,13 @@
 
         window.adminCheckCloudQuota = function() {
             let totalSt = allStations.length;
-            let msg = `📊 تقرير صحة وقود السحابة (Firestore):
-
-`;
-            msg += `• المحطات المعتمدة: ${totalSt}
-`;
-            msg += `• استهلاك عمليات القراءة/الكتابة: مستقر (ضمن الباقة المجانية).
-`;
-            msg += `• التخزين المحلي والـ PWA: يعملان بكفاءة.
-`;
-            msg += `• حالة المزامنة: متصل بالسحابة ✓`;
+            let msg = `<div style="text-align:right; line-height:1.8; font-size:0.88rem;">
+                <b style="color:#38BDF8; font-size:0.95rem;">📊 تقرير صحة وقود السحابة (Firestore):</b><br>
+                • المحطات المسجلة: <b>${totalSt}</b><br>
+                • استهلاك القراءة/الكتابة: <span style="color:#34D399; font-weight:bold;">مستقر (نظام التجميع Batch نشط ✓)</span><br>
+                • التخزين المحلي والـ PWA: <span style="color:#34D399; font-weight:bold;">يعملان بكفاءة ✓</span><br>
+                • حالة الاتصال بالسحابة: <span style="color:#FBBF24; font-weight:bold;">متصل ومزامن ✓</span>
+            </div>`;
             showAlertModal(msg);
         };
 
@@ -4264,14 +4261,15 @@
         };
 
         window.adminTriggerGlobalBroadcastModal = function() {
-            let msg = prompt("اكتب رسالة البث الإداري العام لتظهر لكافة مستخدمي التطبيق:");
-            if (!msg || !msg.trim()) return;
+            let msg = prompt("اكتب رسالة البث الإداري العام لتظهر لكافة مستخدمي التطبيق (أو اترك الحقل فارغاً واضغط موافق لإيقاف البث الحالي):");
+            if (msg === null) return;
             if(!db) return;
+            let cleanMsg = msg.trim();
             db.collection("settings").doc("config").set({
-                globalAdminBroadcast: msg.trim(),
+                globalAdminBroadcast: cleanMsg,
                 globalBroadcastTime: new Date().toISOString()
             }, { merge: true }).then(() => {
-                showToast("📢 تم إطلاق البث الإداري العام بنجاح لجميع المستخدمين!");
+                showToast(cleanMsg ? "📢 تم إطلاق البث الإداري العام بنجاح لجميع المستخدمين!" : "🛑 تم إيقاف وإخفاء البث الإداري العام.");
             }).catch(() => {
                 showToast("خطأ أثناء نشر البث العام");
             });
