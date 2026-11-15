@@ -923,43 +923,12 @@
                     <input type="text" id="settingConsumerWaTemplate" placeholder="مثال: مرحباً، أود الاستفسار من محطة {stationName} عبر تطبيق متوفر هناا..." style="margin-bottom:0.4rem; font-size:0.82rem;">
                     <button onclick="saveConsumerWaTemplate()" style="background:#059669; color:white; border:none; padding:0.5rem; border-radius:6px; font-weight:bold; font-size:0.78rem; width:100%;">💾 حفظ قالب رسالة التواصل</button>
                 </div>
-<!-- Admin Advanced Ecosystem Tools -->
-<div style="background: #1E293B; border: 1px solid #10B981; padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem;">
-    <h3 style="color: #34D399; margin-top: 0; font-size: 1.05rem;">🛠️ أدوات الإدارة الذكية الشاملة</h3>
-    
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
-        <button onclick="adminTriggerGlobalBroadcastModal()" style="background:#7C3AED; color:white; border:none; padding:0.65rem; border-radius:8px; font-weight:bold; font-size:0.82rem; cursor:pointer;">📢 أداة بث إداري عام</button>
-        <button onclick="adminExportDataJson()" style="background:#0284C7; color:white; border:none; padding:0.65rem; border-radius:8px; font-weight:bold; font-size:0.82rem; cursor:pointer;">📥 أداة تصدير البيانات (JSON)</button>
-    </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
-        <button onclick="adminToggleHeatmapView()" style="background:#D97706; color:white; border:none; padding:0.65rem; border-radius:8px; font-weight:bold; font-size:0.82rem; cursor:pointer;">🗺️ الخريطة الحرارية الإدارية</button>
-        <button onclick="adminCheckCloudQuota()" style="background:#334155; color:#38BDF8; border:1px solid #38BDF8; padding:0.65rem; border-radius:8px; font-weight:bold; font-size:0.82rem; cursor:pointer;">📊 مراقب صحة وقود السحابة</button>
-    </div>
-
-    <!-- 🔗 حقل التحكم في رابط تحميل التطبيق المرفق بالمشاركات -->
-    <div style="background:#0F172A; padding:0.75rem; border-radius:8px; border:1px solid #38BDF8; margin-top:0.75rem;">
-        <label style="font-size:0.78rem; color:#38BDF8; font-weight:bold; display:block; margin-bottom:0.3rem;">🔗 رابط تحميل التطبيق المرفق عند مشاركة توفر مادة (ومن أزرار التحميل):</label>
-        <input type="url" id="settingShareAppUrl" placeholder="https://t.me/+7QVYs8WgbLwzM2I8" style="margin-bottom:0.4rem; font-size:0.82rem; direction:ltr; text-align:left;">
-        <button onclick="saveShareAppDownloadUrl()" style="background:#0284C7; color:white; border:none; padding:0.5rem; border-radius:6px; font-weight:bold; font-size:0.78rem; width:100%; cursor:pointer;">💾 حفظ وتحديث رابط تحميل التطبيق</button>
-    </div>
-
-    <div style="background:#0F172A; padding:0.75rem; border-radius:8px; border:1px solid #334155; margin-top:0.75rem;">
-        <label style="font-size:0.78rem; color:#FBBF24; font-weight:bold; display:block; margin-bottom:0.3rem;">💬 قالب رسالة التواصل التلقائي (من المستهلك للمحطة عبر واتساب):</label>
-        <input type="text" id="settingConsumerWaTemplate" placeholder="مثال: مرحباً، أود الاستفسار من محطة {stationName} عبر تطبيق متوفر هناا..." style="margin-bottom:0.4rem; font-size:0.82rem;">
-        <button onclick="saveConsumerWaTemplate()" style="background:#059669; color:white; border:none; padding:0.5rem; border-radius:6px; font-weight:bold; font-size:0.78rem; width:100%;">💾 حفظ قالب رسالة التواصل</button>
-    </div>
-
-    <div style="background:#0F172A; padding:0.75rem; border-radius:8px; border:1px solid #334155; margin-top:0.75rem;">
-        <label style="font-size:0.78rem; color:#34D399; font-weight:bold; display:block; margin-bottom:0.3rem;">⚡ نظام الاعتماد التلقائي للموثوقين (Whitelist - أرقام تفصل بينها فواصل):</label>
-        <input type="text" id="settingWhitelistPhones" placeholder="09xxxxxxxx, 09yyyyyyyy..." style="margin-bottom:0.4rem; font-size:0.82rem;">
-        <button onclick="saveWhitelistPhones()" style="background:#059669; color:white; border:none; padding:0.5rem; border-radius:6px; font-weight:bold; font-size:0.78rem; width:100%; cursor:pointer;">💾 حفظ قائمة الموثوقين</button>
-    </div>
-
-    <div id="adminHeatmapContainer" style="display:none; width:100%; height:320px; margin-top:1rem; border-radius:8px; overflow:hidden; border:1px solid #FBBF24;">
-        <iframe id="adminHeatmapIframe" width="100%" height="100%" style="border:0;" src=""></iframe>
-    </div>
-</div>
+                <div style="background:#0F172A; padding:0.75rem; border-radius:8px; border:1px solid #38BDF8; margin-top:0.75rem;">
+                    <label style="font-size:0.78rem; color:#38BDF8; font-weight:bold; display:block; margin-bottom:0.3rem;">🔗 رابط تحميل التطبيق المرفق عند مشاركة توفر مادة (ومن أزرار التحميل):</label>
+                    <input type="url" id="settingShareAppUrl" placeholder="https://t.me/+7QVYs8WgbLwzM2I8" style="margin-bottom:0.4rem; font-size:0.82rem; direction:ltr; text-align:left;">
+                    <button onclick="saveShareAppDownloadUrl()" style="background:#0284C7; color:white; border:none; padding:0.5rem; border-radius:6px; font-weight:bold; font-size:0.78rem; width:100%; cursor:pointer;">💾 حفظ وتحديث رابط تحميل التطبيق</button>
+                </div>
 
                 <div style="background:#0F172A; padding:0.75rem; border-radius:8px; border:1px solid #334155; margin-top:0.75rem;">
                     <label style="font-size:0.78rem; color:#34D399; font-weight:bold; display:block; margin-bottom:0.3rem;">⚡ نظام الاعتماد التلقائي للموثوقين (Whitelist - أرقام تفصل بينها فواصل):</label>
@@ -1223,7 +1192,7 @@
             if (ol) ol.style.display = 'none';
         }
 
-        function calculateDistance(lat1, lon1, lat2, lon2) {
+        function calculateStraightDistance(lat1, lon1, lat2, lon2) {
             if (!lat1 || !lon1 || !lat2 || !lon2) return 999;
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1232,6 +1201,11 @@
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLon / 2) * Math.sin(dLon / 2);
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            let straight = calculateStraightDistance(lat1, lon1, lat2, lon2);
+            return straight * 1.3; // مسافة القيادة التقريبية (معامل التصحيح 1.3 للطرق)
         }
 
         window.copyShamCashToClipboard = function(shamId) {
@@ -1932,7 +1906,9 @@
                 let safeBroadcast = escapeHTML(st.broadcastMsg);
                 let cardClass = isVipPlus ? 'vip-plus-card' : (isVip ? 'vip-card' : '');
                 let vipBadge = isVipPlus ? `<div class="vip-plus-badge" style="margin-bottom:0.5rem;">👑 موزع ملكي معتمد VIP+</div>` : (isVip ? `<div class="vip-badge" style="margin-bottom:0.5rem;">⭐ موزع معتمد VIP</div>` : '');
-                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.25rem 0.65rem; border-radius:8px; font-size:0.78rem; font-weight:bold; border:1px solid #334155; white-space:nowrap;">📍 ${st.distance < 1 ? (st.distance * 1000).toFixed(0) + ' متر' : st.distance.toFixed(2) + ' كم'}</span>` : '';
+                let straightDist = calculateStraightDistance(userLat, userLon, st.lat || 35.5, st.lon || 36.3);
+                let drivingDist = st.distance !== undefined ? st.distance : straightDist * 1.3;
+                let distText = st.distance !== undefined ? `<span style="background:#0F172A; color:#38BDF8; padding:0.25rem 0.65rem; border-radius:8px; font-size:0.75rem; font-weight:bold; border:1px solid #334155; white-space:nowrap;" title="مسافة القيادة مقابل المسافة الجوية">🚗 ${drivingDist < 1 ? (drivingDist * 1000).toFixed(0) + ' م' : drivingDist.toFixed(1) + ' كم'} <span style="font-size:0.65rem; color:#94A3B8; font-weight:normal;">(جوي: ${straightDist.toFixed(1)} كم)</span></span>` : '';
                 let currentRating = st.rating ? (st.rating / (st.ratingCount || 1)).toFixed(1) : '5.0';
                 let ratingCount = st.ratingCount || 1;
 
