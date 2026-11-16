@@ -512,6 +512,11 @@
             border-color: #FBBF24 !important;
             box-shadow: 0 0 12px rgba(251, 191, 36, 0.6);
         }
+    
+        .masked-pin-input {
+            -webkit-text-security: disc;
+            text-security: disc;
+        }
     </style>
 </head>
 <body>
@@ -706,7 +711,7 @@
             <p style="color: #94A3B8; font-size: 0.85rem; text-align:center; margin-bottom:1.25rem;">أدخل رقم الهاتف والرمز السري للوصول للوحة التحكم:</p>
             
             <input type="tel" id="loginPhone" placeholder="رقم الهاتف (09xxxxxxxx)" maxlength="10">
-            <input type="password" id="loginPin" placeholder="الرمز السري">
+            <input type="text" id="loginPin" class="masked-pin-input" autocomplete="off" data-lpignore="true" placeholder="الرمز السري">
             <button onclick="attemptStationLogin()" class="btn-secondary">تسجيل الدخول للوحة التحكم</button>
             
             <hr style="border:0; border-top:1px solid #334155; margin:1.5rem 0;">
@@ -737,7 +742,7 @@
                 <input type="tel" id="stPhone" placeholder="09xxxxxxxx" pattern="^09[0-9]{8}$" maxlength="10" required>
                 
                 <label style="font-size:0.8rem; color:#94A3B8;">الرمز السري الخاص بك:</label>
-                <input type="password" id="stPin" placeholder="اختر رمزاً سرياً..." required>
+                <input type="text" id="stPin" class="masked-pin-input" autocomplete="off" data-lpignore="true" placeholder="اختر رمزاً سرياً..." required>
                 
                 <label style="font-size:0.85rem; margin-bottom:0.3rem; display:block;">اختر الفئات المتوفرة لديك:</label>
                 <div id="checkboxCategoriesContainer" style="background:#0F172A; border:1px solid #475569; padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;"></div>
@@ -2182,6 +2187,7 @@
 
         function checkSmartAlertsSilent(stations, uLat, uLon) {
             let savedPrefs = JSON.parse(localStorage.getItem('alert_prefs') || '[]');
+            let subStations = JSON.parse(localStorage.getItem('subscribed_stations') || '[]');
             let alertMode = localStorage.getItem('alert_trigger_mode') || 'both';
             let alertsList = [];
             let vipBroadcastAlerts = [];
@@ -2195,7 +2201,8 @@
                 if (st.status === 'approved') {
                     let stRadius = getStationDefaultAlertRadius(st);
                     let dist = (uLat !== null && uLon !== null && st.lat && st.lon) ? calculateDistance(uLat, uLon, st.lat, st.lon) : 0;
-                    let isWithinRange = (uLat === null || uLon === null) ? true : (dist <= stRadius);
+                    let isSubStation = subStations.includes(st.id);
+                    let isWithinRange = isSubStation || ((uLat === null || uLon === null) ? true : (dist <= stRadius));
                     let hasVipPrivilege = (getStationTierLevel(st) >= 1);
 
                     let stUpdateTime = st.lastUpdate ? new Date(st.lastUpdate).getTime() : 0;
