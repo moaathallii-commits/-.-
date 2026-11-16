@@ -1372,7 +1372,25 @@
             } else {
                 let savedPhone = localStorage.getItem('saved_station_phone');
                 let savedPin = localStorage.getItem('saved_station_pin');
-                if (savedPhone && savedPin) {
+                let cachedData = localStorage.getItem('cached_station_data');
+                
+                if (savedPhone && savedPin && cachedData) {
+                    try {
+                        let st = JSON.parse(cachedData);
+                        if (st.status === 'approved') {
+                            hasShownWelcomeThisSession = false;
+                            loadMyStationDashboard(st);
+                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2000);
+                        } else {
+                            showSection('stationPending');
+                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2000);
+                        }
+                    } catch(e) {
+                        showSection('stationPortal');
+                        autoLoginStationOwner(savedPhone, savedPin);
+                    }
+                } else if (savedPhone && savedPin) {
+                    showSection('stationPortal');
                     autoLoginStationOwner(savedPhone, savedPin);
                 } else if (currentStationIdForPending) {
                     checkPendingStationStatus(currentStationIdForPending);
@@ -1440,7 +1458,24 @@
             } else if (route === 'station') {
                 let savedPhone = localStorage.getItem('saved_station_phone');
                 let savedPin = localStorage.getItem('saved_station_pin');
-                if (savedPhone && savedPin) {
+                let cachedData = localStorage.getItem('cached_station_data');
+                
+                if (savedPhone && savedPin && cachedData) {
+                    try {
+                        let st = JSON.parse(cachedData);
+                        if (st.status === 'approved') {
+                            hasShownWelcomeThisSession = false;
+                            loadMyStationDashboard(st);
+                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2500);
+                        } else {
+                            showSection('stationPending');
+                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2500);
+                        }
+                    } catch(e) {
+                        showSection('stationPortal');
+                        autoLoginStationOwner(savedPhone, savedPin);
+                    }
+                } else if (savedPhone && savedPin) {
                     showSection('stationPortal');
                     autoLoginStationOwner(savedPhone, savedPin);
                 } else if (currentStationIdForPending) {
@@ -2561,28 +2596,37 @@
             }
         });
 
-        window.autoLoginStationOwner = async function(phoneVal, pinVal) {
+        window.autoLoginStationOwner = async function(phoneVal, pinVal, isBackground = false) {
             if (!db) return;
             try {
                 let snap = await db.collection("stations").where("phone", "==", phoneVal).get();
                 if (snap.empty) {
-                    localStorage.removeItem('saved_station_phone');
-                    localStorage.removeItem('saved_station_pin');
+                    logoutStationOwner();
                     return;
                 }
                 let stDoc = null;
                 snap.forEach(d => { stDoc = { id: d.id, ...d.data() }; });
                 if (stDoc.pinCode !== pinVal) {
-                    localStorage.removeItem('saved_station_phone');
-                    localStorage.removeItem('saved_station_pin');
+                    logoutStationOwner();
                     return;
                 }
+                localStorage.setItem('cached_station_data', JSON.stringify(stDoc));
                 if (stDoc.status === 'approved') {
-                    hasShownWelcomeThisSession = false;
-                loadMyStationDashboard(stDoc);
+                    if (!isBackground) {
+                        hasShownWelcomeThisSession = false;
+                        loadMyStationDashboard(stDoc);
+                    } else {
+                        // Background update silently updates the UI if already on dashboard
+                        let currentSec = document.getElementById('sec-stationDashboard');
+                        if (currentSec && currentSec.style.display === 'block') {
+                            loadMyStationDashboard(stDoc, currentOwnerActiveTab);
+                        }
+                    }
                 } else if (stDoc.status === 'pending') {
                     currentStationIdForPending = stDoc.id;
-                    showSection('stationPending');
+                    if(!isBackground) showSection('stationPending');
+                } else if (stDoc.status === 'canceled') {
+                    logoutStationOwner();
                 }
             } catch (e) {}
         };
@@ -2595,6 +2639,7 @@
             if (wrap) wrap.remove();
             localStorage.removeItem('saved_station_phone');
             localStorage.removeItem('saved_station_pin');
+            localStorage.removeItem('cached_station_data');
             document.getElementById('loginPhone').value = '';
             document.getElementById('loginPin').value = '';
             showToast("تم تسجيل الخروج بنجاح");
@@ -2636,6 +2681,7 @@
                 // Save owner session for automatic login next time
                 localStorage.setItem('saved_station_phone', p);
                 localStorage.setItem('saved_station_pin', pin);
+                localStorage.setItem('cached_station_data', JSON.stringify(stDoc));
                 localStorage.removeItem('pending_station_id');
 
                 hasShownWelcomeThisSession = false;
