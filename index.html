@@ -702,6 +702,13 @@
             <p style="font-size: 0.85rem; font-weight: 600; color: #F8FAFC; margin-top: 1rem; border-top:1px solid #334155; padding-top:1rem;">تفضيلات المواد للبحث والتنبيه:</p>
             <div id="consumerAlertPreferences" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;"></div>
 
+            <div style="background:#0F172A; padding:0.85rem; border-radius:10px; border:1px solid #10B981; margin-bottom:1rem; text-align:center;">
+                <p style="font-size: 0.85rem; font-weight: bold; color: #34D399; margin: 0 0 0.5rem 0;">💬 هل تواجه مشكلة أو لديك مقترح؟</p>
+                <button type="button" onclick="contactAdminFromConsumer()" style="background:#25D366; color:white; border:none; border-radius:8px; padding:0.65rem 1rem; cursor:pointer; font-weight:bold; width:100%; font-size:0.9rem; display:flex; justify-content:center; align-items:center; gap:0.4rem;">
+                    💬 تواصل مع إدارة المنصة (واتساب)
+                </button>
+            </div>
+
             <button onclick="showSection('consumerRadar')" class="btn-primary" style="margin-bottom:0;">حفظ والعودة للرادار</button>
         </section>
 
@@ -1372,25 +1379,7 @@
             } else {
                 let savedPhone = localStorage.getItem('saved_station_phone');
                 let savedPin = localStorage.getItem('saved_station_pin');
-                let cachedData = localStorage.getItem('cached_station_data');
-                
-                if (savedPhone && savedPin && cachedData) {
-                    try {
-                        let st = JSON.parse(cachedData);
-                        if (st.status === 'approved') {
-                            hasShownWelcomeThisSession = false;
-                            loadMyStationDashboard(st);
-                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2000);
-                        } else {
-                            showSection('stationPending');
-                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2000);
-                        }
-                    } catch(e) {
-                        showSection('stationPortal');
-                        autoLoginStationOwner(savedPhone, savedPin);
-                    }
-                } else if (savedPhone && savedPin) {
-                    showSection('stationPortal');
+                if (savedPhone && savedPin) {
                     autoLoginStationOwner(savedPhone, savedPin);
                 } else if (currentStationIdForPending) {
                     checkPendingStationStatus(currentStationIdForPending);
@@ -1458,24 +1447,7 @@
             } else if (route === 'station') {
                 let savedPhone = localStorage.getItem('saved_station_phone');
                 let savedPin = localStorage.getItem('saved_station_pin');
-                let cachedData = localStorage.getItem('cached_station_data');
-                
-                if (savedPhone && savedPin && cachedData) {
-                    try {
-                        let st = JSON.parse(cachedData);
-                        if (st.status === 'approved') {
-                            hasShownWelcomeThisSession = false;
-                            loadMyStationDashboard(st);
-                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2500);
-                        } else {
-                            showSection('stationPending');
-                            setTimeout(() => autoLoginStationOwner(savedPhone, savedPin, true), 2500);
-                        }
-                    } catch(e) {
-                        showSection('stationPortal');
-                        autoLoginStationOwner(savedPhone, savedPin);
-                    }
-                } else if (savedPhone && savedPin) {
+                if (savedPhone && savedPin) {
                     showSection('stationPortal');
                     autoLoginStationOwner(savedPhone, savedPin);
                 } else if (currentStationIdForPending) {
@@ -2596,37 +2568,28 @@
             }
         });
 
-        window.autoLoginStationOwner = async function(phoneVal, pinVal, isBackground = false) {
+        window.autoLoginStationOwner = async function(phoneVal, pinVal) {
             if (!db) return;
             try {
                 let snap = await db.collection("stations").where("phone", "==", phoneVal).get();
                 if (snap.empty) {
-                    logoutStationOwner();
+                    localStorage.removeItem('saved_station_phone');
+                    localStorage.removeItem('saved_station_pin');
                     return;
                 }
                 let stDoc = null;
                 snap.forEach(d => { stDoc = { id: d.id, ...d.data() }; });
                 if (stDoc.pinCode !== pinVal) {
-                    logoutStationOwner();
+                    localStorage.removeItem('saved_station_phone');
+                    localStorage.removeItem('saved_station_pin');
                     return;
                 }
-                localStorage.setItem('cached_station_data', JSON.stringify(stDoc));
                 if (stDoc.status === 'approved') {
-                    if (!isBackground) {
-                        hasShownWelcomeThisSession = false;
-                        loadMyStationDashboard(stDoc);
-                    } else {
-                        // Background update silently updates the UI if already on dashboard
-                        let currentSec = document.getElementById('sec-stationDashboard');
-                        if (currentSec && currentSec.style.display === 'block') {
-                            loadMyStationDashboard(stDoc, currentOwnerActiveTab);
-                        }
-                    }
+                    hasShownWelcomeThisSession = false;
+                loadMyStationDashboard(stDoc);
                 } else if (stDoc.status === 'pending') {
                     currentStationIdForPending = stDoc.id;
-                    if(!isBackground) showSection('stationPending');
-                } else if (stDoc.status === 'canceled') {
-                    logoutStationOwner();
+                    showSection('stationPending');
                 }
             } catch (e) {}
         };
@@ -2639,7 +2602,6 @@
             if (wrap) wrap.remove();
             localStorage.removeItem('saved_station_phone');
             localStorage.removeItem('saved_station_pin');
-            localStorage.removeItem('cached_station_data');
             document.getElementById('loginPhone').value = '';
             document.getElementById('loginPin').value = '';
             showToast("تم تسجيل الخروج بنجاح");
@@ -2681,7 +2643,6 @@
                 // Save owner session for automatic login next time
                 localStorage.setItem('saved_station_phone', p);
                 localStorage.setItem('saved_station_pin', pin);
-                localStorage.setItem('cached_station_data', JSON.stringify(stDoc));
                 localStorage.removeItem('pending_station_id');
 
                 hasShownWelcomeThisSession = false;
@@ -3058,6 +3019,14 @@
                         <h4 style="color:#34D399; margin:0 0 0.4rem 0; font-size:0.92rem;">📍 تحديث الموقع الجغرافي للمحطة (GPS):</h4>
                         <p style="font-size:0.76rem; color:#94A3B8; margin:0 0 0.65rem 0;">إذا قمت بتسجيل المحطة سابقاً من موقع غير دقيق، اضغط أدناه وأنت داخل المحطة لتحديث إحداثياتها:</p>
                         <button onclick="updateOwnerStationGPS('${st.id}')" style="background:#064E3B; border:1px solid #10B981; color:#FFFFFF; width:100%; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.85rem; cursor:pointer;">📍 تحديث موقع المحطة الدقيق الآن</button>
+                    </div>
+
+                    <div style="background:#1E293B; border:1px solid #10B981; padding:1rem; border-radius:14px; margin-bottom:1rem;">
+                        <h4 style="color:#34D399; margin:0 0 0.4rem 0; font-size:0.92rem;">💬 التواصل مع إدارة المنصة:</h4>
+                        <p style="font-size:0.76rem; color:#94A3B8; margin:0 0 0.65rem 0;">لطلب الدعم الفني، تعديل بيانات المحطة، أو الاستفسار:</p>
+                        <button onclick="contactAdminFromOwner('${safeName}', '${safeRegion}', '${escapeHTML(st.phone)}')" style="background:#25D366; border:none; color:#FFFFFF; width:100%; padding:0.7rem; border-radius:8px; font-weight:bold; font-size:0.85rem; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:0.4rem;">
+                            💬 مراسلة الإدارة عبر واتساب
+                        </button>
                     </div>
 
                     <button onclick="logoutStationOwner()" class="btn-danger" style="margin:0; padding:0.85rem; font-size:0.95rem;">🚪 تسجيل الخروج من الحساب</button>
@@ -4760,6 +4729,21 @@
         window.shareOwnerWeeklyReport = function(stName, impressions, clicks, rating) {
             let text = `📊 *ملخص النشاط الأسبوعي - محطة ${stName}*\n• مرات الظهور في الرادار: ${impressions}\n• نقرات التواصل المباشر: ${clicks}\n• التقييم العام: ⭐ ${rating}\n📅 تم التوليد عبر منصة *متوفر هناا*`;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        };
+
+        
+        window.contactAdminFromConsumer = function() {
+            let cleanPhone = (window.globalAdminWaPhone || "0965461504").replace(/[^0-9]/g, '');
+            let waNum = cleanPhone.startsWith('0') ? '963' + cleanPhone.substring(1) : cleanPhone;
+            let msg = `مرحباً إدارة منصة "متوفر هناا" ⛽\nأود التواصل معكم بخصوص: `;
+            window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+
+        window.contactAdminFromOwner = function(stName, stRegion, stPhone) {
+            let cleanPhone = (window.globalAdminWaPhone || "0965461504").replace(/[^0-9]/g, '');
+            let waNum = cleanPhone.startsWith('0') ? '963' + cleanPhone.substring(1) : cleanPhone;
+            let msg = `مرحباً إدارة منصة "متوفر هناا" ⛽👑\nأنا مالك محطة (${stName}) في منطقة (${stRegion})، رقم الدخول: ${stPhone}\n\nأود الاستفسار عن: `;
+            window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
         };
 
         window.saveWhitelistPhones = async function() {
